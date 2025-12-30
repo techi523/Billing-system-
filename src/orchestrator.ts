@@ -10,7 +10,8 @@ export class SessionOrchestrator {
         }
 
         const pkg = (payment as any).package;
-        const username = `user_${payment.phoneNumber.slice(-4)}_${uuidv4().slice(0, 4)}`;
+        // Use MAC address as username (sanitized) for transparency
+        const username = `HS-${macAddress.replace(/[: -]/g, '').toUpperCase()}`;
         const password = Math.random().toString(36).slice(-8);
 
         // Calculate expiry if time-based

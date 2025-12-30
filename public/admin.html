@@ -4,66 +4,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Hotspot Pro</title>
+    <title>Admin Panel | Hotspot Manager</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 1rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .data-table {
+            width: 100%;
+            text-align: left;
+        }
+
+        .data-table th {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 0.95rem;
+        }
+
+        .pkg-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 1rem;
+            align-items: end;
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+        }
+
+        .pkg-form input {
+            padding: 0.6rem;
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+    </style>
 </head>
 
-<body class="admin">
-    <div class="container" style="max-width: 800px;">
-        <header>
-            <h1>Admin Dashboard</h1>
-            <nav><button onclick="loadSessions()">Refresh Sessions</button></nav>
-        </header>
+<body style="align-items: flex-start; padding-top: 4rem;">
+    <div class="container" style="max-width: 900px;">
+        <div class="admin-header">
+            <div>
+                <div class="logo">FLASH ADMIN</div>
+                <h1>System Control</h1>
+            </div>
+            <button class="btn-primary" style="width: auto; margin:0;" onclick="location.href='/'">Go to Portal</button>
+        </div>
 
-        <main class="glass">
-            <h2>Live Active Sessions</h2>
-            <table id="sessions-table" style="width: 100%; border-collapse: collapse;">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('sessions')">Active Sessions</button>
+            <button class="tab-btn" onclick="showTab('packages')">Package Management</button>
+        </div>
+
+        <!-- SESSIONS TAB -->
+        <div id="tab-sessions" class="glass-card">
+            <table class="data-table">
                 <thead>
                     <tr>
                         <th>Username</th>
-                        <th>MAC Address</th>
-                        <th>IP Address</th>
-                        <th>Start Time</th>
+                        <th>Device (MAC)</th>
                         <th>Status</th>
+                        <th>Started</th>
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody id="sessions-body">
-                    <!-- Rows injected here -->
+                <tbody id="sessions-list">
+                    <!-- Rows injected -->
                 </tbody>
             </table>
-        </main>
+        </div>
 
-        <section class="glass" style="margin-top: 20px;">
-            <h2>Device Binding & Fraud Signals</h2>
-            <div id="fraud-summary">
-                <p>MAC Lockdown: <strong>Active</strong></p>
-                <p>Tethering Block (TTL=1): <strong>Active</strong></p>
+        <!-- PACKAGES TAB -->
+        <div id="tab-packages" class="glass-card hidden">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price (KES)</th>
+                        <th>Limit</th>
+                        <th>Speed</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="packages-list">
+                    <!-- Rows injected -->
+                </tbody>
+            </table>
+
+            <div class="pkg-form">
+                <div class="input-group" style="margin:0;">
+                    <label>Tier Name</label>
+                    <input type="text" id="new-name" placeholder="e.g. 5GB Data">
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label>Price</label>
+                    <input type="number" id="new-price" placeholder="50">
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label>Duration (min)</label>
+                    <input type="number" id="new-duration" placeholder="60">
+                </div>
+                <button class="btn-primary" style="margin:0; padding: 0.8rem;" onclick="addPackage()">Add</button>
             </div>
-        </section>
+        </div>
     </div>
 
     <script>
+        function showTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-sessions').classList.toggle('hidden', tab !== 'sessions');
+            document.getElementById('tab-packages').classList.toggle('hidden', tab !== 'packages');
+            if (tab === 'sessions') loadSessions(); else loadPackages();
+        }
+
         async function loadSessions() {
             const res = await fetch('/api/admin/sessions');
-            const sessions = await res.json();
-            const body = document.getElementById('sessions-body');
-            body.innerHTML = sessions.map(s => `
+            const data = await res.json();
+            const list = document.getElementById('sessions-list');
+            list.innerHTML = data.map(s => `
                 <tr>
-                    <td>${s.mikrotikUsername}</td>
+                    <td><b>${s.mikrotikUsername}</b></td>
                     <td><code>${s.macAddress}</code></td>
-                    <td>${s.ipAddress || 'Pending'}</td>
+                    <td><span class="badge badge-success">${s.status}</span></td>
                     <td>${new Date(s.startTime).toLocaleTimeString()}</td>
-                    <td><span class="status-badge">${s.status}</span></td>
-                    <td><button class="secondary" onclick="terminate('${s.id}')">Kick</button></td>
+                    <td><button style="background:red; padding: 0.3rem 0.6rem; font-size: 0.7rem; width: auto;" onclick="kick('${s.id}')">Kick</button></td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" style="text-align:center; opacity:0.5;">No active sessions</td></tr>';
+        }
+
+        async function loadPackages() {
+            const res = await fetch('/api/admin/packages');
+            const data = await res.json();
+            const list = document.getElementById('packages-list');
+            list.innerHTML = data.map(p => `
+                <tr>
+                    <td><input type="text" value="${p.name}" onchange="updatePkg('${p.id}', 'name', this.value)"></td>
+                    <td><input type="number" value="${p.price}" onchange="updatePkg('${p.id}', 'price', this.value)" style="width:80px"></td>
+                    <td>${p.dataLimitBytes ? 'Data' : p.durationMinutes + ' min'}</td>
+                    <td>${p.speedLimit}</td>
+                    <td><button style="background:rgba(255,255,255,0.1); width:auto;" onclick="deletePkg('${p.id}')">🗑️</button></td>
                 </tr>
             `).join('');
         }
 
-        async function terminate(id) {
-            if (confirm('Terminate this session?')) {
-                await fetch(`/api/admin/sessions/${id}/terminate`, { method: 'POST' });
-                loadSessions();
+        async function updatePkg(id, field, value) {
+            await fetch(`/api/admin/packages/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [field]: value })
+            });
+        }
+
+        async function addPackage() {
+            const name = document.getElementById('new-name').value;
+            const price = document.getElementById('new-price').value;
+            const duration = document.getElementById('new-duration').value;
+            await fetch('/api/admin/packages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price, durationMinutes: duration, speedLimit: '5M/5M' })
+            });
+            loadPackages();
+        }
+
+        async function deletePkg(id) {
+            if (confirm('Delete tier?')) {
+                await fetch(`/api/admin/packages/${id}`, { method: 'DELETE' });
+                loadPackages();
             }
         }
 

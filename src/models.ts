@@ -29,6 +29,7 @@ export class Package extends Model {
   public durationMinutes!: number | null;
   public dataLimitBytes!: number | null;
   public speedLimit!: string | null;
+  public isEnabled!: boolean;
 }
 Package.init({
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
@@ -37,6 +38,7 @@ Package.init({
   durationMinutes: { type: DataTypes.INTEGER, allowNull: true },
   dataLimitBytes: { type: DataTypes.BIGINT, allowNull: true },
   speedLimit: { type: DataTypes.STRING, allowNull: true },
+  isEnabled: { type: DataTypes.BOOLEAN, defaultValue: true },
 }, { sequelize, modelName: 'package' });
 
 export class Payment extends Model {
