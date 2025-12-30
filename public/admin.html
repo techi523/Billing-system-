@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Hotspot Pro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="admin">
+    <div class="container" style="max-width: 800px;">
+        <header>
+            <h1>Admin Dashboard</h1>
+            <nav><button onclick="loadSessions()">Refresh Sessions</button></nav>
+        </header>
+
+        <main class="glass">
+            <h2>Live Active Sessions</h2>
+            <table id="sessions-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>MAC Address</th>
+                        <th>IP Address</th>
+                        <th>Start Time</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="sessions-body">
+                    <!-- Rows injected here -->
+                </tbody>
+            </table>
+        </main>
+
+        <section class="glass" style="margin-top: 20px;">
+            <h2>Device Binding & Fraud Signals</h2>
+            <div id="fraud-summary">
+                <p>MAC Lockdown: <strong>Active</strong></p>
+                <p>Tethering Block (TTL=1): <strong>Active</strong></p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        async function loadSessions() {
+            const res = await fetch('/api/admin/sessions');
+            const sessions = await res.json();
+            const body = document.getElementById('sessions-body');
+            body.innerHTML = sessions.map(s => `
+                <tr>
+                    <td>${s.mikrotikUsername}</td>
+                    <td><code>${s.macAddress}</code></td>
+                    <td>${s.ipAddress || 'Pending'}</td>
+                    <td>${new Date(s.startTime).toLocaleTimeString()}</td>
+                    <td><span class="status-badge">${s.status}</span></td>
+                    <td><button class="secondary" onclick="terminate('${s.id}')">Kick</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function terminate(id) {
+            if (confirm('Terminate this session?')) {
+                await fetch(`/api/admin/sessions/${id}/terminate`, { method: 'POST' });
+                loadSessions();
+            }
+        }
+
+        loadSessions();
+    </script>
+</body>
+
+</html>

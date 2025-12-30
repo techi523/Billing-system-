@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wi-Fi Hotspot | Premium Access</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">⚡ Hotspot Pro</div>
+            <h1>Wi-Fi Hotspot Access</h1>
+            <p>Choose your plan to start browsing</p>
+        </header>
+
+        <main id="package-list">
+            <!-- Packages will be loaded here -->
+            <div class="card glass">
+                <h3>Buy 1GB</h3>
+                <p>High Speed Access</p>
+                <button onclick="selectPackage(1, 50)">Buy now</button>
+            </div>
+            <div class="card glass">
+                <h3>30 Minutes</h3>
+                <p>Limited Access</p>
+                <button onclick="selectPackage(2, 20)">Buy now</button>
+            </div>
+        </main>
+
+        <section id="payment-form" class="hidden glass">
+            <h2>Payment Details</h2>
+            <p>Enter your M-Pesa number</p>
+            <input type="text" id="phone" placeholder="2547XXXXXXXX">
+            <button id="pay-btn" onclick="initiatePayment()">Pay via M-Pesa</button>
+            <button class="secondary" onclick="showPackages()">Back</button>
+        </section>
+
+        <section id="status-spinner" class="hidden">
+            <div class="spinner"></div>
+            <p>Waiting for payment confirmation...</p>
+        </section>
+
+        <footer>
+            <p>Fast & Secure Hotspot Billing</p>
+        </footer>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
