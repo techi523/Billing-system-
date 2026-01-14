@@ -4,42 +4,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FastNet | Tap & Pay</title>
+    <title>Wi-Fi Portal</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --secondary: #1e293b;
+            --accent: #10b981;
+            --text: #f8fafc;
+            --card-bg: rgba(30, 41, 59, 0.7);
+        }
+    </style>
 </head>
 
 <body>
     <div class="container">
         <header>
-            <div class="logo">FLASH CONNECT</div>
+            <img id="logo" src="" alt="" style="max-height: 50px; margin-bottom: 1rem;">
+            <div id="isp-name" class="logo">LOADING...</div>
             <h1>Premium Internet</h1>
             <p class="subtitle">Fast. Secure. Frictionless.</p>
         </header>
 
-        <!-- STEP 1 & 2: Package Selection & Payment -->
+        <!-- Main Flow -->
         <div id="main-flow">
             <div class="glass-card">
                 <label>1. SELECT PLAN</label>
                 <div id="package-list" class="package-grid">
-                    <!-- Packages loaded via JS -->
                     <div class="pkg-card loading">
                         <div class="pkg-info"><span>Loading packages...</span></div>
                     </div>
                 </div>
 
-                <div class="input-group">
-                    <label for="phone">2. M-PESA NUMBER</label>
-                    <input type="tel" id="phone" placeholder="e.g. 0712345678" autocomplete="tel">
+                <div class="tabs" style="display: flex; gap: 1rem; margin: 1.5rem 0;">
+                    <button class="tab-btn active" onclick="switchTab('mpesa')">M-Pesa</button>
+                    <button class="tab-btn" onclick="switchTab('voucher')">Voucher</button>
                 </div>
 
-                <button id="pay-btn" class="btn-primary" onclick="initiatePayment()" disabled>
-                    Pay & Connect Now
-                </button>
+                <div id="mpesa-tab">
+                    <div class="input-group">
+                        <label for="phone">2. M-PESA NUMBER</label>
+                        <input type="tel" id="phone" placeholder="e.g. 0712345678" autocomplete="tel">
+                    </div>
+                    <button id="pay-btn" class="btn-primary" onclick="initiatePayment()" disabled>
+                        Pay & Connect Now
+                    </button>
+                </div>
+
+                <div id="voucher-tab" class="hidden">
+                    <div class="input-group">
+                        <label for="voucher-code">2. ENTER VOUCHER CODE</label>
+                        <input type="text" id="voucher-code" placeholder="ENTER CODE HERE">
+                    </div>
+                    <button class="btn-primary" onclick="redeemVoucher()">
+                        Activate Voucher
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- STEP 3: Status Overlay -->
+        <!-- Status Overlay -->
         <div id="status-overlay" class="glass-card hidden">
             <div class="status-overlay">
                 <div class="loader"></div>
@@ -49,7 +74,7 @@
             </div>
         </div>
 
-        <!-- STEP 4: Success Page -->
+        <!-- Success Page -->
         <div id="success-overlay" class="glass-card hidden">
             <div class="status-overlay">
                 <div class="success-badge">✓</div>
@@ -65,11 +90,25 @@
         </div>
 
         <footer>
-            <p>&copy; 2025 FlashNet Hotspot Systems</p>
+            <p id="footer-text">&copy; 2025 PowerBy FlashNet Systems</p>
             <p id="device-info" style="margin-top: 0.5rem; opacity: 0.5; font-size: 0.7rem;">Detecting device...</p>
         </footer>
     </div>
     <script src="app.js"></script>
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if (tab === 'mpesa') {
+                document.getElementById('mpesa-tab').classList.remove('hidden');
+                document.getElementById('voucher-tab').classList.add('hidden');
+                event.target.classList.add('active');
+            } else {
+                document.getElementById('mpesa-tab').classList.add('hidden');
+                document.getElementById('voucher-tab').classList.remove('hidden');
+                event.target.classList.add('active');
+            }
+        }
+    </script>
 </body>
 
 </html>

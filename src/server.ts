@@ -1,159 +1,90 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import { sequelize, Package, Payment, Session } from './models';
-import { MpesaService } from './services/mpesa.service';
-import { SessionOrchestrator } from './orchestrator';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { sequelize } from './models';
+import authRoutes from './routes/auth';
+import portalRoutes from './routes/portal';
+import adminRoutes from './routes/admin';
+import agentRoutes from './routes/agent';
+import webhookRoutes from './routes/webhook';
+import { IspService } from './services/isp.service';
+import logger from './utils/logger';
 
 const app = express();
-app.use(bodyParser.json());
+
+// SECURITY HARDENING
+app.use(helmet()); // Sets various HTTP headers for security
+app.use(cors({
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id']
+}));
+
+// RATE LIMITING (Prevent Abuse)
+const limiter = rateLimit({
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 mins
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // Limit each IP
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api/', limiter);
+
+app.use(bodyParser.json({ limit: '10kb' })); // Limit body size to prevent DoS
 app.use(express.static('public'));
 
-// --- USER ENDPOINTS ---
-
-// 1. Get Packages
-app.get('/api/packages', async (req, res) => {
-    const packages = await Package.findAll({ where: { isEnabled: true } });
-    res.json(packages);
+// REQUEST LOGGING
+app.use((req, res, next) => {
+    logger.info(`${req.method} ${req.url}`, { ip: req.ip });
+    next();
 });
 
-// 2. Initiate Payment (Frictionless Flow)
-app.post('/api/pay', async (req, res) => {
-    const { phone, packageId, mac, ip } = req.body;
-    const pkg = await Package.findByPk(packageId);
-    if (!pkg) return res.status(404).send('Package not found');
+// ROUTES
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/portal', portalRoutes);
+app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/agent', agentRoutes);
+app.use('/api/v1/webhooks', webhookRoutes);
 
-    const payment = await Payment.create({
-        phoneNumber: phone,
-        amount: pkg.get('price') as number,
-        packageId: pkg.get('id') as number,
-        status: 'PENDING',
-        macAddress: mac,
-        ipAddress: ip
-    });
-
-    try {
-        const stkResponse = await MpesaService.initiateStkPush(phone, pkg.get('price') as number, `HSP-${payment.id.slice(0, 8)}`);
-        res.json({ checkoutId: stkResponse.CheckoutRequestID, paymentId: payment.id });
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// 3. Payment Status Polling (Frictionless)
-app.get('/api/payment-status/:id', async (req, res) => {
-    const payment = await Payment.findByPk(req.params.id);
-    if (!payment) return res.status(404).send('Payment not found');
-    res.json({ status: payment.get('status') });
-});
-
-// 4. M-Pesa Webhook
-app.post('/api/webhooks/mpesa', async (req, res) => {
-    const { Body } = req.body;
-    const result = Body.stkCallback;
-
-    if (result.ResultCode === 0) {
-        const metadata = result.CallbackMetadata.Item;
-        const receipt = metadata.find((i: any) => i.Name === 'MpesaReceiptNumber').Value;
-        const phone = metadata.find((i: any) => i.Name === 'PhoneNumber').Value;
-
-        const payment = await Payment.findOne({
-            where: { status: 'PENDING', phoneNumber: phone.toString() },
-            include: [Package],
-            order: [['createdAt', 'DESC']]
-        });
-
-        if (payment) {
-            const pkg = (payment as any).package;
-            const paidAmount = metadata.find((i: any) => i.Name === 'Amount').Value;
-
-            // STRICT: Match payment amount to package price exactly
-            if (Number(paidAmount) !== pkg.price) {
-                console.error(`Payment mismatch: Expected ${pkg.price}, got ${paidAmount}`);
-                payment.set('status', 'FAILED');
-                await payment.save();
-                return res.status(200).send('OK');
-            }
-
-            payment.set('status', 'SUCCESS');
-            payment.set('mpesaReceiptNumber', receipt);
-            await payment.save();
-
-            // Grant Access with MAC-based Transparent Login
-            await SessionOrchestrator.grantAccess(
-                payment.id,
-                payment.get('macAddress') as string,
-                payment.get('ipAddress') as string
-            );
-        }
-    }
-
-    res.status(200).send('OK');
-});
-
-// --- ADMIN ENDPOINTS ---
-
-// 1. Get All Packages
-app.get('/api/admin/packages', async (req, res) => {
-    const packages = await Package.findAll();
-    res.json(packages);
-});
-
-// 2. Update Package (Price Change, etc.)
-app.put('/api/admin/packages/:id', async (req, res) => {
-    const pkg = await Package.findByPk(req.params.id);
-    if (!pkg) return res.status(404).send('Package not found');
-    await pkg.update(req.body);
-    res.json(pkg);
-});
-
-// 3. Create Package
-app.post('/api/admin/packages', async (req, res) => {
-    const pkg = await Package.create(req.body);
-    res.json(pkg);
-});
-
-// 4. Delete Package
-app.delete('/api/admin/packages/:id', async (req, res) => {
-    await Package.destroy({ where: { id: req.params.id } });
-    res.sendStatus(204);
-});
-
-// 5. Admin - Revenue Report
-app.get('/api/admin/revenue', async (req, res) => {
-    const revenue = await Payment.findAll({
-        attributes: [
-            [sequelize.col('package.name'), 'packageName'],
-            [sequelize.fn('COUNT', sequelize.col('payment.id')), 'count'],
-            [sequelize.fn('SUM', sequelize.col('payment.amount')), 'totalRevenue']
-        ],
-        include: [{ model: Package, attributes: [] }],
-        where: { status: 'SUCCESS' },
-        group: ['package.name'],
-        raw: true
-    });
-    res.json(revenue);
-});
-
-// 6. Admin - Active Sessions
-app.get('/api/admin/sessions', async (req, res) => {
-    const sessions = await Session.findAll({ where: { status: 'ACTIVE' } });
-    res.json(sessions);
+// ERROR HANDLING (Catch-all)
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    logger.error('Unhandled Error', { error: err.message, stack: err.stack });
+    res.status(500).json({ error: 'Internal Server Error' });
 });
 
 const PORT = process.env.PORT || 3000;
-sequelize.sync().then(async () => {
-    // Auto-seed packages if empty
-    const count = await Package.count();
-    if (count === 0) {
-        await Package.bulkCreate([
-            { name: '1 Hour', price: 10, durationMinutes: 60, isEnabled: true },
-            { name: '8 Hours', price: 50, durationMinutes: 480, isEnabled: true },
-            { name: '16 Hours', price: 80, durationMinutes: 960, isEnabled: true },
-            { name: '24 Hours', price: 100, durationMinutes: 1440, isEnabled: true },
-            { name: '1 Week', price: 200, durationMinutes: 10080, isEnabled: true },
-            { name: '1 Month', price: 600, durationMinutes: 43200, isEnabled: true }
-        ]);
-        console.log('Database seeded with required pricing packages.');
+
+// DATABASE & STARTUP
+async function startServer() {
+    try {
+        await sequelize.authenticate();
+        logger.info('Database connection established successfully.');
+
+        // NOTE: In production, migrations (e.g. Umzug or Sequelize-CLI) are preferred over .sync()
+        if (process.env.NODE_ENV !== 'production') {
+            await sequelize.sync({ alter: true });
+            logger.info('Database synchronized (Development Mode).');
+        }
+
+        // Background Tasks (ISP Monthly Billing/Suspension Checks)
+        setInterval(async () => {
+            logger.info('Running automated billing/suspension checks...');
+            try {
+                await IspService.suspendExpiredSubscribers();
+            } catch (err) {
+                logger.error('Background Check Failed', { error: (err as Error).message });
+            }
+        }, 60 * 60 * 1000); // 1 hour
+
+        app.listen(PORT, () => {
+            logger.info(`Production SaaS Billing System running on port ${PORT}`);
+        });
+    } catch (err) {
+        logger.error('Failed to start server:', { error: (err as Error).message });
+        process.exit(1);
     }
-    app.listen(PORT, () => console.log(`Hotspot server running on port ${PORT}`));
-});
+}
+
+startServer();

@@ -2,16 +2,38 @@ let selectedPkgId = null;
 const urlParams = new URLSearchParams(window.location.search);
 const mac = urlParams.get('mac') || 'NOT_DETECTED';
 const ip = urlParams.get('ip') || 'STATIONARY';
+const routerId = urlParams.get('routerId') || '';
+const tenantId = urlParams.get('tenantId') || 'demo'; // Default for demo
 
 // 1. Initial Load
 document.addEventListener('DOMContentLoaded', () => {
+    loadConfig();
     loadPackages();
     document.getElementById('device-info').innerText = `Device: ${mac} | IP: ${ip}`;
 });
 
+async function loadConfig() {
+    try {
+        const response = await fetch(`/api/v1/portal/${tenantId}/config`);
+        const config = await response.json();
+
+        // Update Branding
+        document.title = `${config.name} - Wi-Fi Portal`;
+        document.getElementById('isp-name').innerText = config.name;
+        if (config.logoUrl) {
+            document.getElementById('logo').src = config.logoUrl;
+        }
+        if (config.primaryColor) {
+            document.documentElement.style.setProperty('--primary', config.primaryColor);
+        }
+    } catch (e) {
+        console.error('Failed to load portal config');
+    }
+}
+
 async function loadPackages() {
     try {
-        const response = await fetch('/api/packages');
+        const response = await fetch(`/api/v1/portal/${tenantId}/packages`);
         const packages = await response.json();
         const list = document.getElementById('package-list');
         list.innerHTML = '';
@@ -27,7 +49,7 @@ async function loadPackages() {
             card.innerHTML = `
                 <div class="pkg-info">
                     <h3>${pkg.name}</h3>
-                    <span>${durationText} • Pay-Per-Use</span>
+                    <span>${durationText} • ${pkg.type}</span>
                 </div>
                 <div class="pkg-price">KES ${pkg.price}</div>
             `;
@@ -56,10 +78,10 @@ async function initiatePayment() {
     document.getElementById('status-overlay').classList.remove('hidden');
 
     try {
-        const response = await fetch('/api/pay', {
+        const response = await fetch(`/api/v1/portal/${tenantId}/pay`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone, packageId: selectedPkg.id, mac, ip })
+            body: JSON.stringify({ phone, packageId: selectedPkg.id, mac, ip, routerId })
         });
 
         const data = await response.json();
@@ -75,6 +97,28 @@ async function initiatePayment() {
     }
 }
 
+async function redeemVoucher() {
+    const code = document.getElementById('voucher-code').value.trim();
+    if (!code) return alert('Please enter a voucher code');
+
+    try {
+        const response = await fetch(`/api/v1/portal/${tenantId}/voucher/redeem`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, mac, ip, routerId })
+        });
+
+        const data = await response.json();
+        if (data.session) {
+            showSuccess(selectedPkg ? selectedPkg.durationMinutes : 60); // Default if unknown
+        } else {
+            throw new Error(data.error || 'Invalid voucher');
+        }
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
 function startPolling(paymentId) {
     let seconds = 60;
     const countdown = document.getElementById('countdown');
@@ -87,7 +131,7 @@ function startPolling(paymentId) {
 
     const poll = setInterval(async () => {
         try {
-            const response = await fetch(`/api/payment-status/${paymentId}`);
+            const response = await fetch(`/api/v1/portal/payment-status/${paymentId}`);
             const data = await response.json();
 
             if (data.status === 'SUCCESS') {
@@ -108,7 +152,7 @@ function showSuccess(durationMinutes) {
     document.getElementById('status-overlay').classList.add('hidden');
     document.getElementById('success-overlay').classList.remove('hidden');
 
-    let totalSeconds = durationMinutes * 60;
+    let totalSeconds = (durationMinutes || 60) * 60;
     const display = document.getElementById('session-timer');
 
     const timer = setInterval(() => {
@@ -125,10 +169,4 @@ function showSuccess(durationMinutes) {
 
         display.innerText = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }, 1000);
-}
-
-function formatBytes(bytes) {
-    if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(0) + ' GB';
-    if (bytes >= 1048576) return (bytes / 1048576).toFixed(0) + ' MB';
-    return bytes + ' B';
 }

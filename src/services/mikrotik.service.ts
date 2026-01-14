@@ -1,31 +1,28 @@
 import { RouterOSClient } from 'routeros-client';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import { Router as RouterModel } from '../models';
 
 export class MikroTikService {
-    private static config = {
-        host: process.env.MIKROTIK_HOST || '192.168.88.1',
-        user: process.env.MIKROTIK_USER || 'admin',
-        password: process.env.MIKROTIK_PASSWORD || '',
-    };
-
-    private static async getClient() {
-        const client = new RouterOSClient(this.config);
+    private static async getClient(router: RouterModel) {
+        const client = new RouterOSClient({
+            host: router.host,
+            user: router.username,
+            password: router.password,
+            port: router.port || 8728
+        });
         return client;
     }
 
-    static async createHotspotUser(username: string, password: string, macAddress: string, ipAddress?: string, limitBytes?: number, limitTime?: string) {
-        const client = await this.getClient();
+    // HOTSPOT METHODS
+    static async createHotspotUser(router: RouterModel, username: string, password: string, macAddress: string, ipAddress?: string, limitBytes?: number, limitTime?: string) {
+        const client = await this.getClient(router);
         try {
             const api = await client.connect();
 
-            // 1. Create user with MAC locking
             const userData: any = {
                 name: username,
                 password: password,
                 profile: 'default',
-                macAddress: macAddress, // routeros-client translates this to mac-address
+                macAddress: macAddress,
             };
 
             if (limitBytes) userData.limitBytesTotal = limitBytes.toString();
@@ -33,8 +30,8 @@ export class MikroTikService {
 
             await api.menu('/ip/hotspot/user').add(userData);
 
-            // 2. Anti-Tethering Mangle Rule (TTL=1)
             if (ipAddress) {
+                // Anti-Tethering Mangle Rule
                 await api.menu('/ip/firewall/mangle').add({
                     chain: 'prerouting',
                     srcAddress: ipAddress,
@@ -43,7 +40,6 @@ export class MikroTikService {
                     comment: `Anti-Share-${username}`
                 });
 
-                // 3. Limit Concurrent Connections (Max 1)
                 const userMenu = api.menu('/ip/hotspot/user');
                 const user = await userMenu.where('name', username).find();
                 if (user) {
@@ -55,26 +51,23 @@ export class MikroTikService {
         }
     }
 
-    static async disconnectUser(username: string, ipAddress?: string) {
-        const client = await this.getClient();
+    static async disconnectHotspotUser(router: RouterModel, username: string, ipAddress?: string) {
+        const client = await this.getClient(router);
         try {
             const api = await client.connect();
 
-            // 1. Remove from active sessions
             const activeMenu = api.menu('/ip/hotspot/active');
             const active = await activeMenu.where('user', username).find();
             if (active) {
                 await activeMenu.remove((active as any).id);
             }
 
-            // 2. Remove user completely
             const userMenu = api.menu('/ip/hotspot/user');
             const user = await userMenu.where('name', username).find();
             if (user) {
                 await userMenu.remove((user as any).id);
             }
 
-            // 3. Cleanup Mangle rules
             if (ipAddress) {
                 const mangleMenu = api.menu('/ip/firewall/mangle');
                 const rules = await mangleMenu.where('srcAddress', ipAddress).get();
@@ -87,8 +80,62 @@ export class MikroTikService {
         }
     }
 
-    static async getActiveSessions() {
-        const client = await this.getClient();
+    // PPPoE METHODS (ISP MODE)
+    static async createPppoeUser(router: RouterModel, username: string, password: string, profile: string = 'default', remoteAddress?: string) {
+        const client = await this.getClient(router);
+        try {
+            const api = await client.connect();
+            const userData: any = {
+                name: username,
+                password: password,
+                service: 'pppoe',
+                profile: profile,
+            };
+            if (remoteAddress) userData.remoteAddress = remoteAddress;
+
+            await api.menu('/ppp/secret').add(userData);
+        } finally {
+            await client.close();
+        }
+    }
+
+    static async suspendPppoeUser(router: RouterModel, username: string) {
+        const client = await this.getClient(router);
+        try {
+            const api = await client.connect();
+            const secretMenu = api.menu('/ppp/secret');
+            const secret = await secretMenu.where('name', username).find();
+            if (secret) {
+                await secretMenu.update({ disabled: 'yes' }, (secret as any).id);
+            }
+
+            // Also kick from active sessions
+            const activeMenu = api.menu('/ppp/active');
+            const active = await activeMenu.where('name', username).find();
+            if (active) {
+                await activeMenu.remove((active as any).id);
+            }
+        } finally {
+            await client.close();
+        }
+    }
+
+    static async activatePppoeUser(router: RouterModel, username: string) {
+        const client = await this.getClient(router);
+        try {
+            const api = await client.connect();
+            const secretMenu = api.menu('/ppp/secret');
+            const secret = await secretMenu.where('name', username).find();
+            if (secret) {
+                await secretMenu.update({ disabled: 'no' }, (secret as any).id);
+            }
+        } finally {
+            await client.close();
+        }
+    }
+
+    static async getActiveHotspotSessions(router: RouterModel) {
+        const client = await this.getClient(router);
         try {
             const api = await client.connect();
             return await api.menu('/ip/hotspot/active').get();
@@ -97,3 +144,4 @@ export class MikroTikService {
         }
     }
 }
+

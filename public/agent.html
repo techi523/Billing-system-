@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Reseller Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .agent-stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .voucher-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .voucher-card {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.5rem;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            opacity: 0.6;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .nav-btn.active {
+            opacity: 1;
+            border-bottom: 2px solid var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">AGENT PORTAL</div>
+            <h1>Reseller Dashboard</h1>
+        </header>
+
+        <div id="login-section" class="glass-card">
+            <h2>Agent Login</h2>
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="agent@example.com">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="••••••••">
+            </div>
+            <button class="btn-primary" onclick="login()">Login</button>
+        </div>
+
+        <div id="dashboard" class="hidden">
+            <div class="agent-stats">
+                <div class="stat-card">
+                    <label>Balance (KES)</label>
+                    <div id="balance" style="font-size: 1.5rem; font-weight: 800; color: var(--accent);">0.00</div>
+                </div>
+                <div class="stat-card">
+                    <label>Total Sales</label>
+                    <div id="total-sales" style="font-size: 1.5rem; font-weight: 800;">0</div>
+                </div>
+            </div>
+
+            <div class="nav-tabs">
+                <button class="nav-btn active" onclick="showTab('inventory')">Inventory</button>
+                <button class="nav-btn" onclick="showTab('history')">Sales History</button>
+            </div>
+
+            <div id="inventory-tab">
+                <h3>Available Vouchers</h3>
+                <div id="available-list" class="voucher-list">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+
+            <div id="history-tab" class="hidden">
+                <h3>Recent Sales</h3>
+                <div id="history-list" class="voucher-list">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="agent.js"></script>
+</body>
+
+</html>
