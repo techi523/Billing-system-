@@ -25,9 +25,9 @@ router.get('/:tenantId/packages', async (req, res) => {
     res.json(packages);
 });
 
-// 2. Initiate Payment
+// 2. Initiate Payment (Hotspot or ISP)
 router.post('/:tenantId/pay', async (req, res) => {
-    const { phone, packageId, mac, ip, routerId } = req.body;
+    const { phone, packageId, mac, ip, routerId, subscriberId } = req.body;
     const tenantId = req.params.tenantId;
 
     const tenant = await Tenant.findByPk(tenantId);
@@ -44,21 +44,30 @@ router.post('/:tenantId/pay', async (req, res) => {
         macAddress: mac,
         ipAddress: ip,
         tenantId: tenantId,
-        routerId: routerId
+        routerId: routerId,
+        subscriberId: subscriberId
     });
 
     try {
+        const userId = subscriberId || mac || 'GUEST';
         const stkResponse = await MpesaService.initiateStkPush(
-            tenant,
             phone,
             pkg.price,
-            `HSP-${payment.id.slice(0, 8)}`
+            tenantId,
+            userId,
+            pkg.id.toString()
         );
+
+        // Save checkout ID for tracking/polling
+        payment.checkoutRequestId = stkResponse.CheckoutRequestID;
+        await payment.save();
+
         res.json({ checkoutId: stkResponse.CheckoutRequestID, paymentId: payment.id });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Payment initiation failed. Please try again later.' });
     }
 });
+
 
 import { VoucherService } from '../services/voucher.service';
 

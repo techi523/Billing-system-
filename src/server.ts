@@ -68,15 +68,28 @@ async function startServer() {
             logger.info('Database synchronized (Development Mode).');
         }
 
-        // Background Tasks (ISP Monthly Billing/Suspension Checks)
+        // Background Tasks
         setInterval(async () => {
             logger.info('Running automated billing/suspension checks...');
             try {
                 await IspService.suspendExpiredSubscribers();
+
+                // M-Pesa Status Polling (for delayed callbacks)
+                const { PaymentService } = require('./services/payment.service');
+                await PaymentService.pollPendingPayments();
+
             } catch (err) {
-                logger.error('Background Check Failed', { error: (err as Error).message });
+                logger.error('Background Job Failed', { error: (err as Error).message });
             }
-        }, 60 * 60 * 1000); // 1 hour
+        }, 60 * 60 * 1000); // Main cycle: 1 hour (suspensions)
+
+        // Frequent cycle for payment polling (e.g. every 2 minutes)
+        setInterval(async () => {
+            try {
+                const { PaymentService } = require('./services/payment.service');
+                await PaymentService.pollPendingPayments();
+            } catch (err) { }
+        }, 2 * 60 * 1000);
 
         app.listen(PORT, () => {
             logger.info(`Production SaaS Billing System running on port ${PORT}`);

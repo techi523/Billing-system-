@@ -169,6 +169,7 @@ Wallet.init({
 export class Payment extends Model {
   public id!: string;
   public mpesaReceiptNumber!: string;
+  public checkoutRequestId!: string | null;
   public amount!: number;
   public phoneNumber!: string;
   public status!: 'PENDING' | 'SUCCESS' | 'FAILED';
@@ -176,12 +177,14 @@ export class Payment extends Model {
   public macAddress!: string | null;
   public ipAddress!: string | null;
   public tenantId!: string;
-  public routerId!: string | null; // Targeted router
-  public subscriberId!: string | null; // For ISP mode payments
+  public routerId!: string | null;
+  public subscriberId!: string | null;
+  public rawCallback!: string | null; // Storing the full JSON payload
 }
 Payment.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   mpesaReceiptNumber: { type: DataTypes.STRING, unique: true },
+  checkoutRequestId: { type: DataTypes.STRING, unique: true },
   amount: { type: DataTypes.FLOAT, allowNull: false },
   phoneNumber: { type: DataTypes.STRING, allowNull: false },
   status: { type: DataTypes.ENUM('PENDING', 'SUCCESS', 'FAILED'), defaultValue: 'PENDING' },
@@ -191,6 +194,7 @@ Payment.init({
   tenantId: { type: DataTypes.UUID, allowNull: false },
   routerId: { type: DataTypes.UUID, allowNull: true },
   subscriberId: { type: DataTypes.UUID, allowNull: true },
+  rawCallback: { type: DataTypes.TEXT },
 }, { sequelize, modelName: 'payment' });
 
 export class Session extends Model {

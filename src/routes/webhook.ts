@@ -1,72 +1,114 @@
 import { Router } from 'express';
 import { Payment, Package, Tenant } from '../models';
 import { SessionOrchestrator } from '../orchestrator';
+import logger from '../utils/logger';
 
 const router = Router();
 
+// SAFE SAFARICOM IPS (PROD)
+const SAFARICOM_IPS = [
+    '196.201.214.200', '196.201.214.206', '196.201.213.114',
+    '196.201.214.207', '196.201.214.208', '196.201.213.44',
+    '196.201.212.127', '196.201.212.138'
+];
+
 router.post('/mpesa', async (req, res) => {
     const { Body } = req.body;
-    const { tenantId } = req.query;
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-    if (!tenantId) {
-        console.error('Webhook received without tenantId');
-        return res.status(400).send('No tenantId');
+    // 1. Log Raw Callback for audit trail
+    logger.info('M-Pesa Callback Received', { ip: clientIp, payload: JSON.stringify(req.body) });
+
+    // 2. IP Validation (Optional but recommended in production)
+    if (process.env.NODE_ENV === 'production' && !SAFARICOM_IPS.includes(clientIp as string)) {
+        logger.warn('Unauthorized M-Pesa Callback IP', { ip: clientIp });
+        // Some prefer returning 200 to keep Safaricom happy but logging the rejection
     }
 
-    const result = Body.stkCallback;
+    if (!Body || !Body.stkCallback) {
+        return res.status(400).send('Invalid payload');
+    }
 
-    if (result.ResultCode === 0) {
-        const metadata = result.CallbackMetadata.Item;
-        const receipt = metadata.find((i: any) => i.Name === 'MpesaReceiptNumber').Value;
-        const phone = metadata.find((i: any) => i.Name === 'PhoneNumber').Value;
-        const amountPaid = metadata.find((i: any) => i.Name === 'Amount').Value;
+    const callback = Body.stkCallback;
+    const checkoutRequestId = callback.CheckoutRequestID;
+    const resultCode = callback.ResultCode;
 
-        // Find the pending payment for this phone number and tenant
-        const payment = await Payment.findOne({
-            where: {
-                status: 'PENDING',
-                phoneNumber: phone.toString(),
-                tenantId: tenantId as string
-            },
-            include: [Package],
-            order: [['createdAt', 'DESC']]
-        });
+    // Find the pending payment
+    const payment = await Payment.findOne({
+        where: { checkoutRequestId },
+        include: [Package]
+    });
 
-        if (payment) {
-            const pkg = (payment as any).package;
+    if (!payment) {
+        logger.error('Payment not found for CheckoutRequestID', { checkoutRequestId });
+        return res.status(200).send('OK'); // Still 200 to stop retries
+    }
 
-            if (Number(amountPaid) !== pkg.price) {
-                console.error(`Payment mismatch: Expected ${pkg.price}, got ${amountPaid}`);
-                payment.set('status', 'FAILED');
-                await payment.save();
-                return res.status(200).send('OK');
-            }
+    // Capture raw callback
+    payment.rawCallback = JSON.stringify(req.body);
 
-            payment.set('status', 'SUCCESS');
-            payment.set('mpesaReceiptNumber', receipt);
+    if (resultCode === 0) {
+        // SUCCESS
+        const metadata = callback.CallbackMetadata.Item;
+        const receipt = metadata.find((i: any) => i.Name === 'MpesaReceiptNumber')?.Value;
+        const phone = metadata.find((i: any) => i.Name === 'PhoneNumber')?.Value;
+        const amountPaid = metadata.find((i: any) => i.Name === 'Amount')?.Value;
+
+        const pkg = (payment as any).package;
+
+        // 3. Validation Rules
+        if (Number(amountPaid) < pkg.price) {
+            logger.warn('Payment amount mismatch', { expected: pkg.price, received: amountPaid, paymentId: payment.id });
+            payment.status = 'FAILED';
             await payment.save();
-
-            // Handle based on payment type (ISP vs Hotspot)
-            try {
-                if (payment.subscriberId) {
-                    // ISP MODE RECHARGE
-                    const { IspService } = require('../services/isp.service');
-                    await IspService.renewSubscriber(payment.subscriberId);
-                    console.log(`ISP Subscriber ${payment.subscriberId} renewed for tenant ${tenantId}`);
-                } else if (payment.macAddress) {
-                    // HOTSPOT MODE
-                    await SessionOrchestrator.grantAccess(
-                        payment.id,
-                        payment.macAddress,
-                        payment.ipAddress as string
-                    );
-                    console.log(`Hotspot Access granted for phone ${phone} on tenant ${tenantId}`);
-                }
-            } catch (error) {
-                console.error('Error processing payment fulfillment:', error);
-            }
-
+            return res.status(200).send('OK');
         }
+
+        // Check for duplicate receipt
+        const duplicate = await Payment.findOne({ where: { mpesaReceiptNumber: receipt } });
+        if (duplicate && duplicate.id !== payment.id) {
+            logger.error('Duplicate M-Pesa Receipt detected', { receipt, paymentId: payment.id });
+            payment.status = 'FAILED';
+            await payment.save();
+            return res.status(200).send('OK');
+        }
+
+        payment.status = 'SUCCESS';
+        payment.mpesaReceiptNumber = receipt;
+        await payment.save();
+
+        logger.info('Payment SUCCESS', { paymentId: payment.id, receipt });
+
+        // 4. INTERNET ACTIVATION LOGIC
+        try {
+            if (payment.subscriberId) {
+                // ISP MODE
+                const { IspService } = require('../services/isp.service');
+                await IspService.renewSubscriber(payment.subscriberId);
+                logger.info('ISP Subscriber Renewed', { subscriberId: payment.subscriberId });
+            } else if (payment.macAddress) {
+                // HOTSPOT MODE
+                await SessionOrchestrator.grantAccess(
+                    payment.id,
+                    payment.macAddress,
+                    payment.ipAddress as string
+                );
+                logger.info('Hotspot Access Granted', { mac: payment.macAddress });
+            }
+        } catch (error: any) {
+            logger.error('Fulfillment Failed', { paymentId: payment.id, error: error.message });
+            // In production, you might queue this for retry
+        }
+
+    } else {
+        // FAILURES (e.g. 1032 cancelled, 2001 insufficient)
+        payment.status = 'FAILED';
+        await payment.save();
+        logger.warn('Payment FAILED/CANCELLED', {
+            paymentId: payment.id,
+            resultCode,
+            desc: callback.ResultDesc
+        });
     }
 
     res.status(200).send('OK');
