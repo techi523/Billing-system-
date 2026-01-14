@@ -34,6 +34,8 @@ export class Tenant extends Model {
   public mpesaConsumerSecret!: string | null;
   public mpesaPasskey!: string | null;
   public status!: 'ACTIVE' | 'SUSPENDED';
+  public description!: string | null;
+  public contactPhone!: string | null;
 }
 Tenant.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -46,6 +48,8 @@ Tenant.init({
   mpesaConsumerSecret: { type: DataTypes.STRING },
   mpesaPasskey: { type: DataTypes.STRING },
   status: { type: DataTypes.ENUM('ACTIVE', 'SUSPENDED'), defaultValue: 'ACTIVE' },
+  description: { type: DataTypes.TEXT },
+  contactPhone: { type: DataTypes.STRING },
 }, { sequelize, modelName: 'tenant' });
 
 export class AdminUser extends Model {

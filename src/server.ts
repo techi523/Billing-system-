@@ -8,6 +8,7 @@ import authRoutes from './routes/auth';
 import portalRoutes from './routes/portal';
 import adminRoutes from './routes/admin';
 import agentRoutes from './routes/agent';
+import superadminRoutes from './routes/superadmin';
 import webhookRoutes from './routes/webhook';
 import { IspService } from './services/isp.service';
 import logger from './utils/logger';
@@ -46,6 +47,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/portal', portalRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/agent', agentRoutes);
+app.use('/api/v1/superadmin', superadminRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
 
 // ERROR HANDLING (Catch-all)

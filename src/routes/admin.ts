@@ -83,13 +83,55 @@ router.post('/vouchers', async (req: AuthRequest, res) => {
     }
 });
 
-// --- ANALYTICS ---
-router.get('/revenue', async (req: AuthRequest, res) => {
-    const payments = await Payment.findAll({
-        where: { tenantId: req.user?.tenantId, status: 'SUCCESS' },
-        include: [Package]
-    });
-    res.json(payments);
+import { AnalyticsService } from '../services/analytics.service';
+
+// --- ANALYTICS & REPORTING ---
+router.get('/stats', async (req: AuthRequest, res) => {
+    try {
+        const stats = await AnalyticsService.getDashboardStats(req.user?.tenantId as string);
+        res.json(stats);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/reports/revenue', async (req: AuthRequest, res) => {
+    const { start, end } = req.query;
+    try {
+        const report = await AnalyticsService.getRevenueReport(
+            req.user?.tenantId as string,
+            start as string,
+            end as string
+        );
+        res.json(report);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/insights', async (req: AuthRequest, res) => {
+    try {
+        const insights = await AnalyticsService.getTrafficInsights(req.user?.tenantId as string);
+        res.json(insights);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/reports/export', async (req: AuthRequest, res) => {
+    // Simple CSV generator for demonstration
+    try {
+        const report = await AnalyticsService.getRevenueReport(req.user?.tenantId as string);
+        let csv = 'Date,Phone,Amount,Package,Status\n';
+        report.forEach((p: any) => {
+            csv += `${p.createdAt},${p.phoneNumber},${p.amount},${p.package?.name},${p.status}\n`;
+        });
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=revenue_report.csv');
+        res.send(csv);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 export default router;

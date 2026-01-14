@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SurfBill | Tenant Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f172a;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+        }
+
+        .logo-area {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo-area .logo {
+            font-size: 2.5rem;
+            -webkit-text-fill-color: #fff;
+            color: #fff;
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-top: -1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.6;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-card glass-card">
+        <div class="logo-area">
+            <div class="logo">SURFBILL</div>
+        </div>
+        <p class="subtitle">SaaS Billing Console Login</p>
+
+        <div id="login-form">
+            <div class="input-group">
+                <label>ADMIN EMAIL</label>
+                <input type="email" id="email" placeholder="admin@yourisp.com">
+            </div>
+            <div class="input-group">
+                <label>PASSWORD</label>
+                <input type="password" id="password" placeholder="••••••••">
+            </div>
+            <button class="btn-primary" onclick="handleLogin()">Sign In to Dashboard</button>
+            <p style="text-align: center; margin-top: 1.5rem; font-size: 0.8rem; opacity: 0.5;">
+                Don't have an account? Contact support.
+            </p>
+        </div>
+    </div>
+    <script src="login.js"></script>
+</body>
+
+</html>

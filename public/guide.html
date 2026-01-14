@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SurfBill | Operational Excellence Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --accent: #f43f5e;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --sidebar-bg: #0f172a;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            display: flex;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 300px;
+            background: var(--sidebar-bg);
+            color: white;
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-group {
+            margin-bottom: 2rem;
+        }
+
+        .nav-group h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: 0.2s;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .nav-link.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            padding: 4rem;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .section {
+            display: none;
+            max-width: 800px;
+            margin: 0 auto;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: #0f172a;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-top: 2rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .step {
+            margin-bottom: 2rem;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: 700;
+            margin-right: 0.5rem;
+        }
+
+        .mock-ui {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .mock-ui img {
+            width: 100%;
+            display: block;
+        }
+
+        .tip {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .warning {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-print {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        @media print {
+
+            .sidebar,
+            .btn-print {
+                display: none;
+            }
+
+            .content {
+                padding: 0;
+            }
+
+            .section {
+                display: block;
+                break-after: page;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <button class="btn-print" onclick="window.print()">Export as PDF</button>
+
+    <div class="sidebar">
+        <h2>SurfBill.</h2>
+
+        <div class="nav-group">
+            <h3>Getting Started</h3>
+            <a href="#" class="nav-link active" onclick="showSection('intro')">Welcome to SurfBill</a>
+            <a href="#" class="nav-link" onclick="showSection('account')">Account Registration</a>
+        </div>
+
+        <div class="nav-group">
+            <h3>Hotspot Operations</h3>
+            <a href="#" class="nav-link" onclick="showSection('hsp-routers')">Adding Routers</a>
+            <a href="#" class="nav-link" onclick="showSection('hsp-plans')">Billing Packages</a>
+            <a href="#" class="nav-link" onclick="showSection('hsp-payments')">M-Pesa Integration</a>
+            <a href="#" class="nav-link" onclick="showSection('hsp-vouchers')">Voucher Generation</a>
+        </div>
+
+        <div class="nav-group">
+            <h3>ISP Operations</h3>
+            <a href="#" class="nav-link" onclick="showSection('isp-subscribers')">PPPoE Subscribers</a>
+            <a href="#" class="nav-link" onclick="showSection('isp-billing')">Auto-Suspension</a>
+        </div>
+
+        <div class="nav-group">
+            <h3>End-User Guide</h3>
+            <a href="#" class="nav-link" onclick="showSection('user-guide')">How to Connect</a>
+        </div>
+
+        <div class="nav-group">
+            <h3>Advanced Features</h3>
+            <a href="#" class="nav-link" onclick="showSection('advanced')">AI & Loyalty</a>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- Introduction -->
+        <div id="intro" class="section active">
+            <h1>Surf Fast. Manage Easy.</h1>
+            <p>Welcome to <strong>SurfBill</strong>, the industry-leading SaaS for intelligent Wi-Fi billing. Whether
+                you are running a single neighborhood hotspot or a regional ISP, SurfBill provides the automation,
+                security, and analytics you need to scale.</p>
+
+            <div class="mock-ui">
+                <img src="images/dashboard.png" alt="Dashboard Mockup">
+            </div>
+
+            <div class="tip">
+                <span>💡</span>
+                <div><strong>Pro Tip:</strong> Use the interactive setup wizard on your main dashboard to track your
+                    configuration progress. Most tenants are live in under 15 minutes!</div>
+            </div>
+        </div>
+
+        <!-- Account Registration -->
+        <div id="account" class="section">
+            <h1>Tenant Registration</h1>
+            <div class="step">
+                <p><span class="step-number">1</span> <strong>Navigate to SurfBill.com</strong> and click "Start Free
+                    Trial". Enter your business email, phone number, and desired subdomain (e.g., <em>superisp</em>).
+                </p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">2</span> <strong>Verify Identity:</strong> Check your email for a
+                    verification link. This step is critical to prevent fraud and secure your billing data.</p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">3</span> <strong>Branding:</strong> Go to <em>Settings > Branding</em> to
+                    upload your logo and choose your brand's primary color. This will automatically update your Captive
+                    Portal UI.</p>
+            </div>
+        </div>
+
+        <!-- Adding Routers -->
+        <div id="hsp-routers" class="section">
+            <h1>Adding Your Network Hardware</h1>
+            <p>SurfBill connects directly to your edge routers via API. We currently support MikroTik (RouterOS v6/v7)
+                out of the box.</p>
+
+            <div class="mock-ui">
+                <img src="images/router_setup.png" alt="Router Setup Mockup">
+            </div>
+
+            <div class="step">
+                <p><span class="step-number">1</span> <strong>Router API:</strong> Ensure your MikroTik has the API
+                    service enabled (<em>/ip service set api disabled=no</em>).</p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">2</span> <strong>Credentials:</strong> Enter the Public IP, Admin Username,
+                    and Password in the "Add Router" modal.</p>
+            </div>
+
+            <div class="warning">
+                <span>⚠️</span>
+                <div><strong>Security Warning:</strong> We recommend creating a dedicated API-only user on your router
+                    with limited permissions for maximum security.</div>
+            </div>
+        </div>
+
+        <!-- Billing Plans -->
+        <div id="hsp-plans" class="section">
+            <h1>Creating Billing Packages</h1>
+            <p>Packages allow you to define how much users pay for specific access limits.</p>
+
+            <div class="step">
+                <p><span class="step-number">1</span> <strong>Plan Type:</strong> Choose between "Hotspot" (Time/Data
+                    Based) or "ISP" (Subscription Based).</p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">2</span> <strong>Limits:</strong> Set a time limit (e.g., 1 Hour) or data
+                    limit (e.g., 500MB). You can also cap the download/upload speeds to ensure fair usage.</p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">3</span> <strong>Pricing:</strong> Assign a KES value. SurfBill handles the
+                    M-Pesa rounding automatically.</p>
+            </div>
+        </div>
+
+        <!-- M-Pesa Integration -->
+        <div id="hsp-payments" class="section">
+            <h1>M-Pesa Daraja Integration</h1>
+            <p>Automate your revenue collection with Lipa Na M-Pesa STK Push.</p>
+
+            <div class="step">
+                <p><span class="step-number">1</span> <strong>Credentials:</strong> Go to <em>Finance > Settings</em>
+                    and enter your Daraja Consumer Key, Secret, Shortcode, and Passkey.</p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">2</span> <strong>Test Mode:</strong> Enable "Sandbox Mode" to run test
+                    transactions without real money. Switch to "Production" once verified.</p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">3</span> <strong>Auto-Reconciliation:</strong> When a user pays, SurfBill
+                    listens for the M-Pesa callback and activates internet in < 3 seconds.</p>
+            </div>
+        </div>
+
+        <!-- Voucher System -->
+        <div id="hsp-vouchers" class="section">
+            <h1>Voucher Management</h1>
+            <p>For cash payments or resellers, generate unique access codes.</p>
+            <div class="step">
+                <p><span class="step-number">1</span> Select a package and specify the "Quantity" of vouchers to
+                    generate.</p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">2</span> <strong>Export:</strong> Download the list as a CSV to print on
+                    physical cards or share via SMS.</p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">3</span> <strong>Agents:</strong> Use the "Agent Portal" to allow
+                    third-party sellers to sell vouchers for a commission.</p>
+            </div>
+        </div>
+
+        <!-- ISP Subscribers -->
+        <div id="isp-subscribers" class="section">
+            <h1>Managing ISP Subscribers</h1>
+            <p>For Home Fiber or Fixed Wireless operations using PPPoE.</p>
+            <div class="step">
+                <p><span class="step-number">1</span> <strong>Register:</strong> Add the subscriber's name, phone
+                    number, and desired PPPoE username/password.</p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">2</span> <strong>Billing Cycle:</strong> Set the subscription to "Monthly
+                    Prepaid". The system will calculate the expiry date automatically.</p>
+            </div>
+        </div>
+
+        <!-- ISP Billing -->
+        <div id="isp-billing" class="section">
+            <h1>Automated Suspension</h1>
+            <div class="step">
+                <p>Every hour, SurfBill scans for expired accounts. If a payment is not confirmed by the expiry date,
+                    the account is automatically disabled on the MikroTik router.</p>
+            </div>
+            <div class="step">
+                <p><strong>Reminders:</strong> Subscribers receive an SMS reminder 2 days before expiry (requires SMS
+                    Gateway config).</p>
+            </div>
+        </div>
+
+        <!-- End-User Guide -->
+        <div id="user-guide" class="section">
+            <h1>How to Connect (End-User)</h1>
+            <p>Your customers experience a frictionless connection flow.</p>
+
+            <div class="mock-ui">
+                <img src="images/portal.png" alt="Portal Mockup"
+                    style="max-width: 300px; margin: 0 auto; display: block;">
+            </div>
+
+            <div class="step">
+                <p><span class="step-number">1</span> <strong>Connect:</strong> Select your Wi-Fi network from the
+                    device list.</p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">2</span> <strong>Select:</strong> The SurfBill portal slides up. Choose
+                    your plan.</p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">3</span> <strong>Pay:</strong> Enter your M-Pesa number. Confirm the prompt
+                    on your phone.</p>
+            </div>
+            <div class="step">
+                <p><span class="step-number">4</span> <strong>Enjoy:</strong> You are online instantly. The portal
+                    displays your remaining time.</p>
+            </div>
+        </div>
+
+        <!-- Advanced Features -->
+        <div id="advanced" class="section">
+            <h1>Advanced Intelligence</h1>
+            <h2>AI-Based Suggestions</h2>
+            <p>SurfBill analyzes your sales data to suggest the best prices for your location. If users are dropping off
+                on 1-Hour plans, the AI might suggest a "2-Hour Power User" bundle at a competitive rate.</p>
+
+            <h2>Loyalty Rewards</h2>
+            <p>Enable gamification to reward frequent users with bonus time (e.g., Use 5 times, get 1 Hour Free).</p>
+        </div>
+    </div>
+
+    <script>
+        function showSection(id) {
+            // Update Active Link
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            const activeLink = document.querySelector(`a[onclick="showSection('${id}')"]`);
+            if (activeLink) activeLink.classList.add('active');
+
+            // Update Section
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+
+            // Scroll to top of content
+            document.querySelector('.content').scrollTop = 0;
+        }
+
+        // Initialize mobile menu or other features if needed
+    </script>
+</body>
+
+</html>

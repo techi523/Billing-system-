@@ -4,16 +4,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wi-Fi Portal</title>
+    <title>SurfBill | Premium Wi-Fi Access</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #3b82f6;
-            --secondary: #1e293b;
-            --accent: #10b981;
-            --text: #f8fafc;
-            --card-bg: rgba(30, 41, 59, 0.7);
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --accent: #f43f5e;
+            --font-main: 'Outfit', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+        }
+
+        .hero-text {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .hero-text h1 {
+            color: #fff;
+            font-size: 2.5rem;
+            letter-spacing: -0.05em;
+            font-weight: 800;
+        }
+
+        .hero-text p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: 600;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .guide-scroller {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding: 1rem 0;
+            scrollbar-width: none;
+        }
+
+        .guide-card {
+            min-width: 200px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .guide-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary);
+        }
+
+        .guide-card p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: #94a3b8;
         }
     </style>
 </head>
@@ -21,91 +86,121 @@
 <body>
     <div class="container">
         <header>
-            <img id="logo" src="" alt="" style="max-height: 50px; margin-bottom: 1rem;">
-            <div id="isp-name" class="logo">LOADING...</div>
-            <h1>Premium Internet</h1>
-            <p class="subtitle">Fast. Secure. Frictionless.</p>
+            <img id="logo" src="" alt="" style="max-height: 40px; margin-bottom: 0.5rem;">
+            <div class="logo">SURFBILL</div>
+            <p id="isp-name" style="font-weight: 600; opacity: 0.7;">CONNECTED TO NETWORK</p>
         </header>
 
-        <!-- Main Flow -->
+        <div class="hero-text">
+            <h1>Surf Fast. Pay Easy.</h1>
+            <p>Select a plan and connect instantly via M-Pesa.</p>
+        </div>
+
         <div id="main-flow">
             <div class="glass-card">
-                <label>1. SELECT PLAN</label>
-                <div id="package-list" class="package-grid">
-                    <div class="pkg-card loading">
-                        <div class="pkg-info"><span>Loading packages...</span></div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label>STEP 1: CHOOSE YOUR VIBE</label>
+                    <div id="package-list" class="package-grid">
+                        <div class="pkg-card loading">
+                            <div class="pkg-info"><span>Warming up servers...</span></div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="tabs" style="display: flex; gap: 1rem; margin: 1.5rem 0;">
-                    <button class="tab-btn active" onclick="switchTab('mpesa')">M-Pesa</button>
-                    <button class="tab-btn" onclick="switchTab('voucher')">Voucher</button>
+                <div class="tabs" style="display: flex; gap: 0.8rem; margin-bottom: 1.5rem;">
+                    <button class="tab-btn active" onclick="switchTab('mpesa')">Lipa Na M-Pesa</button>
+                    <button class="tab-btn" onclick="switchTab('voucher')">Voucher Code</button>
                 </div>
 
                 <div id="mpesa-tab">
                     <div class="input-group">
-                        <label for="phone">2. M-PESA NUMBER</label>
-                        <input type="tel" id="phone" placeholder="e.g. 0712345678" autocomplete="tel">
+                        <label>STEP 2: M-PESA NUMBER</label>
+                        <input type="tel" id="phone" placeholder="07XXXXXXXX" autocomplete="tel">
                     </div>
                     <button id="pay-btn" class="btn-primary" onclick="initiatePayment()" disabled>
-                        Pay & Connect Now
+                        Initialize Connection
                     </button>
+                    <p style="font-size: 0.75rem; text-align: center; margin-top: 1rem; opacity: 0.5;">
+                        You will receive an STK prompt on your phone.
+                    </p>
                 </div>
 
                 <div id="voucher-tab" class="hidden">
                     <div class="input-group">
-                        <label for="voucher-code">2. ENTER VOUCHER CODE</label>
-                        <input type="text" id="voucher-code" placeholder="ENTER CODE HERE">
+                        <label>STEP 2: VOUCHER CODE</label>
+                        <input type="text" id="voucher-code" placeholder="XXXX-XXXX" style="text-transform: uppercase;">
                     </div>
                     <button class="btn-primary" onclick="redeemVoucher()">
-                        Activate Voucher
+                        Activate Access
                     </button>
                 </div>
             </div>
-        </div>
 
-        <!-- Status Overlay -->
-        <div id="status-overlay" class="glass-card hidden">
-            <div class="status-overlay">
-                <div class="loader"></div>
-                <h2>Verifying Payment</h2>
-                <p class="subtitle">Please check your phone for the M-Pesa PIN prompt.</p>
-                <div id="countdown" style="font-weight: 700; margin-top: 1rem; color: var(--primary);">60s</div>
+            <!-- Quick Guide -->
+            <div style="margin-top: 2rem;">
+                <label>HOW IT WORKS</label>
+                <div class="guide-scroller">
+                    <div class="guide-card">
+                        <h4>1. Select</h4>
+                        <p>Pick a plan that fits your current data needs and budget.</p>
+                    </div>
+                    <div class="guide-card">
+                        <h4>2. Pay</h4>
+                        <p>Enter your phone number and confirm the M-Pesa prompt.</p>
+                    </div>
+                    <div class="guide-card">
+                        <h4>3. Enjoy</h4>
+                        <p>System detects payment and grants browsing access instantly.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Success Page -->
+        <!-- Success/Status States remain same but with SurfBill styling -->
+        <div id="status-overlay" class="glass-card hidden">
+            <div class="status-overlay">
+                <div class="loader"></div>
+                <h2>Securing Payment...</h2>
+                <p class="subtitle">Waiting for M-Pesa verification.</p>
+                <div id="countdown"
+                    style="font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-top: 1rem;">60s</div>
+            </div>
+        </div>
+
         <div id="success-overlay" class="glass-card hidden">
             <div class="status-overlay">
                 <div class="success-badge">✓</div>
-                <h2>Welcome Online!</h2>
-                <p class="subtitle">Your access has been granted automatically.</p>
-                <div style="margin: 2rem 0;">
+                <h2>You're Online!</h2>
+                <p class="subtitle">SurfBill has enabled your high-speed session.</p>
+                <div style="margin: 2.5rem 0;">
                     <span id="session-timer"
-                        style="font-size: 2.5rem; font-weight: 800; color: var(--accent);">--:--</span>
-                    <p style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;">Remaining Access</p>
+                        style="font-size: 3rem; font-weight: 800; color: #fff; text-shadow: 0 4px 20px var(--primary);">--:--</span>
+                    <p style="font-size: 0.7rem; color: #94a3b8; letter-spacing: 0.2em; margin-top: 0.5rem;">ACCESS
+                        REMAINING</p>
                 </div>
-                <button class="btn-primary" onclick="window.location.href='https://google.com'">Start Browsing</button>
+                <button class="btn-primary" style="margin-top: 0;"
+                    onclick="window.location.href='https://google.com'">Explore Web</button>
             </div>
         </div>
 
         <footer>
-            <p id="footer-text">&copy; 2025 PowerBy FlashNet Systems</p>
-            <p id="device-info" style="margin-top: 0.5rem; opacity: 0.5; font-size: 0.7rem;">Detecting device...</p>
+            <p>&copy; 2026 SURFBILL NETWORKS. POWERED BY AI.</p>
+            <p id="device-info" style="margin-top: 0.5rem; opacity: 0.4; font-size: 0.65rem;">ID: DETECTING...</p>
         </footer>
     </div>
     <script src="app.js"></script>
     <script>
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const btn = event.currentTarget;
+            btn.classList.add('active');
+
             if (tab === 'mpesa') {
                 document.getElementById('mpesa-tab').classList.remove('hidden');
                 document.getElementById('voucher-tab').classList.add('hidden');
-                event.target.classList.add('active');
             } else {
                 document.getElementById('mpesa-tab').classList.add('hidden');
                 document.getElementById('voucher-tab').classList.remove('hidden');
-                event.target.classList.add('active');
             }
         }
     </script>

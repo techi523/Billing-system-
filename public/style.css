@@ -118,6 +118,11 @@ h1 {
     box-shadow: 0 0 20px var(--primary-glow);
 }
 
+.pkg-card.recommended {
+    border: 2px solid var(--primary);
+    background: rgba(59, 130, 246, 0.08);
+}
+
 .pkg-info h3 {
     margin: 0;
     font-size: 1.1rem;
@@ -127,6 +132,15 @@ h1 {
 .pkg-info span {
     font-size: 0.85rem;
     color: var(--text-muted);
+}
+
+.badge {
+    background: var(--primary);
+    color: white;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 800;
 }
 
 .pkg-price {

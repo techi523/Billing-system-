@@ -33,6 +33,30 @@ async function initialSetup() {
             logger.info('Super Admin already exists.');
         }
 
+        // 2. Create Demo "SurfBill" Tenant
+        const { Tenant, Package } = require('./models');
+        const demoTenant = await Tenant.findOne({ where: { subdomain: 'demo' } });
+        if (!demoTenant) {
+            const tenant = await Tenant.create({
+                name: 'SurfBill Demo ISP',
+                subdomain: 'demo',
+                primaryColor: '#6366f1',
+                status: 'ACTIVE',
+                description: 'Experience high-speed premium internet with SurfBill.'
+            });
+
+            await Package.create({
+                name: 'SurfBill Fast Hour',
+                price: 20,
+                durationMinutes: 60,
+                type: 'HOTSPOT',
+                tenantId: tenant.id,
+                isEnabled: true
+            });
+
+            logger.info('Demo Tenant "SurfBill" initialized.');
+        }
+
         logger.info('Production system setup complete.');
         process.exit(0);
     } catch (err) {

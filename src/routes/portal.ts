@@ -82,4 +82,16 @@ router.post('/:tenantId/voucher/redeem', async (req, res) => {
     }
 });
 
+// 5. Payment Status (Polling)
+router.get('/payment-status/:id', async (req, res) => {
+    const payment = await Payment.findByPk(req.params.id);
+    if (!payment) return res.status(404).json({ error: 'Payment not found' });
+    res.json({ status: payment.status });
+});
+
+// 6. SaaS Health Check
+router.get('/health', (req, res) => {
+    res.json({ status: 'UP', service: 'SurfBill Portal', timestamp: new Date() });
+});
+
 export default router;

@@ -3,13 +3,13 @@ const urlParams = new URLSearchParams(window.location.search);
 const mac = urlParams.get('mac') || 'NOT_DETECTED';
 const ip = urlParams.get('ip') || 'STATIONARY';
 const routerId = urlParams.get('routerId') || '';
-const tenantId = urlParams.get('tenantId') || 'demo'; // Default for demo
+const tenantId = urlParams.get('tenantId') || 'demo';
 
 // 1. Initial Load
 document.addEventListener('DOMContentLoaded', () => {
     loadConfig();
     loadPackages();
-    document.getElementById('device-info').innerText = `Device: ${mac} | IP: ${ip}`;
+    document.getElementById('device-info').innerText = `DEVICE ID: ${mac}`;
 });
 
 async function loadConfig() {
@@ -18,8 +18,8 @@ async function loadConfig() {
         const config = await response.json();
 
         // Update Branding
-        document.title = `${config.name} - Wi-Fi Portal`;
-        document.getElementById('isp-name').innerText = config.name;
+        document.title = `${config.name} | powered by SurfBill`;
+        document.getElementById('isp-name').innerText = config.name.toUpperCase();
         if (config.logoUrl) {
             document.getElementById('logo').src = config.logoUrl;
         }
@@ -38,9 +38,25 @@ async function loadPackages() {
         const list = document.getElementById('package-list');
         list.innerHTML = '';
 
+        // AI-Based Recommendation Logic (Simple)
+        const hour = new Date().getHours();
+        let recommendedId = null;
+
+        // Suggest night plans if late, or day plans if morning
+        if (hour >= 22 || hour <= 5) {
+            const nightPlan = packages.find(p => p.name.toLowerCase().includes('night'));
+            if (nightPlan) recommendedId = nightPlan.id;
+        } else {
+            // Otherwise suggest the "Best Value" (middle price)
+            const sortedByPrice = [...packages].sort((a, b) => a.price - b.price);
+            if (sortedByPrice.length > 2) recommendedId = sortedByPrice[1].id;
+        }
+
         packages.forEach(pkg => {
             const card = document.createElement('div');
             card.className = 'pkg-card';
+            if (pkg.id === recommendedId) card.classList.add('recommended');
+
             let durationText = `${pkg.durationMinutes} min`;
             if (pkg.durationMinutes >= 43200) durationText = '1 Month';
             else if (pkg.durationMinutes >= 10080) durationText = '1 Week';
@@ -48,7 +64,10 @@ async function loadPackages() {
 
             card.innerHTML = `
                 <div class="pkg-info">
-                    <h3>${pkg.name}</h3>
+                    <div style="display:flex; align-items:center; gap:0.5rem">
+                        <h3>${pkg.name}</h3>
+                        ${pkg.id === recommendedId ? '<span class="badge">AI RECOMMENDED</span>' : ''}
+                    </div>
                     <span>${durationText} • ${pkg.type}</span>
                 </div>
                 <div class="pkg-price">KES ${pkg.price}</div>
@@ -67,6 +86,11 @@ function selectPackage(pkg, element) {
     document.querySelectorAll('.pkg-card').forEach(c => c.classList.remove('selected'));
     element.classList.add('selected');
     document.getElementById('pay-btn').disabled = false;
+
+    // Smooth scroll to payment section on mobile
+    if (window.innerWidth < 768) {
+        document.getElementById('mpesa-tab').scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 async function initiatePayment() {
@@ -110,7 +134,7 @@ async function redeemVoucher() {
 
         const data = await response.json();
         if (data.session) {
-            showSuccess(selectedPkg ? selectedPkg.durationMinutes : 60); // Default if unknown
+            showSuccess(selectedPkg ? selectedPkg.durationMinutes : 60);
         } else {
             throw new Error(data.error || 'Invalid voucher');
         }
