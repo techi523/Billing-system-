@@ -1,6 +1,6 @@
 import { RouterOSClient } from 'routeros-client';
 import { Router as RouterModel } from '../models';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
 export class MikroTikService {
     private static async getClient(router: RouterModel) {

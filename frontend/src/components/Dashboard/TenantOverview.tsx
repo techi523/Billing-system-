@@ -1,9 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Users, Radio, CreditCard, Ticket, Settings, ArrowUpRight, ArrowDownRight, Activity, TrendingUp } from 'lucide-react';
 import axios from 'axios';
+import { motion } from 'framer-motion';
 
-const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
-    <div className="premium-card group relative overflow-hidden">
+const StatCard = ({ label, value, trend, icon: Icon, color, index }: any) => (
+    <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: index * 0.1 }}
+        className="premium-card group relative overflow-hidden"
+    >
         <div className={`absolute top-0 right-0 w-24 h-24 bg-${color}-500/5 rounded-full blur-3xl -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700`}></div>
         <div className="flex justify-between items-start mb-6 relative z-10">
             <div className={`p-4 rounded-2xl bg-${color}-50 text-${color}-600`}>
@@ -16,7 +22,7 @@ const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
         </div>
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{label}</p>
         <h2 className="text-3xl font-black text-slate-900 tracking-tight">{value}</h2>
-    </div>
+    </motion.div>
 );
 
 const TenantOverview = () => {
@@ -50,15 +56,20 @@ const TenantOverview = () => {
         <div className="space-y-10">
             {/* KPI Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <StatCard label="Monthly Revenue" value={`KES ${(stats.totalRevenue || 0).toLocaleString()}`} trend={12} icon={CreditCard} color="sky" />
-                <StatCard label="Network Load" value={stats.activeSessions || 0} trend={-3} icon={Activity} color="orange" />
-                <StatCard label="Managed Nodes" value={stats.totalSubscribers || 0} trend={8} icon={Radio} color="indigo" />
-                <StatCard label="Voucher Volume" value={stats.voucherSales || 0} trend={24} icon={Ticket} color="emerald" />
+                <StatCard index={0} label="Monthly Revenue" value={`KES ${(stats.totalRevenue || 0).toLocaleString()}`} trend={12} icon={CreditCard} color="sky" />
+                <StatCard index={1} label="Network Load" value={stats.activeSessions || 0} trend={-3} icon={Activity} color="orange" />
+                <StatCard index={2} label="Managed Nodes" value={stats.totalSubscribers || 0} trend={8} icon={Radio} color="indigo" />
+                <StatCard index={3} label="Voucher Volume" value={stats.voucherSales || 0} trend={24} icon={Ticket} color="emerald" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 {/* Recent Billing Events */}
-                <div className="lg:col-span-2 premium-card overflow-hidden !p-0 border-slate-200/60 shadow-xl shadow-slate-200/20">
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="lg:col-span-2 premium-card overflow-hidden !p-0 border-slate-200/60 shadow-xl shadow-slate-200/20"
+                >
                     <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                         <div>
                             <h3 className="font-black text-slate-900 text-lg tracking-tight">Financial Overview</h3>
@@ -80,7 +91,13 @@ const TenantOverview = () => {
                             </thead>
                             <tbody className="divide-y divide-slate-100 text-slate-600">
                                 {payments.slice(0, 8).map((p, i) => (
-                                    <tr key={i} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                                    <motion.tr
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.5 + (i * 0.05) }}
+                                        key={i}
+                                        className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                                    >
                                         <td className="px-10 py-6">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]"></div>
@@ -104,7 +121,7 @@ const TenantOverview = () => {
                                                 {p.amount}
                                             </span>
                                         </td>
-                                    </tr>
+                                    </motion.tr>
                                 ))}
                             </tbody>
                         </table>
@@ -115,12 +132,17 @@ const TenantOverview = () => {
                             <p className="font-black text-sm uppercase tracking-widest">No active sessions detected</p>
                         </div>
                     )}
-                </div>
+                </motion.div>
 
                 {/* Right Column Mix */}
                 <div className="space-y-8">
                     {/* Insights Block */}
-                    <div className="bg-[#1e293b] rounded-[2.5rem] p-10 text-white relative overflow-hidden group shadow-2xl shadow-slate-900/40">
+                    <motion.div
+                        initial={{ x: 20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.6 }}
+                        className="bg-[#1e293b] rounded-[2.5rem] p-10 text-white relative overflow-hidden group shadow-2xl shadow-slate-900/40"
+                    >
                         <div className="absolute top-0 right-0 w-48 h-48 bg-sky-500 rounded-full blur-[100px] opacity-10 -mr-20 -mt-20 group-hover:opacity-30 transition-opacity duration-1000"></div>
                         <div className="relative z-10">
                             <div className="flex items-center gap-2 mb-8">
@@ -139,10 +161,15 @@ const TenantOverview = () => {
                                 Implement Strategy
                             </button>
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Quick Config Card */}
-                    <div className="premium-card !p-10">
+                    <motion.div
+                        initial={{ x: 20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.7 }}
+                        className="premium-card !p-10"
+                    >
                         <div className="flex items-center justify-between mb-8">
                             <h4 className="font-black text-slate-900 text-[10px] uppercase tracking-[0.3em]">Command Center</h4>
                             <div className="h-1 w-8 bg-sky-500 rounded-full"></div>
@@ -161,7 +188,7 @@ const TenantOverview = () => {
                                 </button>
                             ))}
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </div>
         </div>

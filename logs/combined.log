@@ -38,3 +38,38 @@
 {"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-14T17:02:53.283Z"}
 {"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T08:51:59.828Z"}
 {"error":"SQLITE_IOERR: disk I/O error","level":"error","message":"Failed to start server:","service":"billing-system","timestamp":"2026-01-15T08:53:43.085Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T11:56:30.075Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synchronized.","service":"billing-system","timestamp":"2026-01-15T11:58:01.761Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-15T11:58:01.881Z"}
+{"error":"Expected property name or '}' in JSON at position 1 (line 1 column 2)","level":"error","message":"Unhandled Error","service":"billing-system","stack":"SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)\n    at JSON.parse (<anonymous>)\n    at parse (C:\\Users\\samtech\\billing\\node_modules\\body-parser\\lib\\types\\json.js:74:19)\n    at C:\\Users\\samtech\\billing\\node_modules\\body-parser\\lib\\read.js:163:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n    at invokeCallback (C:\\Users\\samtech\\billing\\node_modules\\raw-body\\index.js:238:16)\n    at done (C:\\Users\\samtech\\billing\\node_modules\\raw-body\\index.js:227:7)\n    at IncomingMessage.onEnd (C:\\Users\\samtech\\billing\\node_modules\\raw-body\\index.js:287:7)\n    at IncomingMessage.emit (node:events:508:28)\n    at IncomingMessage.emit (node:domain:489:12)\n    at endReadableNT (node:internal/streams/readable:1701:12)","timestamp":"2026-01-15T11:58:37.982Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-15T12:00:00.920Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-15T12:00:20.640Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T12:01:50.208Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T12:01:50.254Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T12:01:50.284Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T12:01:50.370Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T12:28:33.469Z"}
+{"error":"SQLITE_CONSTRAINT: FOREIGN KEY constraint failed","level":"error","message":"Failed to start server:","service":"billing-system","timestamp":"2026-01-15T12:28:34.422Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T12:32:58.900Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-15T12:33:02.458Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-15T12:33:02.545Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T12:36:57.770Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-15T12:36:59.324Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-15T12:36:59.393Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T12:42:22.611Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-15T12:42:23.190Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-15T12:42:23.435Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-15T12:44:02.604Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-15T12:44:06.464Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/admin/packages","service":"billing-system","timestamp":"2026-01-15T12:44:11.386Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/admin/routers","service":"billing-system","timestamp":"2026-01-15T12:44:12.491Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/portal/pay","service":"billing-system","timestamp":"2026-01-15T12:44:15.173Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-15T12:58:24.725Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-15T13:02:42.335Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-15T13:02:47.735Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/admin/packages","service":"billing-system","timestamp":"2026-01-15T13:02:52.982Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/admin/routers","service":"billing-system","timestamp":"2026-01-15T13:02:53.612Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/portal/0bfe02f5-244f-42e3-bde8-323429e415c3/pay","service":"billing-system","timestamp":"2026-01-15T13:02:55.034Z"}
+{"error":"M-Pesa Consumer Key/Secret missing","level":"error","message":"STK Push Failed","service":"billing-system","timestamp":"2026-01-15T13:02:56.947Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T13:37:05.845Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T13:42:23.728Z"}

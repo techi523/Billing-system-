@@ -54,6 +54,17 @@ export class MpesaService {
      * AccountReference format: TENANTID|USERID|PACKAGEID
      */
     static async initiateStkPush(phoneNumber: string, amount: number, tenantId: string, userId: string, packageId: string) {
+        if (process.env.MPESA_MOCK === 'true' || !process.env.MPESA_CONSUMER_KEY) {
+            logger.warn('M-Pesa running in MOCK mode. Returning success simulation.');
+            return {
+                MerchantRequestID: `MOCK-${Date.now()}`,
+                CheckoutRequestID: `ws_CO_${Date.now()}_MOCK`,
+                ResponseCode: "0",
+                ResponseDescription: "Success. Request accepted for processing",
+                CustomerMessage: "Success. Request accepted for processing"
+            };
+        }
+
         try {
             const accessToken = await this.getAccessToken();
             const { shortcode, passkey } = this.getCredentials();

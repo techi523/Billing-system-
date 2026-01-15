@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Smartphone, Zap, Clock, Wifi, ShieldCheck, ChevronRight, Share2, Info } from 'lucide-react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const CaptivePortal = () => {
     const [packages, setPackages] = useState<any[]>([]);
@@ -32,11 +33,15 @@ const CaptivePortal = () => {
     if (loading) return (
         <div className="h-screen flex items-center justify-center bg-[#0f172a] text-white">
             <div className="flex flex-col items-center gap-6">
-                <div className="w-16 h-16 bg-sky-500 rounded-3xl animate-bounce flex items-center justify-center shadow-2xl shadow-sky-500/40">
+                <motion.div
+                    animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-16 h-16 bg-sky-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-sky-500/40"
+                >
                     <Wifi size={32} />
-                </div>
+                </motion.div>
                 <div className="flex flex-col items-center">
-                    <h2 className="text-2xl font-black tracking-tighter animate-pulse">SurfBill.</h2>
+                    <h2 className="text-2xl font-black tracking-tighter">SurfBill.</h2>
                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-sky-400 mt-2">Authenticating Hub</p>
                 </div>
             </div>
@@ -46,11 +51,19 @@ const CaptivePortal = () => {
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-sky-500 overflow-hidden relative">
             {/* Background Decorative Blobs */}
-            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-br from-slate-900 to-blue-900 rounded-b-[4rem] shadow-2xl"></div>
+            <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}
+                className="absolute top-0 left-0 w-full h-96 bg-gradient-to-br from-slate-900 to-blue-900 rounded-b-[4rem] shadow-2xl"
+            ></motion.div>
             <div className="absolute top-20 right-0 w-64 h-64 bg-sky-400 rounded-full blur-[120px] opacity-20 -mr-32 animate-pulse"></div>
 
             {/* Hero Section */}
-            <div className="relative z-10 pt-16 pb-12 px-8 flex flex-col items-center text-center text-white">
+            <motion.div
+                initial={{ y: -50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6 }}
+                className="relative z-10 pt-16 pb-12 px-8 flex flex-col items-center text-center text-white"
+            >
                 <div className="w-16 h-16 bg-white/10 backdrop-blur-xl rounded-[1.5rem] border border-white/20 flex items-center justify-center mb-6 shadow-2xl">
                     <Wifi size={24} className="text-sky-400" />
                 </div>
@@ -59,11 +72,16 @@ const CaptivePortal = () => {
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     SurfBill Alpha Hub Online
                 </p>
-            </div>
+            </motion.div>
 
             {/* Main Content Card */}
             <div className="relative z-20 px-6 max-w-md mx-auto -mt-4 pb-20">
-                <div className="bg-white rounded-[3rem] shadow-[0_20px_80px_-15px_rgba(0,0,0,0.1)] p-8 border border-white">
+                <motion.div
+                    initial={{ y: 50, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.6 }}
+                    className="bg-white rounded-[3rem] shadow-[0_20px_80px_-15px_rgba(0,0,0,0.1)] p-8 border border-white"
+                >
                     <div className="flex items-center justify-between mb-10">
                         <div>
                             <h2 className="text-xl font-black text-slate-900 tracking-tight">Active Plans</h2>
@@ -75,11 +93,16 @@ const CaptivePortal = () => {
                     </div>
 
                     <div className="space-y-4">
-                        {packages.map((pkg) => (
-                            <button
+                        {packages.map((pkg, i) => (
+                            <motion.button
+                                initial={{ x: -20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ delay: 0.3 + (i * 0.1) }}
                                 key={pkg.id}
                                 onClick={() => setSelectedPackage(pkg)}
-                                className={`w-full text-left p-6 rounded-[2rem] border-2 transition-all duration-500 relative group ${selectedPackage?.id === pkg.id
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className={`w-full text-left p-6 rounded-[2rem] border-2 transition-all duration-300 relative group ${selectedPackage?.id === pkg.id
                                     ? 'border-sky-500 bg-sky-50/50 shadow-xl shadow-sky-500/5'
                                     : 'border-slate-50 bg-slate-50/30 hover:border-slate-200 hover:bg-white'
                                     }`}
@@ -109,7 +132,7 @@ const CaptivePortal = () => {
                                         <p className="font-black text-2xl text-slate-900 tracking-tighter leading-none">{pkg.price}</p>
                                     </div>
                                 </div>
-                            </button>
+                            </motion.button>
                         ))}
                     </div>
 
@@ -127,17 +150,19 @@ const CaptivePortal = () => {
                             />
                         </div>
 
-                        <button
+                        <motion.button
                             onClick={handlePayment}
                             disabled={!selectedPackage}
-                            className={`w-full py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 active:scale-95 ${selectedPackage
+                            whileHover={selectedPackage ? { scale: 1.02 } : {}}
+                            whileTap={selectedPackage ? { scale: 0.98 } : {}}
+                            className={`w-full py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 ${selectedPackage
                                 ? 'bg-[#0f172a] text-white shadow-2xl shadow-slate-900/30 hover:bg-slate-800'
                                 : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                 }`}
                         >
                             Activate Connection
                             <ChevronRight size={18} strokeWidth={3} />
-                        </button>
+                        </motion.button>
                     </div>
 
                     <div className="mt-12 flex flex-col items-center gap-6">
@@ -155,7 +180,7 @@ const CaptivePortal = () => {
                             <span className="w-12 h-px bg-slate-100 italic"></span>
                         </p>
                     </div>
-                </div>
+                </motion.div>
 
                 <div className="mt-10 flex justify-center gap-10 opacity-30">
                     <button className="text-[10px] font-black text-slate-900 uppercase tracking-widest hover:opacity-100 flex items-center gap-2">

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Payment, Package, Tenant } from '../models';
+import { Payment, Package, Tenant, sequelize } from '../models';
 import { SessionOrchestrator } from '../orchestrator';
 import logger from '../utils/logger';
 
@@ -44,7 +44,7 @@ router.post('/mpesa', async (req, res) => {
 
             if (!payment) {
                 logger.error('Payment not found for CheckoutRequestID', { checkoutRequestId });
-                return; 
+                return;
             }
 
             // Capture raw callback
@@ -73,9 +73,9 @@ router.post('/mpesa', async (req, res) => {
                 }
 
                 // Check for duplicate receipt
-                const duplicate = await Payment.findOne({ 
+                const duplicate = await Payment.findOne({
                     where: { mpesaReceiptNumber: receipt },
-                    transaction: t 
+                    transaction: t
                 });
                 if (duplicate && duplicate.id !== payment.id) {
                     logger.error('Duplicate M-Pesa Receipt detected', { receipt, paymentId: payment.id });

@@ -73,8 +73,8 @@ async function startServer() {
         if (process.env.NODE_ENV === 'production') {
             logger.warn('PRODUCTION MODE: Skipping automated schema synchronization. Use migrations.');
         } else {
-            await sequelize.sync({ alter: true });
-            logger.info('DEVELOPMENT MODE: Database schema synchronized.');
+            await sequelize.sync({ alter: false });
+            logger.info('DEVELOPMENT MODE: Database schema synced (no-alter checking).');
         }
 
         // Background Tasks
