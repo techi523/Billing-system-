@@ -4,28 +4,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SurfBill | Admin Dashboard</title>
+    <title>SurfBill | Admin Console</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            display: flex;
-            background: #f1f5f9;
-            color: #1e293b;
-            height: 100vh;
-            overflow: hidden;
-            align-items: stretch;
-            justify-content: flex-start;
+        :root {
+            --sidebar-w: 260px;
+            --primary: #3b82f6;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
         }
 
+        body {
+            display: flex;
+            background: var(--bg);
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Sidebar */
         .sidebar {
-            width: 260px;
+            width: var(--sidebar-w);
             background: #1e293b;
             color: #fff;
             padding: 2rem 1rem;
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            padding: 0 1rem 2rem;
+            color: #fff;
+            -webkit-text-fill-color: #fff;
+            cursor: default;
         }
 
         .nav-link {
@@ -33,9 +54,11 @@
             border-radius: 8px;
             cursor: pointer;
             transition: 0.2s;
-            color: #cbd5e1;
+            color: #94a3b8;
             font-weight: 500;
-            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
 
         .nav-link:hover {
@@ -44,176 +67,567 @@
         }
 
         .nav-link.active {
-            background: #3b82f6;
+            background: var(--primary);
             color: #fff;
         }
 
+        /* Main Content */
         .main-content {
             flex: 1;
-            padding: 2rem;
+            padding: 2rem 3rem;
             overflow-y: auto;
         }
 
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        /* Dashboard Cards */
         .stat-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
 
-        .card {
-            background: #fff;
+        .stat-card {
+            background: var(--card-bg);
             padding: 1.5rem;
             border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
         }
 
-        .card h3 {
-            margin: 0;
-            font-size: 0.9rem;
-            color: #64748b;
+        .stat-card .label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
-        .card .value {
-            font-size: 1.8rem;
+        .stat-card .value {
+            font-size: 2rem;
             font-weight: 800;
             margin-top: 0.5rem;
-            color: #0f172a;
+            display: block;
         }
 
-        .progress-container {
-            width: 100%;
-            height: 8px;
-            background: #e2e8f0;
-            border-radius: 4px;
+        /* Tables */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
             overflow: hidden;
-            margin: 1rem 0;
+            margin-bottom: 2rem;
         }
 
-        .progress-bar {
-            height: 100%;
-            background: #3b82f6;
-            width: 20%;
-            transition: 0.5s;
-        }
-
-        .list-item {
+        .card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
-            padding: 1rem;
-            border-bottom: 1px solid #f1f5f9;
             align-items: center;
         }
 
-        .btn-action {
-            background: #3b82f6;
-            color: #fff;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            cursor: pointer;
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            padding: 1rem 1.5rem;
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        td {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+
+        .status-pill {
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
             font-weight: 600;
         }
 
-        .insight-card {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1e40af;
+        .pill-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .pill-pending {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .pill-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Forms / Modals */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal {
+            background: #fff;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 16px;
+            padding: 2rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .input-field {
+            margin-bottom: 1.25rem;
+        }
+
+        .input-field label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: #fff;
+            color: var(--text-dark);
+        }
+
+        input:focus {
+            outline: 2px solid var(--primary);
+            border-color: transparent;
+        }
+
+        .btn {
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-muted);
+        }
+
+        .btn-ghost:hover {
+            background: #f1f5f9;
+            color: var(--text-dark);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Notification */
+        #toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            background: #1e293b;
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(100px);
+            transition: 0.3s;
+            z-index: 1000;
+        }
+
+        #toast.show {
+            transform: translateY(0);
         }
     </style>
 </head>
 
 <body>
     <div class="sidebar">
-        <div class="logo" style="margin-bottom: 2rem; color: #fff; -webkit-text-fill-color: #fff;">SURFBILL</div>
-        <div class="nav-link active" onclick="showTab('dashboard')">Dashboard</div>
-        <div class="nav-link" onclick="showTab('network')">Routers & Network</div>
-        <div class="nav-link" onclick="showTab('billing')">Plans & Billing</div>
-        <div class="nav-link" onclick="showTab('subscribers')">ISP Subscribers</div>
-        <div class="nav-link" onclick="showTab('vouchers')">Voucher System</div>
-        <div class="nav-link" onclick="showTab('reports')">Reports</div>
-        <a href="guide.html" target="_blank" class="nav-link" style="color: #fbbf24;">Platform Guide ↗</a>
+        <div class="logo">SurfBill.</div>
+        <div class="nav-link active" onclick="switchSection('dashboard', this)"><span>📊</span> Dashboard</div>
+        <div class="nav-link" onclick="switchSection('routers', this)"><span>📡</span> Routers</div>
+        <div class="nav-link" onclick="switchSection('packages', this)"><span>💳</span> Billing Plans</div>
+        <div class="nav-link" onclick="switchSection('subscribers', this)"><span>👥</span> ISP Subscribers</div>
+        <div class="nav-link" onclick="switchSection('vouchers', this)"><span>🎫</span> Vouchers</div>
+        <div class="nav-link" onclick="switchSection('revenue', this)"><span>📈</span> Revenue Report</div>
+        <a href="guide.html" target="_blank" class="nav-link" style="color: #fbbf24; margin-top: 2rem;"><span>💡</span>
+            Platform Guide</a>
         <div style="margin-top: auto;">
-            <div class="nav-link" onclick="localStorage.clear(); location.reload();">Log Out</div>
+            <div class="nav-link" onclick="logout()"><span>🚪</span> Log Out</div>
         </div>
     </div>
 
     <div class="main-content">
-        <div id="dashboard-tab" class="tab-content">
-            <h1 style="margin-top: 0;">Welcome, Partner</h1>
-            <p style="color: #64748b; margin-bottom: 2rem;">Here is a snapshot of your network performance today.</p>
+        <!-- TOP NAV -->
+        <div class="top-bar">
+            <h1 id="section-title">Dashboard</h1>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span id="tenant-name" style="font-weight: 600;">Loading Business...</span>
+                <div
+                    style="width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #64748b;">
+                    S</div>
+            </div>
+        </div>
 
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard-section" class="section">
             <div class="stat-grid">
-                <div class="card">
-                    <h3>Today's Revenue</h3>
-                    <div id="total-revenue" class="value">KES 0</div>
+                <div class="stat-card">
+                    <span class="label">Total Revenue</span>
+                    <span id="stat-revenue" class="value">KES 0.00</span>
                 </div>
-                <div class="card">
-                    <h3>Active Sessions</h3>
-                    <div id="active-users" class="value">0</div>
+                <div class="stat-card">
+                    <span class="label">Live Sessions</span>
+                    <span id="stat-sessions" class="value">0</span>
                 </div>
-                <div class="card">
-                    <h3>ISP Subscribers</h3>
-                    <div id="total-subs" class="value">0</div>
+                <div class="stat-card">
+                    <span class="label">Subscribers</span>
+                    <span id="stat-subscribers" class="value">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Voucher Sales</span>
+                    <span id="stat-vouchers" class="value">0</span>
                 </div>
             </div>
 
-            <div class="grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
                 <div class="card">
-                    <h3>SaaS Setup Guidance</h3>
-                    <p id="setup-text" style="font-weight: 600; margin-bottom: 0;">20% Configured</p>
-                    <div class="progress-container">
-                        <div id="setup-bar" class="progress-bar"></div>
+                    <div class="card-header">
+                        <h2>Recent Payments</h2>
+                        <button class="btn btn-ghost" onclick="switchSection('revenue')">View All</button>
                     </div>
-                    <div id="wizard-steps" style="font-size: 0.9rem; color: #64748b;">
-                        <p>✓ Account Verified</p>
-                        <p>• Add your first MikroTik router</p>
-                        <p>• Create a billing package</p>
-                        <p>• Test M-Pesa Integration</p>
-                    </div>
+                    <table id="recent-payments-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Phone</th>
+                                <th>Plan</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows via JS -->
+                        </tbody>
+                    </table>
                 </div>
-                <div class="card insight-card">
-                    <h3>SurfBill Insights</h3>
-                    <div id="insight-box" style="margin-top: 1rem;">
-                        <p>Loading pattern analysis...</p>
+                <div>
+                    <div class="card" style="background: #eff6ff; border-color: #bfdbfe;">
+                        <div class="card-header" style="border-bottom-color: #bfdbfe;">
+                            <h2 style="color: #1e40af;">SurfBill Intelligence</h2>
+                        </div>
+                        <div style="padding: 1.5rem; color: #1e40af;">
+                            <p id="ai-insight-text">Analyzing your network performance...</p>
+                            <div
+                                style="margin-top: 1rem; font-size: 0.85rem; padding: 0.75rem; background: #fff; border-radius: 8px; border: 1px solid #bfdbfe;">
+                                <strong>Top Plan:</strong> <span id="ai-top-plan">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Setup Progress</h2>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <div
+                                style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                                <span id="setup-progress-label">20% Complete</span>
+                            </div>
+                            <div style="width: 100%; height: 8px; background: #f1f5f9; border-radius: 10px;">
+                                <div id="setup-progress-bar"
+                                    style="width: 20%; height: 100%; background: var(--primary); border-radius: 10px; transition: 0.3s;">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="billing-tab" class="tab-content hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h1>Billing Plans</h1>
-                <button class="btn-action" onclick="createPackage()">+ Create Plan</button>
-            </div>
-            <div class="card" id="pkg-list">
-                <!-- Loaded via JS -->
-            </div>
-        </div>
-
-        <div id="reports-tab" class="tab-content hidden">
-            <h1>Advanced Reporting</h1>
+        <!-- ROUTERS TAB -->
+        <div id="routers-section" class="section hidden">
             <div class="card">
-                <p>Generate accurate financial and usage reports for your business.</p>
-                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                    <button class="btn-action" onclick="exportReport()">Export CSV Report</button>
-                    <button class="btn-action" style="background: #10b981;"
-                        onclick="alert('PDF Export coming soon')">Export PDF</button>
+                <div class="card-header">
+                    <h2>Configured Routers</h2>
+                    <button class="btn btn-primary" onclick="openModal('router-modal')">+ Add Router</button>
                 </div>
+                <table id="routers-table">
+                    <thead>
+                        <tr>
+                            <th>Router Name</th>
+                            <th>Host / IP</th>
+                            <th>Identity</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
 
-        <div id="network-tab" class="tab-content hidden">
-            <h1>Router Management</h1>
-            <div class="card" id="router-list">
-                <p>Add and monitor your MikroTik edge routers here.</p>
-                <!-- Simplified for now -->
+        <!-- PACKAGES TAB -->
+        <div id="packages-section" class="section hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Billing Plans</h2>
+                    <button class="btn btn-primary" onclick="openModal('package-modal')">+ Create Plan</button>
+                </div>
+                <table id="packages-table">
+                    <thead>
+                        <tr>
+                            <th>Plan Name</th>
+                            <th>Type</th>
+                            <th>Price</th>
+                            <th>Limits</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SUBSCRIBERS TAB -->
+        <div id="subscribers-section" class="section hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Home Fiber Subscribers</h2>
+                    <button class="btn btn-primary" onclick="openModal('subscriber-modal')">+ New Subscriber</button>
+                </div>
+                <table id="subscribers-table">
+                    <thead>
+                        <tr>
+                            <th>Subscriber Name</th>
+                            <th>PPPoE Username</th>
+                            <th>Plan</th>
+                            <th>Expiry</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VOUCHERS TAB -->
+        <div id="vouchers-section" class="section hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Voucher Management</h2>
+                    <button class="btn btn-primary" onclick="openModal('voucher-modal')">+ Generate Batch</button>
+                </div>
+                <table id="vouchers-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Package</th>
+                            <th>Created</th>
+                            <th>Used At</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- REVENUE TAB -->
+        <div id="revenue-section" class="section hidden">
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <span class="label">Date Range</span>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                        <input type="date" id="report-start" style="padding: 0.4rem; font-size: 0.8rem;">
+                        <input type="date" id="report-end" style="padding: 0.4rem; font-size: 0.8rem;">
+                    </div>
+                </div>
+                <div class="stat-card" style="display: flex; align-items: center; justify-content: center;">
+                    <button class="btn btn-primary" onclick="loadRevenueReport()">Filter Report</button>
+                </div>
+                <div class="stat-card" style="display: flex; align-items: center; justify-content: center;">
+                    <button class="btn btn-ghost" onclick="exportReport()">📥 Export CSV</button>
+                </div>
+            </div>
+            <div class="card">
+                <table id="revenue-report-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Receipt</th>
+                            <th>Phone</th>
+                            <th>Plan</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
     </div>
+
+    <!-- MODALS -->
+
+    <!-- Router Modal -->
+    <div id="router-modal" class="modal-overlay">
+        <div class="modal">
+            <h2>Add Access Router</h2>
+            <form id="router-form" onsubmit="saveRouter(event)">
+                <div class="input-field"><label>Router Name</label><input name="name"
+                        placeholder="e.g. Main Hub - Ground Floor" required></div>
+                <div class="input-field"><label>Host / Public IP</label><input name="host" placeholder="197.xxx.xxx.xxx"
+                        required></div>
+                <div class="input-field"><label>API Username</label><input name="username" value="admin" required></div>
+                <div class="input-field"><label>API Password</label><input type="password" name="password" required>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn btn-ghost" style="flex: 1;" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save Router</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Package Modal -->
+    <div id="package-modal" class="modal-overlay">
+        <div class="modal">
+            <h2>Create Billing Plan</h2>
+            <form id="package-form" onsubmit="savePackage(event)">
+                <div class="input-field"><label>Plan Name</label><input name="name" placeholder="e.g. 1 Hour High Speed"
+                        required></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-field"><label>Type</label><select name="type">
+                            <option value="HOTSPOT">Hotspot</option>
+                            <option value="ISP">PPPoE Subscription</option>
+                        </select></div>
+                    <div class="input-field"><label>Price (KES)</label><input type="number" name="price" value="20"
+                            required></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-field"><label>Duration (Minutes)</label><input type="number"
+                            name="durationMinutes" value="60"></div>
+                    <div class="input-field"><label>Data Limit (MB)</label><input type="number" name="dataLimitMB"
+                            value="0" placeholder="0 = Unlimited"></div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn btn-ghost" style="flex: 1;" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Create Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Subscriber Modal -->
+    <div id="subscriber-modal" class="modal-overlay">
+        <div class="modal">
+            <h2>New PPPoE Subscriber</h2>
+            <form id="subscriber-form" onsubmit="saveSubscriber(event)">
+                <div class="input-field"><label>Customer Name</label><input name="name" placeholder="John Doe" required>
+                </div>
+                <div class="input-field"><label>Phone Number</label><input name="phoneNumber" placeholder="0712345678"
+                        required></div>
+                <div class="input-field"><label>PPPoE Username</label><input name="pppoeUsername" placeholder="user_123"
+                        required></div>
+                <div class="input-field"><label>PPPoE Password</label><input type="password" name="pppoePassword"
+                        required></div>
+                <div class="input-field">
+                    <label>Assigned Plan</label>
+                    <select name="packageId" id="sub-package-select"></select>
+                </div>
+                <div class="input-field">
+                    <label>Edge Router</label>
+                    <select name="routerId" id="sub-router-select"></select>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn btn-ghost" style="flex: 1;" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Activate Subscriber</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Voucher Modal -->
+    <div id="voucher-modal" class="modal-overlay">
+        <div class="modal">
+            <h2>Generate Batch Vouchers</h2>
+            <form id="voucher-form" onsubmit="saveVouchers(event)">
+                <div class="input-field">
+                    <label>Select Plan</label>
+                    <select name="packageId" id="voucher-package-select"></select>
+                </div>
+                <div class="input-field"><label>Number of Vouchers</label><input type="number" name="count" value="10"
+                        min="1" max="100"></div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn btn-ghost" style="flex: 1;" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Generate Batch</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast">Operation Successful</div>
+
     <script src="admin.js"></script>
 </body>
 

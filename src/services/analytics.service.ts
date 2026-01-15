@@ -78,8 +78,23 @@ export class AnalyticsService {
         });
 
         return {
-            topPackage: popularPackage[0]?.package?.name || 'N/A',
+            topPackage: (popularPackage[0] as any)?.package?.name || 'N/A',
             recommendation: "Consider a discount on your least popular plan to boost traffic."
+        };
+    }
+
+    static async getGlobalPlatformStats() {
+        const { Tenant } = require('../models');
+        const totalRevenue = await Payment.sum('amount', { where: { status: 'SUCCESS' } }) || 0;
+        const totalTenants = await Tenant.count();
+        const totalPayments = await Payment.count({ where: { status: 'SUCCESS' } });
+        const activeTenants = await Tenant.count({ where: { status: 'ACTIVE' } });
+
+        return {
+            totalRevenue,
+            totalTenants,
+            totalPayments,
+            activeTenants
         };
     }
 }

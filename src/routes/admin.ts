@@ -36,6 +36,13 @@ router.post('/routers', async (req: AuthRequest, res) => {
     res.json(routerDoc);
 });
 
+router.delete('/routers/:id', async (req: AuthRequest, res) => {
+    const routerDoc = await RouterModel.findOne({ where: { id: req.params.id, tenantId: req.user?.tenantId } });
+    if (!routerDoc) return res.status(404).json({ error: 'Router not found' });
+    await routerDoc.destroy();
+    res.json({ message: 'Router removed' });
+});
+
 import { IspService } from '../services/isp.service';
 
 // --- SUBSCRIBER (ISP) ---

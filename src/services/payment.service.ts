@@ -1,4 +1,4 @@
-import { Payment, Package } from '../models';
+import { Payment, Package, sequelize } from '../models';
 import { MpesaService } from './mpesa.service';
 import { SessionOrchestrator } from '../orchestrator';
 import logger from '../utils/logger';
@@ -21,23 +21,33 @@ export class PaymentService {
 
         for (const payment of pendingPayments) {
             try {
-                logger.info('Polling status for pending payment', { paymentId: payment.id });
-                const status = await MpesaService.checkTransactionStatus(payment.checkoutRequestId as string);
+                await sequelize.transaction(async (t) => {
+                    // Lock the row for the duration of the check
+                    const lockedPayment = await Payment.findByPk(payment.id, {
+                        lock: true,
+                        transaction: t
+                    });
 
-                if (!status) continue;
+                    if (!lockedPayment || lockedPayment.status !== 'PENDING') return;
 
-                // Safaricom ResultCode 0 means Success
-                if (status.ResultCode === "0") {
-                    payment.status = 'SUCCESS';
-                    payment.mpesaReceiptNumber = status.MpesaReceiptNumber || `QUERY-${payment.id.slice(0, 8)}`;
-                    await payment.save();
+                    logger.info('Polling status for pending payment', { paymentId: payment.id });
+                    const status = await MpesaService.checkTransactionStatus(payment.checkoutRequestId as string);
 
-                    await this.fulfillPayment(payment);
-                } else if (["1032", "2001", "1"].includes(status.ResultCode)) {
-                    payment.status = 'FAILED';
-                    await payment.save();
-                    logger.warn('Payment marked as FAILED via polling', { paymentId: payment.id, code: status.ResultCode });
-                }
+                    if (!status) return;
+
+                    // Safaricom ResultCode 0 means Success
+                    if (status.ResultCode === "0") {
+                        lockedPayment.status = 'SUCCESS';
+                        lockedPayment.mpesaReceiptNumber = status.MpesaReceiptNumber || `QUERY-${payment.id.slice(0, 8)}`;
+                        await lockedPayment.save({ transaction: t });
+
+                        await this.fulfillPayment(lockedPayment);
+                    } else if (["1032", "2001", "1"].includes(status.ResultCode)) {
+                        lockedPayment.status = 'FAILED';
+                        await lockedPayment.save({ transaction: t });
+                        logger.warn('Payment marked as FAILED via polling', { paymentId: payment.id, code: status.ResultCode });
+                    }
+                });
             } catch (error: any) {
                 logger.error('Polling error', { paymentId: payment.id, error: error.message });
             }

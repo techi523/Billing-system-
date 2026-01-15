@@ -8,8 +8,15 @@ const router = Router();
 router.post('/register', async (req, res) => {
     const { email, password, tenantName, subdomain } = req.body;
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
+        // 0. Pre-validation
+        const existingUser = await AdminUser.findOne({ where: { email } });
+        if (existingUser) return res.status(400).json({ error: 'Email already registered' });
+
+        const existingTenant = await Tenant.findOne({ where: { subdomain } });
+        if (existingTenant) return res.status(400).json({ error: 'Subdomain already in use' });
+
+        const hashedPassword = await bcrypt.hash(password, 12); // Production-grade entropy
+
         // 1. Create Tenant
         const tenant = await Tenant.create({
             name: tenantName,
@@ -25,9 +32,13 @@ router.post('/register', async (req, res) => {
             tenantId: tenant.id
         });
 
-        res.status(201).json({ message: 'Tenant registered successfully', tenant, user: { id: user.id, email: user.email } });
+        res.status(201).json({
+            message: 'Tenant registered successfully',
+            tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
+            user: { id: user.id, email: user.email }
+        });
     } catch (error: any) {
-        res.status(400).json({ error: error.message });
+        res.status(500).json({ error: 'Registration failed. Please contact support.' });
     }
 });
 

@@ -1,0 +1,40 @@
+{"level":"info","message":"Connected to database for setup.","service":"billing-system","timestamp":"2026-01-14T13:58:25.896Z"}
+{"error":"SQLITE_ERROR: no such table: admin_users","level":"error","message":"Setup failed:","service":"billing-system","timestamp":"2026-01-14T13:58:26.558Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-14T14:00:27.980Z"}
+{"level":"info","message":"Database synchronized (Development Mode).","service":"billing-system","timestamp":"2026-01-14T14:00:29.942Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-14T14:00:29.983Z"}
+{"level":"info","message":"Connected to database for setup.","service":"billing-system","timestamp":"2026-01-14T14:02:16.141Z"}
+{"level":"info","message":"Super Admin created successfully.","service":"billing-system","timestamp":"2026-01-14T14:02:17.421Z"}
+{"level":"info","message":"Demo Tenant \"SurfBill\" initialized.","service":"billing-system","timestamp":"2026-01-14T14:02:17.830Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/config","service":"billing-system","timestamp":"2026-01-14T14:06:53.370Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-14T14:06:53.380Z"}
+{"ip":"::1","level":"info","message":"GET /favicon.ico","service":"billing-system","timestamp":"2026-01-14T14:06:54.259Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/config","service":"billing-system","timestamp":"2026-01-14T14:09:57.290Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-14T14:09:57.292Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/config","service":"billing-system","timestamp":"2026-01-14T14:09:57.538Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-14T14:09:57.541Z"}
+{"level":"info","message":"Connected to database for setup.","service":"billing-system","timestamp":"2026-01-14T14:18:48.164Z"}
+{"level":"info","message":"Super Admin already exists.","service":"billing-system","timestamp":"2026-01-14T14:18:48.987Z"}
+{"level":"info","message":"Production system setup complete.","service":"billing-system","timestamp":"2026-01-14T14:18:49.012Z"}
+{"level":"info","message":"Connected to database for setup.","service":"billing-system","timestamp":"2026-01-14T14:37:23.927Z"}
+{"level":"info","message":"Super Admin already exists.","service":"billing-system","timestamp":"2026-01-14T14:37:24.683Z"}
+{"level":"info","message":"Production system setup complete.","service":"billing-system","timestamp":"2026-01-14T14:37:24.691Z"}
+{"level":"info","message":"Connected to database for setup.","service":"billing-system","timestamp":"2026-01-14T14:38:15.968Z"}
+{"level":"info","message":"Super Admin already exists.","service":"billing-system","timestamp":"2026-01-14T14:38:16.700Z"}
+{"level":"info","message":"Production system setup complete.","service":"billing-system","timestamp":"2026-01-14T14:38:16.708Z"}
+{"level":"info","message":"Connected to database for setup.","service":"billing-system","timestamp":"2026-01-14T15:12:34.579Z"}
+{"level":"info","message":"Database schema updated.","service":"billing-system","timestamp":"2026-01-14T15:12:44.546Z"}
+{"level":"info","message":"Super Admin created successfully.","service":"billing-system","timestamp":"2026-01-14T15:12:46.042Z"}
+{"level":"info","message":"Commercial SaaS \"SurfBill Alpha\" working data initialized.","service":"billing-system","timestamp":"2026-01-14T15:13:02.280Z"}
+{"level":"info","message":"Connected to database for setup.","service":"billing-system","timestamp":"2026-01-14T15:14:42.913Z"}
+{"level":"info","message":"Database schema updated.","service":"billing-system","timestamp":"2026-01-14T15:20:06.689Z"}
+{"error":"Validation error","level":"error","message":"Setup failed:","service":"billing-system","timestamp":"2026-01-14T15:20:09.540Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-14T16:41:01.980Z"}
+{"level":"info","message":"Database synchronized (Development Mode).","service":"billing-system","timestamp":"2026-01-14T16:45:03.388Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-14T16:45:03.460Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-14T16:47:47.031Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-14T16:47:47.252Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-14T17:02:52.935Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-14T17:02:53.283Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T08:51:59.828Z"}
+{"error":"SQLITE_IOERR: disk I/O error","level":"error","message":"Failed to start server:","service":"billing-system","timestamp":"2026-01-15T08:53:43.085Z"}

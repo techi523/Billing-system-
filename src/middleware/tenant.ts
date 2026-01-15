@@ -6,7 +6,6 @@ export interface TenantRequest extends Request {
 }
 
 export const tenantMiddleware = async (req: TenantRequest, res: Response, next: NextFunction) => {
-    // We can identify tenant by Subdomain or Header
     const host = req.headers.host;
     const tenantIdFromHeader = req.headers['x-tenant-id'];
 
@@ -16,18 +15,14 @@ export const tenantMiddleware = async (req: TenantRequest, res: Response, next: 
         tenant = await Tenant.findByPk(tenantIdFromHeader as string);
     } else if (host) {
         const subdomain = host.split('.')[0];
-        // Skip for local or main domain if needed
-        if (subdomain !== 'localhost' && subdomain !== 'www' && subdomain !== 'app') {
+        if (!['localhost', 'www', 'app', 'admin', 'portal'].includes(subdomain.toLowerCase())) {
             tenant = await Tenant.findOne({ where: { subdomain } });
         }
     }
 
-    // For public portal endpoints, tenant must be found
-    if (!tenant && req.path.startsWith('/api/portal/')) {
-        const id = req.path.split('/')[3]; // /api/portal/:id
-        if (id) {
-            tenant = await Tenant.findByPk(id);
-        }
+    // Enforce active status
+    if (tenant && tenant.status !== 'ACTIVE') {
+        return res.status(403).json({ error: 'Tenant account is suspended or inactive.' });
     }
 
     if (tenant) {

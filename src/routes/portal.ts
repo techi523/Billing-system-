@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Package, Payment, Tenant, Router as RouterModel } from '../models';
 import { MpesaService } from '../services/mpesa.service';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -34,7 +35,18 @@ router.post('/:tenantId/pay', async (req, res) => {
     if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
 
     const pkg = await Package.findByPk(packageId);
-    if (!pkg || pkg.tenantId !== tenantId) return res.status(404).json({ error: 'Package not found' });
+    if (!pkg || pkg.tenantId !== tenantId) {
+        logger.warn('Unauthorized payment attempt: Package/Tenant mismatch', { packageId, tenantId });
+        return res.status(403).json({ error: 'Invalid package for this tenant' });
+    }
+
+    if (routerId) {
+        const routerDoc = await RouterModel.findByPk(routerId);
+        if (!routerDoc || routerDoc.tenantId !== tenantId) {
+            logger.warn('Unauthorized payment attempt: Router/Tenant mismatch', { routerId, tenantId });
+            return res.status(403).json({ error: 'Invalid router for this tenant' });
+        }
+    }
 
     const payment = await Payment.create({
         phoneNumber: phone,

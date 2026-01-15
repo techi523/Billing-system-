@@ -160,15 +160,60 @@ export class Wallet extends Model {
   public ownerId!: string; // Subscriber ID, Agent ID, or Tenant ID
   public ownerType!: 'SUBSCRIBER' | 'TENANT' | 'AGENT';
   public balance!: number;
+  public frozenBalance!: number;
   public tenantId!: string;
 }
 Wallet.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   ownerId: { type: DataTypes.UUID, allowNull: false },
   ownerType: { type: DataTypes.ENUM('SUBSCRIBER', 'TENANT', 'AGENT'), allowNull: false },
-  balance: { type: DataTypes.FLOAT, defaultValue: 0 },
+  balance: { type: DataTypes.DECIMAL(20, 2), defaultValue: 0 },
+  frozenBalance: { type: DataTypes.DECIMAL(20, 2), defaultValue: 0 },
   tenantId: { type: DataTypes.UUID, allowNull: false },
 }, { sequelize, modelName: 'wallet' });
+
+export class Settlement extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public amount!: number;
+  public status!: 'PENDING' | 'PAID' | 'FAILED';
+  public method!: string;
+  public paidAt!: Date | null;
+}
+Settlement.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  amount: { type: DataTypes.DECIMAL(20, 2), allowNull: false },
+  status: { type: DataTypes.ENUM('PENDING', 'PAID', 'FAILED'), defaultValue: 'PENDING' },
+  method: { type: DataTypes.STRING },
+  paidAt: { type: DataTypes.DATE },
+}, { sequelize, modelName: 'settlement' });
+
+export class AuditLog extends Model {
+  public id!: string;
+  public tenantId!: string | null;
+  public userId!: string | null;
+  public action!: string;
+  public details!: string;
+  public ipAddress!: string | null;
+}
+AuditLog.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID },
+  userId: { type: DataTypes.UUID },
+  action: { type: DataTypes.STRING, allowNull: false },
+  details: { type: DataTypes.TEXT },
+  ipAddress: { type: DataTypes.STRING },
+}, { sequelize, modelName: 'auditLog' });
+
+export class PlatformSetting extends Model {
+  public key!: string;
+  public value!: string;
+}
+PlatformSetting.init({
+  key: { type: DataTypes.STRING, primaryKey: true },
+  value: { type: DataTypes.TEXT },
+}, { sequelize, modelName: 'platformSetting' });
 
 export class Payment extends Model {
   public id!: string;
@@ -310,7 +355,15 @@ Wallet.belongsTo(Tenant, { foreignKey: 'tenantId' });
 Tenant.hasMany(Voucher, { foreignKey: 'tenantId' });
 Voucher.belongsTo(Tenant, { foreignKey: 'tenantId' });
 
-Voucher.belongsTo(Package, { foreignKey: 'packageId' });
 Package.hasMany(Voucher, { foreignKey: 'packageId' });
+
+Tenant.hasMany(AuditLog, { foreignKey: 'tenantId' });
+AuditLog.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+AdminUser.hasMany(AuditLog, { foreignKey: 'userId' });
+AuditLog.belongsTo(AdminUser, { foreignKey: 'userId' });
+
+Tenant.hasMany(Settlement, { foreignKey: 'tenantId' });
+Settlement.belongsTo(Tenant, { foreignKey: 'tenantId' });
 
 export { sequelize };

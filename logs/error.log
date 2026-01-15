@@ -1,0 +1,3 @@
+{"error":"SQLITE_ERROR: no such table: admin_users","level":"error","message":"Setup failed:","service":"billing-system","timestamp":"2026-01-14T13:58:26.558Z"}
+{"error":"Validation error","level":"error","message":"Setup failed:","service":"billing-system","timestamp":"2026-01-14T15:20:09.540Z"}
+{"error":"SQLITE_IOERR: disk I/O error","level":"error","message":"Failed to start server:","service":"billing-system","timestamp":"2026-01-15T08:53:43.085Z"}

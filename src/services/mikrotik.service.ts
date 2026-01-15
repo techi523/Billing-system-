@@ -1,32 +1,57 @@
 import { RouterOSClient } from 'routeros-client';
 import { Router as RouterModel } from '../models';
+import { logger } from '../utils/logger';
 
 export class MikroTikService {
     private static async getClient(router: RouterModel) {
-        const client = new RouterOSClient({
+        return new RouterOSClient({
             host: router.host,
             user: router.username,
             password: router.password,
-            port: router.port || 8728
+            port: router.port || 8728,
+            timeout: 10 // 10 second timeout for production stability
         });
-        return client;
+    }
+
+    private static async executeWithRetry<T>(router: RouterModel, action: (api: any) => Promise<T>, retries = 3): Promise<T> {
+        let lastError: any;
+        for (let i = 0; i < retries; i++) {
+            const client = await this.getClient(router);
+            try {
+                const api = await client.connect();
+                const result = await action(api);
+                await client.close();
+                return result;
+            } catch (err: any) {
+                lastError = err;
+                logger.warn(`MikroTik Attempt ${i + 1} Failed`, {
+                    routerId: router.id,
+                    host: router.host,
+                    error: err.message
+                });
+                try { await client.close(); } catch { /* ignore close error */ }
+                if (i < retries - 1) await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+            }
+        }
+        logger.error('MikroTik Operation Failed after retries', {
+            routerId: router.id,
+            error: lastError.message
+        });
+        throw new Error(`Router connection failed: ${lastError.message}`);
     }
 
     // HOTSPOT METHODS
     static async createHotspotUser(router: RouterModel, username: string, password: string, macAddress: string, ipAddress?: string, limitBytes?: number, limitTime?: string) {
-        const client = await this.getClient(router);
-        try {
-            const api = await client.connect();
-
+        return this.executeWithRetry(router, async (api) => {
             const userData: any = {
                 name: username,
                 password: password,
                 profile: 'default',
-                macAddress: macAddress,
+                'mac-address': macAddress,
             };
 
-            if (limitBytes) userData.limitBytesTotal = limitBytes.toString();
-            if (limitTime) userData.limitUptime = limitTime;
+            if (limitBytes) userData['limit-bytes-total'] = limitBytes.toString();
+            if (limitTime) userData['limit-uptime'] = limitTime;
 
             await api.menu('/ip/hotspot/user').add(userData);
 
@@ -34,28 +59,23 @@ export class MikroTikService {
                 // Anti-Tethering Mangle Rule
                 await api.menu('/ip/firewall/mangle').add({
                     chain: 'prerouting',
-                    srcAddress: ipAddress,
+                    'src-address': ipAddress,
                     action: 'change-ttl',
-                    newTtl: 'set:1',
+                    'new-ttl': 'set:1',
                     comment: `Anti-Share-${username}`
                 });
 
                 const userMenu = api.menu('/ip/hotspot/user');
                 const user = await userMenu.where('name', username).find();
                 if (user) {
-                    await userMenu.update({ sharedUsers: '1' }, (user as any).id);
+                    await userMenu.update({ 'shared-users': '1' }, (user as any).id);
                 }
             }
-        } finally {
-            await client.close();
-        }
+        });
     }
 
     static async disconnectHotspotUser(router: RouterModel, username: string, ipAddress?: string) {
-        const client = await this.getClient(router);
-        try {
-            const api = await client.connect();
-
+        return this.executeWithRetry(router, async (api) => {
             const activeMenu = api.menu('/ip/hotspot/active');
             const active = await activeMenu.where('user', username).find();
             if (active) {
@@ -70,78 +90,59 @@ export class MikroTikService {
 
             if (ipAddress) {
                 const mangleMenu = api.menu('/ip/firewall/mangle');
-                const rules = await mangleMenu.where('srcAddress', ipAddress).get();
+                const rules = await mangleMenu.where('src-address', ipAddress).get();
                 for (const rule of (rules as any[])) {
                     await mangleMenu.remove(rule.id);
                 }
             }
-        } finally {
-            await client.close();
-        }
+        });
     }
 
     // PPPoE METHODS (ISP MODE)
     static async createPppoeUser(router: RouterModel, username: string, password: string, profile: string = 'default', remoteAddress?: string) {
-        const client = await this.getClient(router);
-        try {
-            const api = await client.connect();
+        return this.executeWithRetry(router, async (api) => {
             const userData: any = {
                 name: username,
                 password: password,
                 service: 'pppoe',
                 profile: profile,
             };
-            if (remoteAddress) userData.remoteAddress = remoteAddress;
+            if (remoteAddress) userData['remote-address'] = remoteAddress;
 
             await api.menu('/ppp/secret').add(userData);
-        } finally {
-            await client.close();
-        }
+        });
     }
 
     static async suspendPppoeUser(router: RouterModel, username: string) {
-        const client = await this.getClient(router);
-        try {
-            const api = await client.connect();
+        return this.executeWithRetry(router, async (api) => {
             const secretMenu = api.menu('/ppp/secret');
             const secret = await secretMenu.where('name', username).find();
             if (secret) {
                 await secretMenu.update({ disabled: 'yes' }, (secret as any).id);
             }
 
-            // Also kick from active sessions
             const activeMenu = api.menu('/ppp/active');
             const active = await activeMenu.where('name', username).find();
             if (active) {
                 await activeMenu.remove((active as any).id);
             }
-        } finally {
-            await client.close();
-        }
+        });
     }
 
     static async activatePppoeUser(router: RouterModel, username: string) {
-        const client = await this.getClient(router);
-        try {
-            const api = await client.connect();
+        return this.executeWithRetry(router, async (api) => {
             const secretMenu = api.menu('/ppp/secret');
             const secret = await secretMenu.where('name', username).find();
             if (secret) {
                 await secretMenu.update({ disabled: 'no' }, (secret as any).id);
             }
-        } finally {
-            await client.close();
-        }
+        });
     }
 
     static async getActiveHotspotSessions(router: RouterModel) {
-        const client = await this.getClient(router);
-        try {
-            const api = await client.connect();
+        return this.executeWithRetry(router, async (api) => {
             return await api.menu('/ip/hotspot/active').get();
-        } finally {
-            await client.close();
-        }
+        });
     }
 }
 

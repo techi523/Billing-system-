@@ -16,24 +16,29 @@ import logger from './utils/logger';
 const app = express();
 
 // SECURITY HARDENING
-app.use(helmet()); // Sets various HTTP headers for security
+app.use(helmet());
 app.use(cors({
     origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id']
 }));
 
-// RATE LIMITING (Prevent Abuse)
-const limiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 mins
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // Limit each IP
-    message: 'Too many requests from this IP, please try again later.',
-    standardHeaders: true,
-    legacyHeaders: false,
+// GLOBAL RATE LIMITING
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 500,
+    message: 'Too many requests, please try again later.',
 });
-app.use('/api/', limiter);
+app.use('/api/', globalLimiter);
 
-app.use(bodyParser.json({ limit: '10kb' })); // Limit body size to prevent DoS
+// STRICT RATE LIMITING (Auth & Payments)
+const strictLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10, // 10 attempts per 15 mins
+    message: 'Security threshold reached. Please try again later.',
+});
+
+app.use(bodyParser.json({ limit: '10kb' }));
 app.use(express.static('public'));
 
 // REQUEST LOGGING
@@ -43,14 +48,15 @@ app.use((req, res, next) => {
 });
 
 // ROUTES
-app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/auth', strictLimiter, authRoutes);
 app.use('/api/v1/portal', portalRoutes);
+app.use('/api/v1/portal/:tenantId/pay', strictLimiter);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/agent', agentRoutes);
 app.use('/api/v1/superadmin', superadminRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
 
-// ERROR HANDLING (Catch-all)
+// ERROR HANDLING
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger.error('Unhandled Error', { error: err.message, stack: err.stack });
     res.status(500).json({ error: 'Internal Server Error' });
@@ -64,10 +70,11 @@ async function startServer() {
         await sequelize.authenticate();
         logger.info('Database connection established successfully.');
 
-        // NOTE: In production, migrations (e.g. Umzug or Sequelize-CLI) are preferred over .sync()
-        if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV === 'production') {
+            logger.warn('PRODUCTION MODE: Skipping automated schema synchronization. Use migrations.');
+        } else {
             await sequelize.sync({ alter: true });
-            logger.info('Database synchronized (Development Mode).');
+            logger.info('DEVELOPMENT MODE: Database schema synchronized.');
         }
 
         // Background Tasks
