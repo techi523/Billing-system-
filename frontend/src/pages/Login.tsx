@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Wifi, ArrowRight, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import logo from '../assets/logo.png';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -37,7 +38,7 @@ const Login = () => {
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, ease: "outCirc" }}
+                transition={{ duration: 0.5, ease: "circOut" }}
                 className="w-full max-w-md relative z-10"
             >
                 <div className="bg-white/5 backdrop-blur-3xl border border-white/10 p-10 rounded-[3rem] shadow-2xl shadow-black/50">
@@ -46,9 +47,9 @@ const Login = () => {
                             initial={{ y: -20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.2 }}
-                            className="w-16 h-16 bg-gradient-to-tr from-sky-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-sky-500/30"
+                            className="w-24 h-24 mx-auto mb-6 drop-shadow-2xl"
                         >
-                            <Wifi size={28} className="text-white" />
+                            <img src={logo} alt="SurfBill" className="w-full h-full object-contain" />
                         </motion.div>
                         <motion.h1
                             initial={{ y: -10, opacity: 0 }}

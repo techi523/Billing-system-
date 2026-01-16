@@ -1,0 +1,5 @@
+[dotenv@17.2.3] injecting env (7) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+info: Database connection established successfully. {"service":"billing-system","timestamp":"2026-01-15T16:11:20.574Z"}
+info: DEVELOPMENT MODE: Database schema synced (no-alter checking). {"service":"billing-system","timestamp":"2026-01-15T16:11:20.790Z"}
+info: Production SaaS Billing System running on port 3000 {"service":"billing-system","timestamp":"2026-01-15T16:11:20.805Z"}

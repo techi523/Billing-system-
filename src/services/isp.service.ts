@@ -1,4 +1,5 @@
 import { Subscriber, Package, Router, Payment, Invoice } from '../models';
+import { Op } from 'sequelize';
 import { MikroTikService } from './mikrotik.service';
 
 export class IspService {
@@ -60,7 +61,7 @@ export class IspService {
         const expired = await Subscriber.findAll({
             where: {
                 status: 'ACTIVE',
-                expiryDate: { [Symbol.for('lt')]: now }
+                expiryDate: { [Op.lt]: now }
             }
         });
 

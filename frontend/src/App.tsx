@@ -1,6 +1,7 @@
-import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Radio, CreditCard, Ticket, Settings, LogOut, ShieldCheck, HelpCircle } from 'lucide-react';
+import AdminPortal from './pages/AdminPortal';
+import { LayoutDashboard, Users, Radio, CreditCard, Ticket, Settings, LogOut, HelpCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import logo from './assets/logo.png';
 
 // Mock Auth Check
 const useAuth = () => {
@@ -47,9 +48,7 @@ const AppLayout = ({ children }: any) => {
         <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
         <div className="flex items-center gap-3 px-2 py-8 mb-4 relative z-10">
-          <div className="w-10 h-10 bg-gradient-to-tr from-sky-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-500/20">
-            <Wifi size={20} className="text-white animate-pulse" />
-          </div>
+          <img src={logo} className="w-12 h-12 rounded-2xl shadow-lg shadow-sky-500/20" alt="SurfBill Logo" />
           <div>
             <span className="text-2xl font-black tracking-tighter block leading-none">SurfBill</span>
             <span className="text-[10px] font-black uppercase text-sky-400 tracking-[0.2em] mt-1 block">Smart Billing</span>
@@ -131,111 +130,29 @@ const AppLayout = ({ children }: any) => {
 
 // --- PAGES ---
 
-const Dashboard = () => (
-  <div className="space-y-6">
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {[
-        { label: 'Revenue', value: 'KES 42,500', trend: '+12%', color: 'blue' },
-        { label: 'Active Sessions', value: '1,240', trend: '+5%', color: 'emerald' },
-        { label: 'PPPoE Users', value: '450', trend: '+20', color: 'indigo' },
-        { label: 'Uptime', value: '99.9%', trend: 'Stable', color: 'orange' }
-      ].map((stat, i) => (
-        <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">{stat.label}</p>
-          <div className="flex items-end justify-between mt-2">
-            <h2 className="text-2xl font-black text-slate-900">{stat.value}</h2>
-            <span className={`text-xs font-bold px-2 py-1 rounded-lg bg-${stat.color}-50 text-${stat.color}-600 underline-offset-4`}>
-              {stat.trend}
-            </span>
-          </div>
-        </div>
-      ))}
-    </div>
-
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-          <h3 className="font-bold text-slate-800">Recent Transactions</h3>
-          <button className="text-blue-600 font-bold text-xs uppercase tracking-tight">View All</button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left font-medium text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-widest">
-              <tr>
-                <th className="px-6 py-4">Receipt</th>
-                <th className="px-6 py-4">User</th>
-                <th className="px-6 py-4">Plan</th>
-                <th className="px-6 py-4">Amount</th>
-                <th className="px-6 py-4">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {[1, 2, 3, 4, 5].map((_, i) => (
-                <tr key={i} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 font-mono text-xs">RC-29384X{i}</td>
-                  <td className="px-6 py-4">0711****0{i}</td>
-                  <td className="px-6 py-4">1 Hour Ultra</td>
-                  <td className="px-6 py-4 font-bold">KES 20</td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded-md text-[10px] font-bold uppercase tracking-tight">Success</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <div className="bg-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-200 relative overflow-hidden group">
-          <div className="relative z-10 text-center">
-            <ShieldCheck className="mx-auto mb-2 opacity-80" size={32} />
-            <h4 className="font-bold text-lg">System Active</h4>
-            <p className="text-blue-100 text-xs mt-1">All routers responsive.</p>
-            <button className="mt-4 bg-white text-blue-600 text-xs font-bold py-2 px-4 rounded-xl hover:bg-blue-50 transition-colors w-full">
-              Check Network Health
-            </button>
-          </div>
-          {/* Decorative Blob */}
-          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-blue-500 rounded-full blur-2xl opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-          <h4 className="font-bold text-slate-800 text-sm mb-4">AI Usage Insight</h4>
-          <p className="text-xs text-slate-500 leading-relaxed italic border-l-2 border-blue-500 pl-3">
-            "Your 'Morning 1-Hour' plan has 20% higher conversion at Node 02. Consider a 5 KES increase during morning peaks."
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-);
+// Dashboard component removed (unused)
 
 import CaptivePortal from './pages/CaptivePortal';
 import SuperAdminDashboard from './components/SuperAdmin/SuperAdminDashboard';
 import TenantOverview from './components/Dashboard/TenantOverview';
+import RouterList from './components/Routers/RouterList';
+import PackagePlans from './components/Packages/PackagePlans';
+import SubscriberList from './components/Subscribers/SubscriberList';
+import VoucherManager from './components/Vouchers/VoucherManager';
 
 function App() {
-  const user = useAuth() || { role: 'TENANT_ADMIN' }; // Default to demo if no token
+  const user = useAuth() || { role: 'SUPER_ADMIN', name: 'Admin' }; // Default to super admin for testing
 
   return (
     <Routes>
       <Route path="/" element={<CaptivePortal />} />
       <Route path="/portal" element={<CaptivePortal />} />
-      <Route path="/admin" element={
-        <AppLayout>
-          {user.role === 'SUPER_ADMIN' ? <SuperAdminDashboard /> : <TenantOverview />}
-        </AppLayout>
-      } />
-      <Route path="/dashboard" element={
-        <AppLayout>
-          {user.role === 'SUPER_ADMIN' ? <SuperAdminDashboard /> : <TenantOverview />}
-        </AppLayout>
-      } />
-      <Route path="/routers" element={<AppLayout><div className="bg-white p-20 rounded-2xl text-center font-bold text-slate-400">Router Management Integration...</div></AppLayout>} />
-      <Route path="/packages" element={<AppLayout><div className="bg-white p-20 rounded-2xl text-center font-bold text-slate-400">Plan Builder Loading...</div></AppLayout>} />
-      <Route path="/subscribers" element={<AppLayout><div className="bg-white p-20 rounded-2xl text-center font-bold text-slate-400">Subscriber Management Hub...</div></AppLayout>} />
-      <Route path="/vouchers" element={<AppLayout><div className="bg-white p-20 rounded-2xl text-center font-bold text-slate-400">Voucher Inventory System...</div></AppLayout>} />
+      <Route path="/admin" element={<AppLayout><AdminPortal /></AppLayout>} />
+      <Route path="/dashboard" element={<AppLayout><TenantOverview /></AppLayout>} />
+      <Route path="/routers" element={<AppLayout><RouterList /></AppLayout>} />
+      <Route path="/packages" element={<AppLayout><PackagePlans /></AppLayout>} />
+      <Route path="/subscribers" element={<AppLayout><SubscriberList /></AppLayout>} />
+      <Route path="/vouchers" element={<AppLayout><VoucherManager /></AppLayout>} />
       <Route path="/login" element={<div className="flex items-center justify-center h-screen bg-slate-900 text-white font-bold text-4xl italic tracking-tighter">SURFBILL. LOGIN</div>} />
     </Routes>
   );
