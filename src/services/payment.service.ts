@@ -20,6 +20,9 @@ export class PaymentService {
         });
 
         for (const payment of pendingPayments) {
+            let shouldFulfill = false;
+            let updatedPayment = payment;
+
             try {
                 await sequelize.transaction(async (t) => {
                     // Lock the row for the duration of the check
@@ -40,14 +43,20 @@ export class PaymentService {
                         lockedPayment.status = 'SUCCESS';
                         lockedPayment.mpesaReceiptNumber = status.MpesaReceiptNumber || `QUERY-${payment.id.slice(0, 8)}`;
                         await lockedPayment.save({ transaction: t });
-
-                        await this.fulfillPayment(lockedPayment);
+                        shouldFulfill = true;
+                        updatedPayment = lockedPayment; // Keep reference for fulfillment
                     } else if (["1032", "2001", "1"].includes(status.ResultCode)) {
                         lockedPayment.status = 'FAILED';
                         await lockedPayment.save({ transaction: t });
                         logger.warn('Payment marked as FAILED via polling', { paymentId: payment.id, code: status.ResultCode });
                     }
                 });
+
+                // Execute fulfillment OUTSIDE the transaction to ensure Orchestrator sees committed data
+                if (shouldFulfill) {
+                    await this.fulfillPayment(updatedPayment);
+                }
+
             } catch (error: any) {
                 logger.error('Polling error', { paymentId: payment.id, error: error.message });
             }

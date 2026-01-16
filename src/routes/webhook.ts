@@ -33,6 +33,8 @@ router.post('/mpesa', async (req, res) => {
     const resultCode = callback.ResultCode;
 
     try {
+        let shouldFulfill = false;
+
         await sequelize.transaction(async (t) => {
             // Find the pending payment with LOCK to prevent race conditions
             const payment = await Payment.findOne({
@@ -89,26 +91,7 @@ router.post('/mpesa', async (req, res) => {
                 await payment.save({ transaction: t });
 
                 logger.info('Payment SUCCESS', { paymentId: payment.id, receipt });
-
-                // 4. INTERNET ACTIVATION LOGIC
-                try {
-                    if (payment.subscriberId) {
-                        // ISP MODE
-                        const { IspService } = require('../services/isp.service');
-                        await IspService.renewSubscriber(payment.subscriberId);
-                        logger.info('ISP Subscriber Renewed', { subscriberId: payment.subscriberId });
-                    } else if (payment.macAddress) {
-                        // HOTSPOT MODE
-                        await SessionOrchestrator.grantAccess(
-                            payment.id,
-                            payment.macAddress,
-                            payment.ipAddress as string
-                        );
-                        logger.info('Hotspot Access Granted', { mac: payment.macAddress });
-                    }
-                } catch (error: any) {
-                    logger.error('Fulfillment Failed', { paymentId: payment.id, error: error.message });
-                }
+                shouldFulfill = true; // Signal for post-transaction fulfillment
 
             } else {
                 // FAILURES (e.g. 1032 cancelled, 2001 insufficient)
@@ -121,6 +104,32 @@ router.post('/mpesa', async (req, res) => {
                 });
             }
         });
+
+        // 4. INTERNET ACTIVATION LOGIC (Outside Transaction)
+        if (shouldFulfill) {
+            try {
+                // Re-fetch payment to ensure we have committed data
+                const freshPayment = await Payment.findOne({ where: { checkoutRequestId } });
+
+                if (freshPayment && freshPayment.subscriberId) {
+                    // ISP MODE
+                    const { IspService } = require('../services/isp.service');
+                    await IspService.renewSubscriber(freshPayment.subscriberId);
+                    logger.info('ISP Subscriber Renewed', { subscriberId: freshPayment.subscriberId });
+                } else if (freshPayment && freshPayment.macAddress) {
+                    // HOTSPOT MODE
+                    await SessionOrchestrator.grantAccess(
+                        freshPayment.id,
+                        freshPayment.macAddress,
+                        freshPayment.ipAddress as string
+                    );
+                    logger.info('Hotspot Access Granted', { mac: freshPayment.macAddress });
+                }
+            } catch (error: any) {
+                // Note: Payment is already SUCCESS, so we log this as a critical fulfillment error
+                logger.error('Fulfillment Failed', { checkoutRequestId, error: error.message });
+            }
+        }
     } catch (err: any) {
         logger.error('Webhook Processing Error', { error: err.message });
         return res.status(500).send('Internal Server Error');

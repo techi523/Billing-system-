@@ -56,6 +56,25 @@ app.use('/api/v1/agent', agentRoutes);
 app.use('/api/v1/superadmin', superadminRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
 
+// HEALTH CHECK
+app.get('/health', async (req, res) => {
+    try {
+        await sequelize.authenticate();
+        res.status(200).json({
+            status: 'UP',
+            timestamp: new Date().toISOString(),
+            database: 'CONNECTED',
+            uptime: process.uptime()
+        });
+    } catch (error) {
+        res.status(503).json({
+            status: 'DOWN',
+            timestamp: new Date().toISOString(),
+            database: 'DISCONNECTED'
+        });
+    }
+});
+
 // ERROR HANDLING
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger.error('Unhandled Error', { error: err.message, stack: err.stack });
