@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Radio, Wifi, Activity, MoreVertical, Plus, Server, Cpu } from 'lucide-react';
+import { Radio, Wifi, Activity, MoreVertical, Plus, Server } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const RouterCard = ({ router, index }: any) => (
