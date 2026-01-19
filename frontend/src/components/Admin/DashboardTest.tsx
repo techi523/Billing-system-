@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { TrendingUp, Building2, CheckCircle2, Globe, AlertCircle, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 
 /**
@@ -78,8 +77,8 @@ const DashboardTest = () => {
                         <button
                             onClick={() => setTestMode('success')}
                             className={`px-4 py-2 rounded-lg font-bold ${testMode === 'success'
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                ? 'bg-green-500 text-white'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                 }`}
                         >
                             ✅ Success
@@ -87,8 +86,8 @@ const DashboardTest = () => {
                         <button
                             onClick={() => setTestMode('error')}
                             className={`px-4 py-2 rounded-lg font-bold ${testMode === 'error'
-                                    ? 'bg-red-500 text-white'
-                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                ? 'bg-red-500 text-white'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                 }`}
                         >
                             ❌ API Error
@@ -96,8 +95,8 @@ const DashboardTest = () => {
                         <button
                             onClick={() => setTestMode('timeout')}
                             className={`px-4 py-2 rounded-lg font-bold ${testMode === 'timeout'
-                                    ? 'bg-orange-500 text-white'
-                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                ? 'bg-orange-500 text-white'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                 }`}
                         >
                             ⏰ Timeout
@@ -105,8 +104,8 @@ const DashboardTest = () => {
                         <button
                             onClick={() => setTestMode('network')}
                             className={`px-4 py-2 rounded-lg font-bold ${testMode === 'network'
-                                    ? 'bg-purple-500 text-white'
-                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                ? 'bg-purple-500 text-white'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                 }`}
                         >
                             🌐 Network Error
