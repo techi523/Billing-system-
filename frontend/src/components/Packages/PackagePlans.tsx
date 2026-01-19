@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CreditCard, Check, Zap, Clock, Edit3, Trash2, Plus } from 'lucide-react';
+import { Check, Zap, Clock, Trash2, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const PlanCard = ({ plan, index }: any) => (

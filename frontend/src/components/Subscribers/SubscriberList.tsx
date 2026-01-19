@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Filter, MoreHorizontal, User, Smartphone, Clock, Shield } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, Smartphone, Clock, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const SubscriberList = () => {
@@ -93,7 +93,7 @@ const SubscriberList = () => {
                                 <td className="px-8 py-5">
                                     <div className="flex flex-col items-start gap-1">
                                         <span className={`status-pill ${sub.status === 'Active' ? 'pill-success' :
-                                                sub.status === 'Warning' ? 'pill-warning' : 'pill-danger'
+                                            sub.status === 'Warning' ? 'pill-warning' : 'pill-danger'
                                             }`}>
                                             {sub.status}
                                         </span>

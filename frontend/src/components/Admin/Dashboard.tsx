@@ -1,26 +1,98 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { TrendingUp, Building2, CheckCircle2, Globe } from 'lucide-react';
+import { TrendingUp, Building2, CheckCircle2, Globe, AlertCircle, RefreshCw } from 'lucide-react';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchStats = async () => {
+            setIsLoading(true);
+            setError(null);
+
+            console.log('AdminDashboard: Starting stats fetch...');
+
             try {
-                const res = await axios.get('/api/v1/superadmin/platform-stats');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+                const res = await axios.get('/api/v1/superadmin/platform-stats', {
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                console.log('AdminDashboard: Stats fetch successful', res.data);
                 setStats(res.data);
-            } catch (e) {
-                console.error('Failed to load admin stats');
+                setIsLoading(false);
+            } catch (err: any) {
+                console.error('AdminDashboard: Stats fetch failed', err);
+                setError(err.message || 'Failed to load dashboard data');
+                setIsLoading(false);
+
+                // Set default stats for fallback UI
+                setStats({
+                    totalRevenue: 0,
+                    activeTenants: 0,
+                    totalTenants: 0,
+                    totalPayments: 0
+                });
             }
         };
+
         fetchStats();
     }, []);
 
-    if (!stats) {
+    if (isLoading) {
         return (
-            <div className="h-[60vh] flex items-center justify-center text-slate-400">
-                Loading admin dashboard...
+            <div className="space-y-8">
+                <h2 className="text-3xl font-black text-slate-900">Admin Dashboard</h2>
+                <div className="h-[60vh] flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="w-16 h-16 border-4 border-slate-200 border-t-sky-500 rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-slate-600 font-bold">Loading dashboard data...</p>
+                        <p className="text-sm text-slate-400 mt-2">This may take a moment</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="space-y-8">
+                <h2 className="text-3xl font-black text-slate-900">Admin Dashboard</h2>
+                <div className="premium-card bg-white">
+                    <div className="p-6 text-center">
+                        <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">Unable to Load Dashboard</h3>
+                        <p className="text-slate-600 mb-6">{error}</p>
+                        <div className="flex gap-4 justify-center">
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="bg-sky-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-sky-600 transition-colors flex items-center gap-2"
+                            >
+                                <RefreshCw className="w-4 h-4" />
+                                Retry
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setStats({
+                                        totalRevenue: 0,
+                                        activeTenants: 0,
+                                        totalTenants: 0,
+                                        totalPayments: 0
+                                    });
+                                    setError(null);
+                                }}
+                                className="bg-slate-100 text-slate-700 px-6 py-3 rounded-lg font-bold hover:bg-slate-200 transition-colors"
+                            >
+                                Show Empty Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
