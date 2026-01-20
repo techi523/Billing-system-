@@ -3,11 +3,13 @@ export default {
     content: [
         "./index.html",
         "./src/**/*.{js,ts,jsx,tsx}",
+        "./src/**/*.css",
     ],
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Inter', 'system-ui', 'sans-serif'],
+                sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+                heading: ['Outfit', 'system-ui', 'sans-serif'],
             },
         },
     },

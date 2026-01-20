@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Radio, CreditCard, Ticket, Settings, ArrowUpRight, ArrowDownRight, Activity, TrendingUp } from 'lucide-react';
+import { Users, Radio, CreditCard, Ticket, ArrowUpRight, ArrowDownRight, Activity, TrendingUp } from 'lucide-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wifi, ArrowRight, Lock, Mail } from 'lucide-react';
+import { ArrowRight, Lock, Mail, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import logo from '../assets/logo.png';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -10,11 +11,47 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [isBackendConnected, setIsBackendConnected] = useState(false);
+
+    // Test backend connection on component mount
+    useState(() => {
+        const testConnection = async () => {
+            try {
+                await axios.get('/api/v1/auth/login', { timeout: 2000 });
+                setIsBackendConnected(true);
+            } catch (e) {
+                setIsBackendConnected(false);
+            }
+        };
+        testConnection();
+    });
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+
+        // Demo credentials for when backend is not available
+        const demoCredentials = {
+            email: 'admin@demo.com',
+            password: 'demo123',
+            name: 'Demo Admin'
+        };
+
+        if (!isBackendConnected) {
+            // Demo mode - bypass authentication
+            if (email === demoCredentials.email && password === demoCredentials.password) {
+                localStorage.setItem('token', 'demo-token');
+                localStorage.setItem('user', JSON.stringify(demoCredentials));
+                navigate('/admin');
+            } else {
+                setError('Demo Mode: Use admin@demo.com / demo123');
+            }
+            setLoading(false);
+            return;
+        }
+
+        // Real authentication when backend is available
         try {
             const res = await axios.post('/api/v1/auth/login', { email, password });
             localStorage.setItem('token', res.data.token);
@@ -37,7 +74,7 @@ const Login = () => {
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, ease: "outCirc" }}
+                transition={{ duration: 0.5, ease: "circOut" }}
                 className="w-full max-w-md relative z-10"
             >
                 <div className="bg-white/5 backdrop-blur-3xl border border-white/10 p-10 rounded-[3rem] shadow-2xl shadow-black/50">
@@ -46,9 +83,9 @@ const Login = () => {
                             initial={{ y: -20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.2 }}
-                            className="w-16 h-16 bg-gradient-to-tr from-sky-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-sky-500/30"
+                            className="w-24 h-24 mx-auto mb-6 drop-shadow-2xl"
                         >
-                            <Wifi size={28} className="text-white" />
+                            <img src={logo} alt="SurfBill" className="w-full h-full object-contain" />
                         </motion.div>
                         <motion.h1
                             initial={{ y: -10, opacity: 0 }}
@@ -66,6 +103,28 @@ const Login = () => {
                         >
                             Sign in to your SurfBill Command Center
                         </motion.p>
+
+                        {/* Demo Credentials Banner */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="mt-6 bg-sky-500/20 border border-sky-500/30 rounded-2xl p-4"
+                        >
+                            <div className="flex items-center gap-3 text-sky-400 font-black text-sm">
+                                <Shield size={16} />
+                                <span>DEMO MODE ACTIVE</span>
+                            </div>
+                            <div className="mt-2 text-sky-300 text-xs font-bold">
+                                Use: admin@demo.com / demo123
+                            </div>
+                            <div className="mt-3 grid grid-cols-2 gap-2 text-[10px] font-black text-sky-300">
+                                <span>• /admin - Admin Portal</span>
+                                <span>• /superadmin - Super Admin</span>
+                                <span>• /tenant - Tenant Portal</span>
+                                <span>• /customer - Customer Portal</span>
+                            </div>
+                        </motion.div>
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-6">

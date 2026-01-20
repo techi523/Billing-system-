@@ -73,38 +73,130 @@
 {"error":"M-Pesa Consumer Key/Secret missing","level":"error","message":"STK Push Failed","service":"billing-system","timestamp":"2026-01-15T13:02:56.947Z"}
 {"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T13:37:05.845Z"}
 {"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T13:42:23.728Z"}
-{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-16T08:42:37.644Z"}
-{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-16T08:42:38.502Z"}
-{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-16T08:42:38.732Z"}
-{"ip":"::1","level":"info","message":"GET /health","service":"billing-system","timestamp":"2026-01-16T08:42:40.472Z"}
-{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-16T08:42:53.333Z"}
-{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-16T08:42:55.421Z"}
-{"ip":"::1","level":"info","message":"POST /api/v1/admin/packages","service":"billing-system","timestamp":"2026-01-16T08:42:56.547Z"}
-{"ip":"::1","level":"info","message":"POST /api/v1/admin/routers","service":"billing-system","timestamp":"2026-01-16T08:42:56.913Z"}
-{"ip":"::1","level":"info","message":"POST /api/v1/portal/2621f234-dddd-419b-bcf6-5f6678a0cbc7/pay","service":"billing-system","timestamp":"2026-01-16T08:42:57.235Z"}
-{"level":"warn","message":"M-Pesa running in MOCK mode. Returning success simulation.","service":"billing-system","timestamp":"2026-01-16T08:42:57.932Z"}
-{"ip":"::1","level":"info","message":"POST /api/v1/webhooks/mpesa","service":"billing-system","timestamp":"2026-01-16T08:42:58.340Z"}
-{"ip":"::1","level":"info","message":"M-Pesa Callback Received","payload":"{\"Body\":{\"stkCallback\":{\"MerchantRequestID\":\"29115-34620561-1\",\"CheckoutRequestID\":\"ws_CO_1768552977932_MOCK\",\"ResultCode\":0,\"ResultDesc\":\"The service request is processed successfully.\",\"CallbackMetadata\":{\"Item\":[{\"Name\":\"Amount\",\"Value\":10},{\"Name\":\"MpesaReceiptNumber\",\"Value\":\"QG57EA3811\"},{\"Name\":\"Balance\",\"Value\":0},{\"Name\":\"TransactionDate\",\"Value\":20230623124511},{\"Name\":\"PhoneNumber\",\"Value\":254712345678}]}}}}","service":"billing-system","timestamp":"2026-01-16T08:42:58.341Z"}
-{"level":"info","message":"Payment SUCCESS","paymentId":"0b9b16a7-4da9-4bc2-a0d5-9912e1c57608","receipt":"QG57EA3811","service":"billing-system","timestamp":"2026-01-16T08:42:58.433Z"}
-{"error":"Invalid payment for access grant","level":"error","message":"Fulfillment Failed","paymentId":"0b9b16a7-4da9-4bc2-a0d5-9912e1c57608","service":"billing-system","timestamp":"2026-01-16T08:42:58.440Z"}
-{"ip":"::1","level":"info","message":"GET /api/v1/admin/stats","service":"billing-system","timestamp":"2026-01-16T08:43:00.719Z"}
-{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-16T09:47:37.650Z"}
-{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-16T09:47:37.829Z"}
-{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-16T09:47:38.157Z"}
-{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-16T09:48:45.917Z"}
-{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-16T09:48:48.764Z"}
-{"ip":"::1","level":"info","message":"POST /api/v1/admin/packages","service":"billing-system","timestamp":"2026-01-16T09:48:50.566Z"}
-{"ip":"::1","level":"info","message":"POST /api/v1/admin/routers","service":"billing-system","timestamp":"2026-01-16T09:48:50.696Z"}
-{"ip":"::1","level":"info","message":"POST /api/v1/portal/49c5c7db-3d4a-48a4-9dd6-dd94df05f818/pay","service":"billing-system","timestamp":"2026-01-16T09:48:51.231Z"}
-{"level":"warn","message":"M-Pesa running in MOCK mode. Returning success simulation.","service":"billing-system","timestamp":"2026-01-16T09:48:51.949Z"}
-{"ip":"::1","level":"info","message":"POST /api/v1/webhooks/mpesa","service":"billing-system","timestamp":"2026-01-16T09:48:52.176Z"}
-{"ip":"::1","level":"info","message":"M-Pesa Callback Received","payload":"{\"Body\":{\"stkCallback\":{\"MerchantRequestID\":\"29115-34620561-1\",\"CheckoutRequestID\":\"ws_CO_1768556931950_MOCK\",\"ResultCode\":0,\"ResultDesc\":\"The service request is processed successfully.\",\"CallbackMetadata\":{\"Item\":[{\"Name\":\"Amount\",\"Value\":10},{\"Name\":\"MpesaReceiptNumber\",\"Value\":\"QG5CCB999F\"},{\"Name\":\"Balance\",\"Value\":0},{\"Name\":\"TransactionDate\",\"Value\":20230623124511},{\"Name\":\"PhoneNumber\",\"Value\":254712345678}]}}}}","service":"billing-system","timestamp":"2026-01-16T09:48:52.177Z"}
-{"level":"info","message":"Payment SUCCESS","paymentId":"ee3e5e12-fc72-4429-b457-abaadbd67d51","receipt":"QG5CCB999F","service":"billing-system","timestamp":"2026-01-16T09:48:52.224Z"}
-{"error":"Timed out after 10 seconds","host":"192.168.88.1","level":"warn","message":"MikroTik Attempt 1 Failed","routerId":"c628830a-fb7f-4f1d-bf0d-a215af813e13","service":"billing-system","timestamp":"2026-01-16T09:49:04.778Z"}
-{"error":"Timed out after 10 seconds","host":"192.168.88.1","level":"warn","message":"MikroTik Attempt 2 Failed","routerId":"c628830a-fb7f-4f1d-bf0d-a215af813e13","service":"billing-system","timestamp":"2026-01-16T09:49:16.684Z"}
-{"error":"Timed out after 10 seconds","host":"192.168.88.1","level":"warn","message":"MikroTik Attempt 3 Failed","routerId":"c628830a-fb7f-4f1d-bf0d-a215af813e13","service":"billing-system","timestamp":"2026-01-16T09:49:28.829Z"}
-{"error":"Timed out after 10 seconds","level":"error","message":"MikroTik Operation Failed after retries","routerId":"c628830a-fb7f-4f1d-bf0d-a215af813e13","service":"billing-system","timestamp":"2026-01-16T09:49:28.830Z"}
-{"checkoutRequestId":"ws_CO_1768556931950_MOCK","error":"Router connection failed: Timed out after 10 seconds","level":"error","message":"Fulfillment Failed","service":"billing-system","timestamp":"2026-01-16T09:49:28.846Z"}
-{"ip":"::1","level":"info","message":"GET /api/v1/admin/stats","service":"billing-system","timestamp":"2026-01-16T09:49:30.889Z"}
-{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-16T10:47:37.836Z"}
-{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-16T11:47:37.845Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T15:48:53.052Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-15T15:48:53.244Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-15T15:48:53.287Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/health","service":"billing-system","timestamp":"2026-01-15T15:49:28.152Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/packages","service":"billing-system","timestamp":"2026-01-15T16:03:52.173Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T16:11:20.574Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-15T16:11:20.790Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-15T16:11:20.805Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T16:59:40.307Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-15T16:59:40.583Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-15T16:59:40.617Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T17:17:05.346Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-15T17:17:06.474Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-15T17:17:06.580Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T17:50:26.537Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-15T17:50:27.198Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-15T17:50:27.256Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T17:53:35.073Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-15T17:53:37.170Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-15T17:53:37.254Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T17:54:40.988Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-15T17:54:41.412Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-15T17:54:41.462Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T17:54:44.217Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T17:54:44.337Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T17:54:44.436Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T17:54:44.511Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T17:58:21.214Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T17:58:21.345Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T17:58:21.727Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T17:58:21.866Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T17:58:54.035Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T17:58:54.119Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T18:02:12.333Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T18:02:12.412Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T18:08:27.989Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/routers","service":"billing-system","timestamp":"2026-01-15T18:09:09.461Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-15T18:09:18.142Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-15T18:09:18.804Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-15T18:09:18.861Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/subscribers","service":"billing-system","timestamp":"2026-01-15T18:09:34.032Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T18:12:52.741Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T18:12:52.892Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T18:12:52.949Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/demo/packages","service":"billing-system","timestamp":"2026-01-15T18:12:53.007Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/platform-stats","service":"billing-system","timestamp":"2026-01-15T18:16:21.471Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/tenants","service":"billing-system","timestamp":"2026-01-15T18:16:21.497Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/audit-logs","service":"billing-system","timestamp":"2026-01-15T18:16:21.511Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/platform-stats","service":"billing-system","timestamp":"2026-01-15T18:16:21.572Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/tenants","service":"billing-system","timestamp":"2026-01-15T18:16:21.694Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/audit-logs","service":"billing-system","timestamp":"2026-01-15T18:16:21.705Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/stats","service":"billing-system","timestamp":"2026-01-15T18:17:15.429Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/reports/revenue","service":"billing-system","timestamp":"2026-01-15T18:17:15.438Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/stats","service":"billing-system","timestamp":"2026-01-15T18:17:15.485Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/reports/revenue","service":"billing-system","timestamp":"2026-01-15T18:17:15.494Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T18:53:37.176Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T18:54:41.416Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T19:09:18.812Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T19:53:37.178Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T19:54:41.452Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T20:09:18.813Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T20:53:37.180Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T20:54:41.552Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T21:09:18.813Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T21:53:37.182Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T21:54:41.654Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T22:09:18.912Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T22:53:37.184Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T22:54:41.752Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T23:09:19.012Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T23:53:37.187Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T23:54:41.853Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-16T00:09:19.112Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-16T00:53:37.190Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-16T00:54:41.952Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-16T01:09:19.212Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-16T01:53:37.190Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-16T01:54:42.048Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-16T02:09:19.311Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-17T18:25:39.699Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-17T18:25:40.560Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-17T18:25:40.672Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-17T19:25:40.583Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-17T20:25:40.579Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-17T21:25:40.579Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-17T22:25:40.582Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-18T10:15:21.865Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-18T10:15:22.138Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-18T10:15:22.167Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T10:16:12.035Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T10:16:36.784Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T10:20:06.142Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T10:20:06.151Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T10:46:18.408Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T10:46:18.423Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T10:47:03.540Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T10:47:03.564Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T11:15:22.142Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T12:15:22.141Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T13:15:22.141Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T14:15:22.141Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T15:09:28.280Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T15:09:28.300Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-18T15:10:19.699Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-18T15:10:19.957Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-18T15:10:19.983Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T15:12:17.579Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T15:12:17.606Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/platform-stats","service":"billing-system","timestamp":"2026-01-18T15:28:05.351Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/platform-stats","service":"billing-system","timestamp":"2026-01-18T15:28:05.387Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/platform-stats","service":"billing-system","timestamp":"2026-01-18T15:32:42.613Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/platform-stats","service":"billing-system","timestamp":"2026-01-18T15:32:42.719Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T15:33:32.433Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T15:33:32.507Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T15:34:10.602Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-18T15:34:10.675Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/platform-stats","service":"billing-system","timestamp":"2026-01-18T15:43:10.198Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/platform-stats","service":"billing-system","timestamp":"2026-01-18T15:43:10.215Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/platform-stats","service":"billing-system","timestamp":"2026-01-18T15:47:46.105Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T16:10:19.961Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T17:10:19.961Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T18:10:19.962Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T19:10:19.962Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T20:10:19.975Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T21:10:19.985Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T22:10:19.993Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T23:10:19.993Z"}

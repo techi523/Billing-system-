@@ -1,0 +1,7 @@
+[dotenv@17.2.3] injecting env (7) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+info: Database connection established successfully. {"service":"billing-system","timestamp":"2026-01-15T15:48:53.052Z"}
+info: DEVELOPMENT MODE: Database schema synced (no-alter checking). {"service":"billing-system","timestamp":"2026-01-15T15:48:53.244Z"}
+info: Production SaaS Billing System running on port 3000 {"service":"billing-system","timestamp":"2026-01-15T15:48:53.287Z"}
+info: GET /api/v1/portal/health {"ip":"::1","service":"billing-system","timestamp":"2026-01-15T15:49:28.152Z"}
+info: GET /api/v1/admin/packages {"ip":"::1","service":"billing-system","timestamp":"2026-01-15T16:03:52.173Z"}

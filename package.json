@@ -5,14 +5,16 @@
   "scripts": {
     "start": "ts-node src/server.ts",
     "dev": "ts-node src/server.ts",
-    "frontend": "cd frontend && npm run dev",
-    "surfbill": "concurrently \"npm run dev\" \"npm run frontend\"",
+    "frontend": "cd frontend && pnpm run dev",
+    "surfbill": "concurrently \"pnpm run dev\" \"pnpm run frontend\"",
     "build": "tsc"
   },
   "dependencies": {
+    "@types/body-parser": "^1.19.6",
     "@types/cors": "^2.8.19",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
+    "body-parser": "^2.2.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",

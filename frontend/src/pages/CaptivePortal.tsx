@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Smartphone, Zap, Clock, Wifi, ShieldCheck, ChevronRight, Share2, Info } from 'lucide-react';
 import axios from 'axios';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const CaptivePortal = () => {
     const [packages, setPackages] = useState<any[]>([]);

@@ -41,7 +41,7 @@ router.post('/vouchers/:id/sell', async (req: AuthRequest, res) => {
     try {
         const result = await AgentService.sellVoucher(
             req.user?.id as string,
-            req.params.id
+            req.params.id as string
         );
         res.json({ message: 'Voucher sold successfully', ...result });
     } catch (error: any) {

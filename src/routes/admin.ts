@@ -131,7 +131,16 @@ router.get('/reports/export', async (req: AuthRequest, res) => {
         const report = await AnalyticsService.getRevenueReport(req.user?.tenantId as string);
         let csv = 'Date,Phone,Amount,Package,Status\n';
         report.forEach((p: any) => {
-            csv += `${p.createdAt},${p.phoneNumber},${p.amount},${p.package?.name},${p.status}\n`;
+            const escape = (val: any) => {
+                if (val === null || val === undefined) return '';
+                const str = String(val);
+                // Escape quotes and wrap in quotes if contains comma, newline or quotes
+                if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
+            csv += `${escape(p.createdAt)},${escape(p.phoneNumber)},${escape(p.amount)},${escape(p.package?.name)},${escape(p.status)}\n`;
         });
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', 'attachment; filename=revenue_report.csv');

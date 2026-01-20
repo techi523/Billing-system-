@@ -10,7 +10,7 @@ const pageTransition = {
     type: 'tween',
     ease: 'circOut',
     duration: 0.4
-};
+} as const;
 
 export const PageTransition = ({ children, className }: { children: React.ReactNode, className?: string }) => (
     <motion.div
