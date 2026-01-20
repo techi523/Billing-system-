@@ -136,62 +136,93 @@ const TenantOverview = () => {
 
                 {/* Right Column Mix */}
                 <div className="space-y-8">
-                    {/* Insights Block */}
+                    {/* Revenue Viz (New) */}
                     <motion.div
                         initial={{ x: 20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: 0.6 }}
-                        className="bg-[#1e293b] rounded-[2.5rem] p-10 text-white relative overflow-hidden group shadow-2xl shadow-slate-900/40"
+                        className="bg-[#0f172a] rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl"
                     >
-                        <div className="absolute top-0 right-0 w-48 h-48 bg-sky-500 rounded-full blur-[100px] opacity-10 -mr-20 -mt-20 group-hover:opacity-30 transition-opacity duration-1000"></div>
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-2 mb-8">
-                                <div className="p-2 bg-sky-500 rounded-lg">
-                                    <TrendingUp size={16} />
-                                </div>
-                                <h4 className="font-black text-sky-400 text-[10px] uppercase tracking-[0.3em]">AI Trend Analysis</h4>
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h4 className="font-black text-white text-lg tracking-tight">Revenue Flow</h4>
+                                <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Last 7 Days Performance</p>
                             </div>
-                            <p className="text-2xl font-black leading-tight tracking-tight mb-4">
-                                Strategic <span className="text-sky-400">Yield Optimization</span> Identified.
-                            </p>
-                            <p className="text-slate-400 text-sm font-medium leading-relaxed mb-10">
-                                Your 'Enterprise 50MB' plan at Node: CBD is currently under-utilized. A temporary 15% discount could boost conversions by 24% this weekend.
-                            </p>
-                            <button className="w-full bg-white text-slate-900 rounded-2xl py-4 font-black text-xs uppercase tracking-widest hover:bg-sky-400 hover:text-white transition-all shadow-xl shadow-white/5">
-                                Implement Strategy
-                            </button>
+                            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+                                <TrendingUp size={20} />
+                            </div>
+                        </div>
+
+                        {/* CSS Bar Chart */}
+                        <div className="flex items-end justify-between gap-2 h-40 mb-4">
+                            {[40, 65, 45, 90, 75, 50, 85].map((h, i) => (
+                                <div key={i} className="flex-1 flex flex-col justify-end group">
+                                    <div
+                                        className="w-full bg-slate-800 rounded-t-lg relative overflow-hidden group-hover:bg-indigo-500/20 transition-colors"
+                                        style={{ height: `${h}%` }}
+                                    >
+                                        <div
+                                            className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-indigo-500 to-sky-400 opacity-60 group-hover:opacity-100 transition-all duration-500"
+                                            style={{ height: '100%' }}
+                                        ></div>
+                                    </div>
+                                    <span className="text-[9px] text-slate-500 font-bold text-center mt-2 group-hover:text-white transition-colors">
+                                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
+                                    </span>
+                                </div>
+                            ))}
                         </div>
                     </motion.div>
 
                     {/* Quick Config Card */}
-                    <motion.div
-                        initial={{ x: 20, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ delay: 0.7 }}
-                        className="premium-card !p-10"
-                    >
-                        <div className="flex items-center justify-between mb-8">
-                            <h4 className="font-black text-slate-900 text-[10px] uppercase tracking-[0.3em]">Command Center</h4>
-                            <div className="h-1 w-8 bg-sky-500 rounded-full"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-2 mb-8">
+                            <div className="p-2 bg-sky-500 rounded-lg">
+                                <TrendingUp size={16} />
+                            </div>
+                            <h4 className="font-black text-sky-400 text-[10px] uppercase tracking-[0.3em]">AI Trend Analysis</h4>
                         </div>
-                        <div className="grid grid-cols-2 gap-6">
-                            {[
-                                { label: 'Node Add', icon: Radio, sub: 'Network' },
-                                { label: 'Plan Mod', icon: CreditCard, sub: 'Fintech' },
-                                { label: 'Batch Gen', icon: Ticket, sub: 'Vouchers' },
-                                { label: 'Audit', icon: Users, sub: 'Security' }
-                            ].map((item, i) => (
-                                <button key={i} className="flex flex-col items-center justify-center p-6 rounded-3xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50/50 transition-all text-center group">
-                                    <item.icon size={24} className="mb-3 text-slate-400 group-hover:text-sky-600 group-hover:-translate-y-1 transition-all" strokeWidth={2.5} />
-                                    <span className="text-[11px] font-black text-slate-900 leading-tight uppercase tracking-tight">{item.label}</span>
-                                    <span className="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-widest">{item.sub}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </motion.div>
-                </div>
+                        <p className="text-2xl font-black leading-tight tracking-tight mb-4">
+                            Strategic <span className="text-sky-400">Yield Optimization</span> Identified.
+                        </p>
+                        <p className="text-slate-400 text-sm font-medium leading-relaxed mb-10">
+                            Your 'Enterprise 50MB' plan at Node: CBD is currently under-utilized. A temporary 15% discount could boost conversions by 24% this weekend.
+                        </p>
+                        <button className="w-full bg-white text-slate-900 rounded-2xl py-4 font-black text-xs uppercase tracking-widest hover:bg-sky-400 hover:text-white transition-all shadow-xl shadow-white/5">
+                            Implement Strategy
+                        </button>
+                    </div>
+                </motion.div>
+
+                {/* Quick Config Card */}
+                <motion.div
+                    initial={{ x: 20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.7 }}
+                    className="premium-card !p-10"
+                >
+                    <div className="flex items-center justify-between mb-8">
+                        <h4 className="font-black text-slate-900 text-[10px] uppercase tracking-[0.3em]">Command Center</h4>
+                        <div className="h-1 w-8 bg-sky-500 rounded-full"></div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-6">
+                        {[
+                            { label: 'Node Add', icon: Radio, sub: 'Network' },
+                            { label: 'Plan Mod', icon: CreditCard, sub: 'Fintech' },
+                            { label: 'Batch Gen', icon: Ticket, sub: 'Vouchers' },
+                            { label: 'Audit', icon: Users, sub: 'Security' }
+                        ].map((item, i) => (
+                            <button key={i} className="flex flex-col items-center justify-center p-6 rounded-3xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50/50 transition-all text-center group">
+                                <item.icon size={24} className="mb-3 text-slate-400 group-hover:text-sky-600 group-hover:-translate-y-1 transition-all" strokeWidth={2.5} />
+                                <span className="text-[11px] font-black text-slate-900 leading-tight uppercase tracking-tight">{item.label}</span>
+                                <span className="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-widest">{item.sub}</span>
+                            </button>
+                        ))}
+                    </div>
+                </motion.div>
             </div>
         </div>
+        </div >
     );
 };
 

@@ -73,3 +73,38 @@
 {"error":"M-Pesa Consumer Key/Secret missing","level":"error","message":"STK Push Failed","service":"billing-system","timestamp":"2026-01-15T13:02:56.947Z"}
 {"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T13:37:05.845Z"}
 {"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-15T13:42:23.728Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-16T08:42:37.644Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-16T08:42:38.502Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-16T08:42:38.732Z"}
+{"ip":"::1","level":"info","message":"GET /health","service":"billing-system","timestamp":"2026-01-16T08:42:40.472Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-16T08:42:53.333Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-16T08:42:55.421Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/admin/packages","service":"billing-system","timestamp":"2026-01-16T08:42:56.547Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/admin/routers","service":"billing-system","timestamp":"2026-01-16T08:42:56.913Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/portal/2621f234-dddd-419b-bcf6-5f6678a0cbc7/pay","service":"billing-system","timestamp":"2026-01-16T08:42:57.235Z"}
+{"level":"warn","message":"M-Pesa running in MOCK mode. Returning success simulation.","service":"billing-system","timestamp":"2026-01-16T08:42:57.932Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/webhooks/mpesa","service":"billing-system","timestamp":"2026-01-16T08:42:58.340Z"}
+{"ip":"::1","level":"info","message":"M-Pesa Callback Received","payload":"{\"Body\":{\"stkCallback\":{\"MerchantRequestID\":\"29115-34620561-1\",\"CheckoutRequestID\":\"ws_CO_1768552977932_MOCK\",\"ResultCode\":0,\"ResultDesc\":\"The service request is processed successfully.\",\"CallbackMetadata\":{\"Item\":[{\"Name\":\"Amount\",\"Value\":10},{\"Name\":\"MpesaReceiptNumber\",\"Value\":\"QG57EA3811\"},{\"Name\":\"Balance\",\"Value\":0},{\"Name\":\"TransactionDate\",\"Value\":20230623124511},{\"Name\":\"PhoneNumber\",\"Value\":254712345678}]}}}}","service":"billing-system","timestamp":"2026-01-16T08:42:58.341Z"}
+{"level":"info","message":"Payment SUCCESS","paymentId":"0b9b16a7-4da9-4bc2-a0d5-9912e1c57608","receipt":"QG57EA3811","service":"billing-system","timestamp":"2026-01-16T08:42:58.433Z"}
+{"error":"Invalid payment for access grant","level":"error","message":"Fulfillment Failed","paymentId":"0b9b16a7-4da9-4bc2-a0d5-9912e1c57608","service":"billing-system","timestamp":"2026-01-16T08:42:58.440Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/stats","service":"billing-system","timestamp":"2026-01-16T08:43:00.719Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-16T09:47:37.650Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-16T09:47:37.829Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-16T09:47:38.157Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-16T09:48:45.917Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-16T09:48:48.764Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/admin/packages","service":"billing-system","timestamp":"2026-01-16T09:48:50.566Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/admin/routers","service":"billing-system","timestamp":"2026-01-16T09:48:50.696Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/portal/49c5c7db-3d4a-48a4-9dd6-dd94df05f818/pay","service":"billing-system","timestamp":"2026-01-16T09:48:51.231Z"}
+{"level":"warn","message":"M-Pesa running in MOCK mode. Returning success simulation.","service":"billing-system","timestamp":"2026-01-16T09:48:51.949Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/webhooks/mpesa","service":"billing-system","timestamp":"2026-01-16T09:48:52.176Z"}
+{"ip":"::1","level":"info","message":"M-Pesa Callback Received","payload":"{\"Body\":{\"stkCallback\":{\"MerchantRequestID\":\"29115-34620561-1\",\"CheckoutRequestID\":\"ws_CO_1768556931950_MOCK\",\"ResultCode\":0,\"ResultDesc\":\"The service request is processed successfully.\",\"CallbackMetadata\":{\"Item\":[{\"Name\":\"Amount\",\"Value\":10},{\"Name\":\"MpesaReceiptNumber\",\"Value\":\"QG5CCB999F\"},{\"Name\":\"Balance\",\"Value\":0},{\"Name\":\"TransactionDate\",\"Value\":20230623124511},{\"Name\":\"PhoneNumber\",\"Value\":254712345678}]}}}}","service":"billing-system","timestamp":"2026-01-16T09:48:52.177Z"}
+{"level":"info","message":"Payment SUCCESS","paymentId":"ee3e5e12-fc72-4429-b457-abaadbd67d51","receipt":"QG5CCB999F","service":"billing-system","timestamp":"2026-01-16T09:48:52.224Z"}
+{"error":"Timed out after 10 seconds","host":"192.168.88.1","level":"warn","message":"MikroTik Attempt 1 Failed","routerId":"c628830a-fb7f-4f1d-bf0d-a215af813e13","service":"billing-system","timestamp":"2026-01-16T09:49:04.778Z"}
+{"error":"Timed out after 10 seconds","host":"192.168.88.1","level":"warn","message":"MikroTik Attempt 2 Failed","routerId":"c628830a-fb7f-4f1d-bf0d-a215af813e13","service":"billing-system","timestamp":"2026-01-16T09:49:16.684Z"}
+{"error":"Timed out after 10 seconds","host":"192.168.88.1","level":"warn","message":"MikroTik Attempt 3 Failed","routerId":"c628830a-fb7f-4f1d-bf0d-a215af813e13","service":"billing-system","timestamp":"2026-01-16T09:49:28.829Z"}
+{"error":"Timed out after 10 seconds","level":"error","message":"MikroTik Operation Failed after retries","routerId":"c628830a-fb7f-4f1d-bf0d-a215af813e13","service":"billing-system","timestamp":"2026-01-16T09:49:28.830Z"}
+{"checkoutRequestId":"ws_CO_1768556931950_MOCK","error":"Router connection failed: Timed out after 10 seconds","level":"error","message":"Fulfillment Failed","service":"billing-system","timestamp":"2026-01-16T09:49:28.846Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/stats","service":"billing-system","timestamp":"2026-01-16T09:49:30.889Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-16T10:47:37.836Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-16T11:47:37.845Z"}

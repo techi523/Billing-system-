@@ -39,128 +39,130 @@ const SuperAdminDashboard = () => {
     );
 
     return (
-        <div className="space-y-10 animate-float-slow">
-            {/* Global Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    return (
+        <div className="space-y-12 animate-fade-in pb-10">
+            {/* Hero Section */}
+            <div className="relative">
+                <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">
+                    Platform <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-sky-500">Command Center</span>
+                </h1>
+                <p className="text-slate-500 font-medium">Global Infrastructure Oversight</p>
+                <div className="absolute top-0 right-0 p-3 glass-panel rounded-2xl flex items-center gap-3">
+                    <div className="relative">
+                        <div className="w-3 h-3 bg-emerald-500 rounded-full animate-ping absolute top-0 right-0 opacity-75"></div>
+                        <div className="w-3 h-3 bg-emerald-500 rounded-full relative z-10"></div>
+                    </div>
+                    <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">System Operational</span>
+                </div>
+            </div>
+
+            {/* Global Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                    { label: 'Platform Revenue', value: stats.totalRevenue, sub: 'Gross Ledger', icon: TrendingUp, color: 'indigo' },
-                    { label: 'Active Tenants', value: stats.activeTenants, sub: `Out of ${stats.totalTenants} Total`, icon: Building2, color: 'sky' },
-                    { label: 'Global Transactions', value: stats.totalPayments, sub: 'Success Rate: 98%', icon: CheckCircle2, color: 'emerald' },
-                    { label: 'Nairobi Hub Load', value: 'Optimal', sub: 'Regional Cluster 1', icon: Globe, color: 'orange' }
+                    { label: 'Platform Revenue', value: stats.totalRevenue, sub: 'Gross Ledger', icon: TrendingUp, color: 'indigo', delay: 0 },
+                    { label: 'Active Tenants', value: stats.activeTenants, sub: `Out of ${stats.totalTenants} Total`, icon: Building2, color: 'sky', delay: 0.1 },
+                    { label: 'Global Transactions', value: stats.totalPayments, sub: 'Success Rate: 98%', icon: CheckCircle2, color: 'emerald', delay: 0.2 },
+                    { label: 'Regional Hub Load', value: 'Optimal', sub: 'Latency: 12ms', icon: Globe, color: 'orange', delay: 0.3 }
                 ].map((s, i) => (
-                    <div key={i} className="premium-card group hover:-translate-y-2 transition-all duration-500">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">{s.label}</p>
-                                <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-                                    {typeof s.value === 'number' && s.label.includes('Revenue') ? `KES ${s.value.toLocaleString()}` : s.value}
-                                </h2>
-                                <p className="text-[10px] font-bold text-slate-400 mt-2 italic">{s.sub}</p>
+                    <div key={i} className="group relative" style={{ animationDelay: `${s.delay}s` }}>
+                        <div className={`absolute inset-0 bg-gradient-to-br from-${s.color}-500/20 to-transparent rounded-[2rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700`}></div>
+                        <div className="relative bg-white/60 backdrop-blur-xl border border-white/20 p-6 rounded-[2rem] shadow-xl hover:-translate-y-1 transition-transform duration-500">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className={`p-3 rounded-2xl bg-${s.color}-50 text-${s.color}-600 group-hover:scale-110 transition-transform`}>
+                                    <s.icon size={24} strokeWidth={2} />
+                                </div>
+                                <span className={`text-[10px] font-black px-2 py-1 rounded-lg bg-${s.color}-50 text-${s.color}-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity`}>
+                                    Live
+                                </span>
                             </div>
-                            <div className={`p-4 rounded-2xl bg-${s.color}-50 text-${s.color}-600 group-hover:bg-${s.color}-500 group-hover:text-white transition-all`}>
-                                <s.icon size={22} strokeWidth={2.5} />
-                            </div>
+                            <h3 className="text-3xl font-black text-slate-900 tracking-tight mb-1">
+                                {typeof s.value === 'number' && s.label.includes('Revenue') ? `KES ${s.value.toLocaleString()}` : s.value}
+                            </h3>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{s.label}</p>
                         </div>
                     </div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                {/* Tenant Management */}
-                <div className="premium-card !p-0 overflow-hidden shadow-2xl shadow-slate-200/20">
-                    <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Visual Map / Audit (Replacing Map with Audit for now as verified component) */}
+                <div className="lg:col-span-2 glass-panel-dark rounded-[2.5rem] p-8 text-white relative overflow-hidden flex flex-col h-[500px]">
+                     {/* Decorative Gradients */}
+                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] -mr-32 -mt-32 animate-pulse-slow"></div>
+                     <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-sky-500/10 rounded-full blur-[100px] -ml-20 -mb-20 animate-float-delayed"></div>
+
+                    <div className="flex justify-between items-center mb-6 relative z-10">
                         <div>
-                            <h3 className="font-extrabold text-slate-900 flex items-center gap-3 text-lg tracking-tight">
-                                <Building2 size={20} className="text-indigo-500" />
-                                Tenant Governance
+                            <h3 className="font-bold text-xl flex items-center gap-2">
+                                <Activity className="text-sky-400" />
+                                Live Network Activity
                             </h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Platform-wide Access Matrix</p>
+                            <p className="text-xs text-slate-400 font-medium uppercase tracking-[0.2em]">Real-time Event Stream</p>
                         </div>
-                        <button className="btn-primary !py-2.5 !text-[10px] !rounded-xl !uppercase !tracking-widest">
-                            Provision New
+                        <button className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-bold uppercase tracking-widest transition-colors">
+                            Filter Stream
                         </button>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm font-medium">
-                            <thead className="bg-slate-50/80 text-slate-400 text-[10px] uppercase tracking-[0.2em] border-b border-slate-100">
-                                <tr>
-                                    <th className="px-10 py-6">Business Node</th>
-                                    <th className="px-10 py-6">Identity</th>
-                                    <th className="px-10 py-6">Status</th>
-                                    <th className="px-10 py-6">Operation</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 italic">
-                                {tenants.map((t) => (
-                                    <tr key={t.id} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="px-10 py-7 font-black text-slate-900 text-base">{t.name}</td>
-                                        <td className="px-10 py-7">
-                                            <span className="px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-black uppercase text-slate-500 tracking-tighter">@{t.subdomain}</span>
-                                        </td>
-                                        <td className="px-10 py-7">
-                                            <span className={`status-pill pill-${t.status === 'ACTIVE' ? 'success' : 'danger'}`}>
-                                                {t.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-10 py-7">
-                                            <button
-                                                onClick={() => toggleTenantStatus(t.id, t.status)}
-                                                className={`text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border-2 transition-all ${t.status === 'ACTIVE'
-                                                    ? 'border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white'
-                                                    : 'border-emerald-100 text-emerald-500 hover:bg-emerald-500 hover:text-white'
-                                                    }`}
-                                            >
-                                                {t.status === 'ACTIVE' ? 'Suspend' : 'Whitelst'}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+
+                    <div className="flex-1 overflow-y-auto pr-2 space-y-3 relative z-10 scrollbar-thin scrollbar-thumb-sky-500/20">
+                        {auditLogs.map((log, i) => (
+                            <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-colors group cursor-default">
+                                <div className="p-3 rounded-full bg-indigo-500/20 text-indigo-300 group-hover:bg-sky-500/20 group-hover:text-sky-300 transition-colors">
+                                    <Clock size={16} />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">
+                                        <span className="text-sky-400 font-bold mr-2">[{log.action}]</span>
+                                        {log.details}
+                                    </p>
+                                    <div className="flex items-center gap-3 mt-1">
+                                        <span className="text-[10px] uppercase font-bold text-slate-500 bg-black/30 px-2 py-0.5 rounded">
+                                            {log.ipAddress || '192.168.1.1'}
+                                        </span>
+                                        <span className="text-[10px] text-slate-500">
+                                            {new Date(log.createdAt).toLocaleTimeString()}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
-                {/* Platform Audit Trail */}
-                <div className="bg-[#0f172a] rounded-[2.5rem] p-10 text-white shadow-2xl shadow-indigo-200/20 overflow-hidden relative">
-                    <div className="flex items-center justify-between mb-10 relative z-10">
-                        <div>
-                            <h3 className="font-black text-white text-lg tracking-tight flex items-center gap-3">
-                                <Clock size={20} className="text-indigo-400" />
-                                Infrastructure Audit
-                            </h3>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mt-1">Real-time system events</p>
-                        </div>
-                        <div className="flex gap-1">
-                            <div className="w-2 h-2 rounded-full bg-rose-500"></div>
-                            <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                {/* Tenant Quick List */}
+                <div className="bg-white/50 backdrop-blur-xl border border-white/50 rounded-[2.5rem] p-8 shadow-xl flex flex-col h-[500px]">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight">Active Tenants</h3>
+                        <div className="px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-black">
+                            {tenants.filter(t => t.status === 'ACTIVE').length} ONLINE
                         </div>
                     </div>
-
-                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-4 scrollbar-hide relative z-10 font-mono">
-                        {auditLogs.length > 0 ? auditLogs.map((log, i) => (
-                            <div key={i} className="group p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-indigo-500/30 hover:bg-white/10 transition-all duration-300">
+                    
+                    <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                        {tenants.map((t) => (
+                            <div key={t.id} className="group p-5 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all">
                                 <div className="flex justify-between items-start mb-3">
-                                    <span className="text-[10px] font-black uppercase text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
-                                        {log.action}
-                                    </span>
-                                    <span className="text-[10px] text-slate-500 font-bold">{new Date(log.createdAt).toLocaleTimeString()}</span>
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-indigo-200">
+                                        {t.name.substring(0, 1)}
+                                    </div>
+                                    <div className={`w-2 h-2 rounded-full ${t.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></div>
                                 </div>
-                                <p className="text-xs text-slate-300 font-medium leading-relaxed tracking-tight group-hover:text-white transition-colors">{log.details}</p>
-                                <div className="mt-4 flex items-center justify-between pt-4 border-t border-white/5">
-                                    <span className="text-[9px] text-slate-600 uppercase font-black">Operator ID: {log.userId?.slice(-6) || 'SYSTEM'}</span>
-                                    <span className="text-[9px] text-slate-600 font-bold">{log.ipAddress || '127.0.0.1'}</span>
-                                </div>
+                                <h4 className="font-bold text-slate-900 leading-tight mb-1">{t.name}</h4>
+                                <p className="text-xs text-slate-400 font-medium mb-4">@{t.subdomain}.surfbill.app</p>
+                                
+                                <button 
+                                    onClick={() => toggleTenantStatus(t.id, t.status)}
+                                    className={`w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${
+                                        t.status === 'ACTIVE' 
+                                        ? 'bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600'
+                                        : 'bg-emerald-500 text-white shadow-lg shadow-emerald-200'
+                                    }`}
+                                >
+                                    {t.status === 'ACTIVE' ? 'Suspend Access' : 'Activate Now'}
+                                </button>
                             </div>
-                        )) : (
-                            <div className="py-32 text-center opacity-20">
-                                <Activity size={64} className="mx-auto mb-6" />
-                                <p className="text-base font-black uppercase tracking-[0.4em]">Listening for Flux...</p>
-                            </div>
-                        )}
+                        ))}
                     </div>
-                    {/* Decorative Elements */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[100px] -mr-32 -mt-32"></div>
                 </div>
             </div>
         </div>
