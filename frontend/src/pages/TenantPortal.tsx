@@ -38,8 +38,21 @@ const TenantPortal = () => {
                     const res = await axios.get('/api/v1/auth/verify', {
                         headers: { Authorization: `Bearer ${token}` }
                     });
-                    setIsAuthenticated(true);
-                    setTenantData(res.data.tenant);
+                    const userData = res.data.user;
+                    // Ensure user is tenant admin
+                    if (userData.role === 'TENANT_ADMIN' || userData.role === 'AGENT') {
+                        setIsAuthenticated(true);
+                        setTenantData(res.data.tenant);
+                    } else {
+                        // Wrong role, redirect to appropriate portal
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        if (userData.role === 'SUPER_ADMIN') {
+                            navigate('/superadmin');
+                        } else {
+                            navigate('/login');
+                        }
+                    }
                 } catch (err) {
                     // Token invalid, redirect to login
                     localStorage.removeItem('token');
@@ -86,6 +99,12 @@ const TenantPortal = () => {
                                 TENANT ADMIN
                             </span>
                             <button
+                                onClick={() => navigate('/tenant/wallet')}
+                                className="px-4 py-2 bg-sky-100 text-sky-700 font-bold rounded-lg hover:bg-sky-200 transition-colors"
+                            >
+                                Wallet
+                            </button>
+                            <button
                                 onClick={() => {
                                     localStorage.removeItem('token');
                                     localStorage.removeItem('user');
@@ -131,15 +150,19 @@ const TenantPortal = () => {
                         </div>
                     </div>
 
-                    <div className="premium-card bg-white">
+                    <div
+                        onClick={() => navigate('/tenant/wallet')}
+                        className="premium-card bg-white cursor-pointer hover:border-sky-200 transition-all border-l-4 border-sky-500"
+                    >
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-xs font-black text-slate-400 uppercase mb-2">Revenue (Mtd)</p>
-                                <h3 className="text-2xl font-black text-slate-900">KES {tenantData?.totalRevenue?.toLocaleString() || '450,000'}</h3>
+                                <p className="text-xs font-black text-slate-400 uppercase mb-2">Wallet Balance</p>
+                                <h3 className="text-2xl font-black text-slate-900">KES {tenantData?.walletBalance?.toLocaleString() || '0'}</h3>
+                                <p className="text-[10px] font-bold text-slate-400 mt-1">Click to manage & withdraw</p>
                             </div>
-                            <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600">
+                            <div className="p-3 rounded-2xl bg-sky-50 text-sky-600">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                 </svg>
                             </div>
                         </div>

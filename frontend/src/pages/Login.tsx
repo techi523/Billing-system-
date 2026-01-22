@@ -55,7 +55,17 @@ const Login = () => {
         try {
             const res = await axios.post('/api/v1/auth/login', { email, password });
             localStorage.setItem('token', res.data.token);
-            navigate('/dashboard');
+            localStorage.setItem('user', JSON.stringify(res.data.user));
+
+            // Redirect based on role
+            const user = res.data.user;
+            if (user.role === 'SUPER_ADMIN') {
+                navigate('/superadmin');
+            } else if (user.role === 'TENANT_ADMIN') {
+                navigate('/tenant');
+            } else {
+                navigate('/admin'); // For agents or others
+            }
         } catch (err) {
             setError('Invalid credentials. Please try again.');
         } finally {
@@ -179,7 +189,13 @@ const Login = () => {
                         </motion.button>
                     </form>
 
-                    <div className="mt-8 text-center">
+                    <div className="mt-8 text-center space-y-2">
+                        <button
+                            onClick={() => navigate('/superadmin-login')}
+                            className="text-red-400 hover:text-red-300 text-xs font-bold underline transition-colors"
+                        >
+                            Super Admin Access →
+                        </button>
                         <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">
                             Powered by SurfBill v2.0
                         </p>

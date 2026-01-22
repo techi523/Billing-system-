@@ -2,7 +2,7 @@ import { Payment, Package, sequelize } from '../models';
 import { MpesaService } from './mpesa.service';
 import { SessionOrchestrator } from '../orchestrator';
 import logger from '../utils/logger';
-import { Op } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
 
 export class PaymentService {
     /**
@@ -24,7 +24,7 @@ export class PaymentService {
             let updatedPayment = payment;
 
             try {
-                await sequelize.transaction(async (t) => {
+                await sequelize.transaction(async (t: Transaction) => {
                     // Lock the row for the duration of the check
                     const lockedPayment = await Payment.findByPk(payment.id, {
                         lock: true,

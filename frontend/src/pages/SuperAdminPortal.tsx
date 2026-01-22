@@ -27,19 +27,28 @@ const SuperAdminPortal = () => {
             if (token) {
                 try {
                     // Try to verify token with backend
-                    await axios.get('/api/v1/auth/verify', {
+                    const res = await axios.get('/api/v1/auth/verify', {
                         headers: { Authorization: `Bearer ${token}` }
                     });
-                    setIsAuthenticated(true);
+                    const userData = res.data.user;
+                    // Ensure user is super admin
+                    if (userData.role === 'SUPER_ADMIN') {
+                        setIsAuthenticated(true);
+                    } else {
+                        // Wrong role, redirect to appropriate portal
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        navigate('/login');
+                    }
                 } catch (err) {
                     // Token invalid, redirect to login
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
-                    navigate('/login');
+                    navigate('/superadmin-login');
                 }
             } else {
-                // No token, redirect to login
-                navigate('/login');
+                // No token, redirect to super admin login
+                navigate('/superadmin-login');
             }
             setIsLoading(false);
         };

@@ -6,18 +6,27 @@ const SuperAdminDashboard = () => {
     const [stats, setStats] = useState<any>(null);
     const [tenants, setTenants] = useState<any[]>([]);
     const [auditLogs, setAuditLogs] = useState<any[]>([]);
+    const [wallets, setWallets] = useState<any[]>([]);
+    const [platformFees, setPlatformFees] = useState<any[]>([]);
+    const [platformWallet, setPlatformWallet] = useState<any>(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [statsRes, tenantsRes, logsRes] = await Promise.all([
+                const [statsRes, tenantsRes, logsRes, walletsRes, feesRes, pWalletRes] = await Promise.all([
                     axios.get('/api/v1/superadmin/platform-stats'),
                     axios.get('/api/v1/superadmin/tenants'),
-                    axios.get('/api/v1/superadmin/audit-logs')
+                    axios.get('/api/v1/superadmin/audit-logs'),
+                    axios.get('/api/v1/superadmin/wallets'),
+                    axios.get('/api/v1/superadmin/platform-fees'),
+                    axios.get('/api/v1/superadmin/platform-wallet')
                 ]);
                 setStats(statsRes.data);
                 setTenants(Array.isArray(tenantsRes.data) ? tenantsRes.data : []);
                 setAuditLogs(Array.isArray(logsRes.data) ? logsRes.data : []);
+                setWallets(walletsRes.data || []);
+                setPlatformFees(feesRes.data || []);
+                setPlatformWallet(pWalletRes.data);
             } catch (error) {
                 console.error('Failed to fetch SuperAdmin data');
             }
@@ -87,9 +96,9 @@ const SuperAdminDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Visual Map / Audit (Replacing Map with Audit for now as verified component) */}
                 <div className="lg:col-span-2 glass-panel-dark rounded-[2.5rem] p-8 text-white relative overflow-hidden flex flex-col h-[500px]">
-                     {/* Decorative Gradients */}
-                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] -mr-32 -mt-32 animate-pulse-slow"></div>
-                     <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-sky-500/10 rounded-full blur-[100px] -ml-20 -mb-20 animate-float-delayed"></div>
+                    {/* Decorative Gradients */}
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] -mr-32 -mt-32 animate-pulse-slow"></div>
+                    <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-sky-500/10 rounded-full blur-[100px] -ml-20 -mb-20 animate-float-delayed"></div>
 
                     <div className="flex justify-between items-center mb-6 relative z-10">
                         <div>
@@ -137,7 +146,7 @@ const SuperAdminDashboard = () => {
                             {tenants.filter(t => t.status === 'ACTIVE').length} ONLINE
                         </div>
                     </div>
-                    
+
                     <div className="flex-1 overflow-y-auto pr-2 space-y-4">
                         {tenants.map((t) => (
                             <div key={t.id} className="group p-5 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all">
@@ -149,17 +158,63 @@ const SuperAdminDashboard = () => {
                                 </div>
                                 <h4 className="font-bold text-slate-900 leading-tight mb-1">{t.name}</h4>
                                 <p className="text-xs text-slate-400 font-medium mb-4">@{t.subdomain}.surfbill.app</p>
-                                
-                                <button 
+
+                                <button
                                     onClick={() => toggleTenantStatus(t.id, t.status)}
-                                    className={`w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${
-                                        t.status === 'ACTIVE' 
-                                        ? 'bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600'
-                                        : 'bg-emerald-500 text-white shadow-lg shadow-emerald-200'
-                                    }`}
+                                    className={`w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${t.status === 'ACTIVE'
+                                            ? 'bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600'
+                                            : 'bg-emerald-500 text-white shadow-lg shadow-emerald-200'
+                                        }`}
                                 >
                                     {t.status === 'ACTIVE' ? 'Suspend Access' : 'Activate Now'}
                                 </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Global Wallet & Fee Management */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="premium-card bg-white p-8">
+                    <h3 className="text-xl font-black text-slate-900 mb-6 uppercase tracking-tight">Global Tenant Wallets</h3>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase">Tenant</th>
+                                    <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase text-right">Available</th>
+                                    <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase text-right">Pending</th>
+                                    <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase text-right">Settled</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {wallets.map((w) => (
+                                    <tr key={w.id} className="hover:bg-slate-50">
+                                        <td className="px-4 py-4 font-bold text-slate-900">{w.tenantName}</td>
+                                        <td className="px-4 py-4 font-black text-right text-emerald-600">KES {Number(w.balance).toLocaleString()}</td>
+                                        <td className="px-4 py-4 font-black text-right text-amber-600">KES {Number(w.pendingBalance).toLocaleString()}</td>
+                                        <td className="px-4 py-4 font-black text-right text-sky-600">KES {Number(w.settledBalance).toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div className="premium-card bg-white p-8">
+                    <h3 className="text-xl font-black text-slate-900 mb-6 uppercase tracking-tight">Platform Fee Control</h3>
+                    <div className="space-y-4">
+                        {platformFees.map((fee) => (
+                            <div key={fee.id} className="p-4 rounded-3xl bg-slate-50 border border-slate-100 flex justify-between items-center">
+                                <div>
+                                    <p className="text-xs font-black text-slate-400 uppercase">{fee.feeType}</p>
+                                    <p className="font-bold text-slate-900">{fee.description}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-2xl font-black text-indigo-600">{fee.feeValue}{fee.isPercentage ? '%' : ' KES'}</p>
+                                    <button className="text-[10px] font-black text-indigo-400 uppercase hover:text-indigo-600 mt-1">Configure</button>
+                                </div>
                             </div>
                         ))}
                     </div>

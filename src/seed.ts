@@ -1,4 +1,4 @@
-import { sequelize, AdminUser, Tenant, Package, Router, Voucher } from './models';
+import { sequelize, AdminUser, Tenant, Package, Router, Voucher, Wallet, PlatformWallet, PlatformFee } from './models';
 import bcrypt from 'bcryptjs';
 
 async function seed() {
@@ -72,7 +72,36 @@ async function seed() {
         await Voucher.bulkCreate(vouchers);
     }
 
-    console.log('SaaS Database seeded with Super Admin, Demo Tenant, Agent, and Vouchers!');
+    // 8. Initialize wallets
+    await Wallet.create({
+        ownerId: demoTenant.id,
+        ownerType: 'TENANT',
+        balance: 0,
+        frozenBalance: 0,
+        pendingBalance: 0,
+        settledBalance: 0,
+        currency: 'KES',
+        tenantId: demoTenant.id
+    });
+
+    await PlatformWallet.create({
+        balance: 0,
+        pendingBalance: 0,
+        currency: 'KES'
+    });
+
+    // 9. Set up platform fees
+    await PlatformFee.create({
+        feeType: 'TRANSACTION',
+        feeValue: 10, // 10%
+        isPercentage: true,
+        minAmount: 0,
+        maxAmount: 100,
+        isActive: true,
+        description: 'Standard transaction fee'
+    });
+
+    console.log('SaaS Database seeded with Super Admin, Demo Tenant, Agent, Vouchers, and Wallet System!');
     process.exit(0);
 }
 

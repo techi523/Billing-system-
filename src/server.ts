@@ -10,7 +10,11 @@ import adminRoutes from './routes/admin';
 import agentRoutes from './routes/agent';
 import superadminRoutes from './routes/superadmin';
 import webhookRoutes from './routes/webhook';
+import walletRoutes from './routes/wallet.routes';
+import paymentCallbackRoutes from './routes/payment-callback.routes';
+import aggregatorCallbackRoutes from './routes/aggregator-callback.routes';
 import { IspService } from './services/isp.service';
+import { SettlementEngine } from './services/settlement-engine';
 import logger from './utils/logger';
 
 const app = express();
@@ -38,6 +42,13 @@ const strictLimiter = rateLimit({
     message: 'Security threshold reached. Please try again later.',
 });
 
+// SUPER ADMIN RATE LIMITING (Extra strict)
+const superAdminLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5, // 5 attempts per hour
+    message: 'Super Admin access restricted. Please contact platform support.',
+});
+
 app.use(bodyParser.json({ limit: '10kb' }));
 app.use(express.static('public'));
 
@@ -53,8 +64,20 @@ app.use('/api/v1/portal', portalRoutes);
 app.use('/api/v1/portal/:tenantId/pay', strictLimiter);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/agent', agentRoutes);
-app.use('/api/v1/superadmin', superadminRoutes);
+app.use('/api/v1/superadmin', superAdminLimiter, superadminRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
+app.use('/api/v1/wallet', walletRoutes);
+app.use('/api/v1/aggregator', aggregatorCallbackRoutes);
+app.use('/api/v1/payments/callback', paymentCallbackRoutes);
+
+// Security headers for sensitive routes
+app.use('/api/v1/superadmin', (req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:");
+    next();
+});
 
 // HEALTH CHECK
 app.get('/health', async (req, res) => {
@@ -118,6 +141,26 @@ async function startServer() {
                 await PaymentService.pollPendingPayments();
             } catch (err) { }
         }, 2 * 60 * 1000);
+
+        // Periodically clear matured pending balances (e.g. every 15 minutes)
+        setInterval(async () => {
+            try {
+                const { WalletService } = require('./services/wallet.service');
+                await WalletService.clearAllMaturedPendingBalances();
+            } catch (err) {
+                logger.error('Matured balance clearing failed', { error: (err as Error).message });
+            }
+        }, 15 * 60 * 1000);
+
+        // Daily cycle for automated settlements
+        setInterval(async () => {
+            logger.info('Checking for automated settlements...');
+            try {
+                await SettlementEngine.runAutomatedSettlements();
+            } catch (err) {
+                logger.error('Settlement Engine failed', { error: (err as Error).message });
+            }
+        }, 24 * 60 * 60 * 1000);
 
         app.listen(PORT, () => {
             logger.info(`Production SaaS Billing System running on port ${PORT}`);

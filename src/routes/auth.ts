@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { AdminUser, Tenant } from '../models';
+import crypto from 'crypto';
+import { AdminUser, Tenant, AdminSession, AuditLog } from '../models';
 
 const router = Router();
 
@@ -47,8 +48,21 @@ router.post('/login', async (req, res) => {
     try {
         const user = await AdminUser.findOne({ where: { email } });
         if (!user || !(await bcrypt.compare(password, user.password))) {
+            // Log failed login attempt
+            await AuditLog.create({
+                action: 'FAILED_LOGIN',
+                details: `Failed login attempt for email: ${email}`,
+                ipAddress: req.ip,
+                tenantId: user?.tenantId
+            });
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+
+        // Expire old sessions for this user
+        await AdminSession.update(
+            { status: 'REVOKED' },
+            { where: { userId: user.id, status: 'ACTIVE' } }
+        );
 
         const token = jwt.sign(
             { id: user.id, role: user.role, tenantId: user.tenantId },
@@ -56,9 +70,111 @@ router.post('/login', async (req, res) => {
             { expiresIn: '1d' }
         );
 
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const expiryTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day
+
+        // Create session
+        await AdminSession.create({
+            userId: user.id,
+            tokenHash,
+            ipAddress: req.ip || 'unknown',
+            userAgent: req.get('User-Agent') || '',
+            expiryTime
+        });
+
+        // Log successful login
+        await AuditLog.create({
+            action: 'LOGIN',
+            details: `User ${user.email} logged in`,
+            userId: user.id,
+            tenantId: user.tenantId,
+            ipAddress: req.ip
+        });
+
         res.json({ token, user: { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId } });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Separate Super Admin login with additional security
+router.post('/superadmin/login', async (req, res) => {
+    const { email, password, ip } = req.body;
+    try {
+        // IP allow-listing for Super Admin
+        const allowedIPs = process.env.SUPER_ADMIN_IPS?.split(',') || [];
+        if (allowedIPs.length > 0 && !allowedIPs.includes(req.ip || ip)) {
+            await AuditLog.create({
+                action: 'SUPER_ADMIN_IP_BLOCK',
+                details: `Super admin login blocked from IP: ${req.ip}`,
+                ipAddress: req.ip
+            });
+            return res.status(403).json({ error: 'Access denied from this location' });
+        }
+
+        const user = await AdminUser.findOne({ where: { email, role: 'SUPER_ADMIN' } });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            await AuditLog.create({
+                action: 'FAILED_SUPER_ADMIN_LOGIN',
+                details: `Failed super admin login attempt for email: ${email}`,
+                ipAddress: req.ip
+            });
+            return res.status(401).json({ error: 'Invalid super admin credentials' });
+        }
+
+        // Expire old sessions for this user
+        await AdminSession.update(
+            { status: 'REVOKED' },
+            { where: { userId: user.id, status: 'ACTIVE' } }
+        );
+
+        const token = jwt.sign(
+            { id: user.id, role: user.role, scope: 'SUPER_ADMIN', tenantId: null },
+            process.env.SUPER_ADMIN_JWT_SECRET || process.env.JWT_SECRET || 'super_secret_key',
+            { expiresIn: '2h' } // Shorter expiry for super admin
+        );
+
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const expiryTime = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
+
+        // Create session
+        await AdminSession.create({
+            userId: user.id,
+            tokenHash,
+            ipAddress: req.ip || 'unknown',
+            userAgent: req.get('User-Agent') || '',
+            expiryTime
+        });
+
+        // Log successful super admin login
+        await AuditLog.create({
+            action: 'SUPER_ADMIN_LOGIN',
+            details: `Super admin ${user.email} logged in`,
+            userId: user.id,
+            ipAddress: req.ip
+        });
+
+        res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/verify', async (req: any, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Missing token' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key') as any;
+        const user = await AdminUser.findByPk(decoded.id);
+        if (!user) return res.status(401).json({ error: 'User not found' });
+
+        res.json({ user: { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId } });
+    } catch (error) {
+        res.status(401).json({ error: 'Invalid token' });
     }
 });
 
