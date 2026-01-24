@@ -2,7 +2,8 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { AdminUser, Tenant, AdminSession, AuditLog } from '../models';
+import { AdminUser, Tenant, AdminSession, AuditLog, PasswordResetToken } from '../models';
+import { sendPasswordResetEmail } from '../services/emailService';
 
 const router = Router();
 
@@ -29,7 +30,7 @@ router.post('/register', async (req, res) => {
         const user = await AdminUser.create({
             email,
             password: hashedPassword,
-            role: 'TENANT_ADMIN',
+            role: 'TENANT',
             tenantId: tenant.id
         });
 
@@ -39,7 +40,8 @@ router.post('/register', async (req, res) => {
             user: { id: user.id, email: user.email }
         });
     } catch (error: any) {
-        res.status(500).json({ error: 'Registration failed. Please contact support.' });
+        console.error('Registration Error:', error);
+        res.status(500).json({ error: `Registration failed: ${error.message}` });
     }
 });
 
@@ -176,6 +178,37 @@ router.get('/verify', async (req: any, res) => {
     } catch (error) {
         res.status(401).json({ error: 'Invalid token' });
     }
+});
+
+// Password reset request endpoint
+router.post('/password-reset/request', async (req, res) => {
+    const { email } = req.body;
+    const user = await AdminUser.findOne({ where: { email } });
+    // Always respond with success to avoid email enumeration
+    if (user) {
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+        await PasswordResetToken.create({ userId: user.id, token, expiresAt, used: false });
+        await sendPasswordResetEmail(email, token);
+    }
+    res.json({ message: 'If the email exists, a password reset link has been sent.' });
+});
+
+// Password reset confirmation endpoint
+router.post('/password-reset/confirm', async (req, res) => {
+    const { token, newPassword } = req.body;
+    const resetRecord = await PasswordResetToken.findOne({ where: { token, used: false } });
+    if (!resetRecord || resetRecord.expiresAt < new Date()) {
+        return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+    const user = await AdminUser.findByPk(resetRecord.userId);
+    if (!user) {
+        return res.status(400).json({ error: 'User not found' });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await user.update({ password: hashedPassword });
+    await resetRecord.update({ used: true });
+    res.json({ message: 'Password has been reset successfully' });
 });
 
 export default router;

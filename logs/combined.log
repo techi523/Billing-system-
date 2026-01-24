@@ -200,3 +200,55 @@
 {"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T21:10:19.985Z"}
 {"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T22:10:19.993Z"}
 {"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-18T23:10:19.993Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-22T18:05:39.935Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-22T18:05:40.489Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-22T18:05:40.499Z"}
+{"error":"SQLITE_ERROR: no such column: sourceWalletId","level":"error","message":"Matured balance clearing failed","service":"billing-system","timestamp":"2026-01-22T18:20:40.551Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-22T18:26:15.832Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-22T18:26:17.073Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-22T18:26:17.119Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-22T18:33:49.656Z"}
+{"error":"SQLITE_ERROR: table tenants_backup has 14 columns but 32 values were supplied","level":"error","message":"Failed to start server:","service":"billing-system","timestamp":"2026-01-22T18:34:02.989Z"}
+{"error":"SQLITE_ERROR: no such column: sourceWalletId","level":"error","message":"Matured balance clearing failed","service":"billing-system","timestamp":"2026-01-22T18:35:41.955Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-22T18:37:30.022Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-22T18:38:08.386Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-22T18:38:08.394Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-23T08:54:02.316Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-23T08:54:05.630Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-23T08:54:06.508Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-23T08:56:19.729Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-23T08:56:29.888Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-23T08:56:29.895Z"}
+{"level":"info","message":"Connected to database for setup.","service":"billing-system","timestamp":"2026-01-23T08:57:54.058Z"}
+{"error":"SQLITE_ERROR: table tenants_backup has 14 columns but 32 values were supplied","level":"error","message":"Setup failed:","service":"billing-system","timestamp":"2026-01-23T08:57:54.871Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-23T09:08:32.134Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-23T09:08:33.173Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-23T09:08:33.190Z"}
+{"level":"info","message":"Connected to database for setup.","service":"billing-system","timestamp":"2026-01-23T09:14:25.949Z"}
+{"error":"SQLITE_ERROR: table tenants_backup has 14 columns but 32 values were supplied","level":"error","message":"Setup failed:","service":"billing-system","timestamp":"2026-01-23T09:14:28.039Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-23T09:14:31.956Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-23T09:14:36.005Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-23T09:14:36.065Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-23T09:19:22.168Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/platform-stats","service":"billing-system","timestamp":"2026-01-23T09:22:37.476Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/platform-stats","service":"billing-system","timestamp":"2026-01-23T09:22:40.355Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-23T09:23:22.306Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-23T09:26:13.237Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-23T09:26:14.770Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-23T09:54:05.800Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-23T09:56:30.384Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-23T10:08:33.683Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-23T10:14:39.495Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-23T10:26:35.970Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-23T10:26:37.887Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-23T10:26:38.207Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-23T10:27:03.265Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-23T10:56:46.710Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-23T11:26:38.943Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-23T12:26:39.091Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-23T13:26:39.454Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-24T14:41:08.745Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-24T14:41:22.107Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-24T14:41:22.267Z"}
+{"ip":"::1","level":"info","message":"GET /health","service":"billing-system","timestamp":"2026-01-24T14:42:15.154Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-24T14:42:16.511Z"}

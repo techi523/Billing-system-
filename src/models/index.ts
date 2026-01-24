@@ -98,7 +98,7 @@ export class AdminUser extends Model {
   public id!: string;
   public email!: string;
   public password!: string;
-  public role!: 'SUPER_ADMIN' | 'TENANT_ADMIN' | 'AGENT';
+  public role!: 'SUPER_ADMIN' | 'TENANT' | 'STAFF' | 'AGENT';
   public tenantId!: string | null;
   public commissionRate!: number; // Percentage (e.g., 0.1 for 10%)
 }
@@ -106,7 +106,7 @@ AdminUser.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   email: { type: DataTypes.STRING, unique: true, allowNull: false },
   password: { type: DataTypes.STRING, allowNull: false },
-  role: { type: DataTypes.ENUM('SUPER_ADMIN', 'TENANT_ADMIN', 'AGENT'), defaultValue: 'TENANT_ADMIN' },
+  role: { type: DataTypes.ENUM('SUPER_ADMIN', 'TENANT', 'STAFF', 'AGENT'), defaultValue: 'TENANT' },
   tenantId: { type: DataTypes.UUID, allowNull: true }, // null for super admin
   commissionRate: { type: DataTypes.FLOAT, defaultValue: 0.0 },
 }, { sequelize, modelName: 'admin_user' });
@@ -560,7 +560,25 @@ PlatformFee.init({
   description: { type: DataTypes.TEXT },
 }, { sequelize, modelName: 'platformFee' });
 
+export class PasswordResetToken extends Model {
+  public id!: string;
+  public userId!: string;
+  public token!: string;
+  public expiresAt!: Date;
+  public used!: boolean;
+}
+PasswordResetToken.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId: { type: DataTypes.UUID, allowNull: false },
+  token: { type: DataTypes.STRING, allowNull: false, unique: true },
+  expiresAt: { type: DataTypes.DATE, allowNull: false },
+  used: { type: DataTypes.BOOLEAN, defaultValue: false },
+}, { sequelize, modelName: 'passwordResetToken' });
+
 // Add relationships for new models
+AdminUser.hasMany(PasswordResetToken, { foreignKey: 'userId' });
+PasswordResetToken.belongsTo(AdminUser, { foreignKey: 'userId' });
+
 Wallet.hasMany(WalletTransaction, { foreignKey: 'walletId' });
 WalletTransaction.belongsTo(Wallet, { foreignKey: 'walletId' });
 

@@ -2,72 +2,39 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubscriberTable from '../components/Modern/SubscriberTable';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const TenantPortal = () => {
     const navigate = useNavigate();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const { user, logout } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [tenantData, setTenantData] = useState<any>(null);
 
     useEffect(() => {
-        const checkAuth = async () => {
-            const token = localStorage.getItem('token');
-            const user = localStorage.getItem('user');
+        const fetchDashboardData = async () => {
+            try {
+                const [statsRes, walletRes] = await Promise.all([
+                    axios.get('/api/v1/admin/dashboard-summary'),
+                    axios.get('/api/v1/wallet/balance')
+                ]);
 
-            // Check if we have demo credentials
-            if (token === 'demo-token' && user) {
-                const userData = JSON.parse(user);
-                if (userData.name === 'Demo Admin') {
-                    setIsAuthenticated(true);
-                    setTenantData({
-                        name: 'Demo Tenant',
-                        subdomain: 'demo',
-                        plan: 'Business Pro',
-                        activeUsers: 156,
-                        totalRevenue: 450000
-                    });
-                    setIsLoading(false);
-                    return;
-                }
+                setTenantData({
+                    activeUsers: statsRes.data.activeSessions,
+                    subscriberCount: statsRes.data.subscriberCount,
+                    pendingPayments: statsRes.data.pendingPayments,
+                    walletBalance: walletRes.data.balance,
+                    settledBalance: walletRes.data.settledBalance,
+                    plan: statsRes.data.plan || 'Standard'
+                });
+            } catch (err) {
+                console.error('Failed to fetch tenant data', err);
+            } finally {
+                setIsLoading(false);
             }
-
-            // Check if we have real authentication
-            if (token) {
-                try {
-                    // Try to verify token with backend
-                    const res = await axios.get('/api/v1/auth/verify', {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    const userData = res.data.user;
-                    // Ensure user is tenant admin
-                    if (userData.role === 'TENANT_ADMIN' || userData.role === 'AGENT') {
-                        setIsAuthenticated(true);
-                        setTenantData(res.data.tenant);
-                    } else {
-                        // Wrong role, redirect to appropriate portal
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
-                        if (userData.role === 'SUPER_ADMIN') {
-                            navigate('/superadmin');
-                        } else {
-                            navigate('/login');
-                        }
-                    }
-                } catch (err) {
-                    // Token invalid, redirect to login
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    navigate('/login');
-                }
-            } else {
-                // No token, redirect to login
-                navigate('/login');
-            }
-            setIsLoading(false);
         };
 
-        checkAuth();
-    }, [navigate]);
+        fetchDashboardData();
+    }, []);
 
     if (isLoading) {
         return (
@@ -96,7 +63,7 @@ const TenantPortal = () => {
                         </div>
                         <div className="flex items-center gap-4">
                             <span className="px-3 py-1 bg-sky-500/20 text-sky-600 text-xs font-black rounded-full">
-                                TENANT ADMIN
+                                {user?.role}
                             </span>
                             <button
                                 onClick={() => navigate('/tenant/wallet')}
@@ -105,11 +72,7 @@ const TenantPortal = () => {
                                 Wallet
                             </button>
                             <button
-                                onClick={() => {
-                                    localStorage.removeItem('token');
-                                    localStorage.removeItem('user');
-                                    navigate('/login');
-                                }}
+                                onClick={logout}
                                 className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
                             >
                                 Logout
@@ -126,7 +89,7 @@ const TenantPortal = () => {
                         <div className="flex justify-between items-start">
                             <div>
                                 <p className="text-xs font-black text-slate-400 uppercase mb-2">Active Users</p>
-                                <h3 className="text-2xl font-black text-slate-900">{tenantData?.activeUsers || 156}</h3>
+                                <h3 className="text-2xl font-black text-slate-900">{tenantData?.activeUsers || 0}</h3>
                             </div>
                             <div className="p-3 rounded-2xl bg-sky-50 text-sky-600">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +103,7 @@ const TenantPortal = () => {
                         <div className="flex justify-between items-start">
                             <div>
                                 <p className="text-xs font-black text-slate-400 uppercase mb-2">Current Plan</p>
-                                <h3 className="text-2xl font-black text-slate-900">{tenantData?.plan || 'Business Pro'}</h3>
+                                <h3 className="text-2xl font-black text-slate-900">{tenantData?.plan || '---'}</h3>
                             </div>
                             <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

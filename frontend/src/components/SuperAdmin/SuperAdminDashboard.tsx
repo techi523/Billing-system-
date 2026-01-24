@@ -13,13 +13,16 @@ const SuperAdminDashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                const token = localStorage.getItem('token');
+                const config = { headers: { Authorization: `Bearer ${token}` } };
+
                 const [statsRes, tenantsRes, logsRes, walletsRes, feesRes, pWalletRes] = await Promise.all([
-                    axios.get('/api/v1/superadmin/platform-stats'),
-                    axios.get('/api/v1/superadmin/tenants'),
-                    axios.get('/api/v1/superadmin/audit-logs'),
-                    axios.get('/api/v1/superadmin/wallets'),
-                    axios.get('/api/v1/superadmin/platform-fees'),
-                    axios.get('/api/v1/superadmin/platform-wallet')
+                    axios.get('/api/v1/superadmin/platform-stats', config),
+                    axios.get('/api/v1/superadmin/tenants', config),
+                    axios.get('/api/v1/superadmin/audit-logs', config),
+                    axios.get('/api/v1/superadmin/wallets', config),
+                    axios.get('/api/v1/superadmin/platform-fees', config),
+                    axios.get('/api/v1/superadmin/platform-wallet', config)
                 ]);
                 setStats(statsRes.data);
                 setTenants(Array.isArray(tenantsRes.data) ? tenantsRes.data : []);
@@ -35,8 +38,12 @@ const SuperAdminDashboard = () => {
     }, []);
 
     const toggleTenantStatus = async (id: string, currentStatus: string) => {
+        const token = localStorage.getItem('token');
         const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
-        await axios.put(`/api/v1/superadmin/tenants/${id}/status`, { status: newStatus });
+        await axios.put(`/api/v1/superadmin/tenants/${id}/status`,
+            { status: newStatus },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
         setTenants(tenants.map(t => t.id === id ? { ...t, status: newStatus } : t));
     };
 
@@ -47,7 +54,6 @@ const SuperAdminDashboard = () => {
         </div>
     );
 
-    return (
     return (
         <div className="space-y-12 animate-fade-in pb-10">
             {/* Hero Section */}
@@ -162,8 +168,8 @@ const SuperAdminDashboard = () => {
                                 <button
                                     onClick={() => toggleTenantStatus(t.id, t.status)}
                                     className={`w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${t.status === 'ACTIVE'
-                                            ? 'bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600'
-                                            : 'bg-emerald-500 text-white shadow-lg shadow-emerald-200'
+                                        ? 'bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600'
+                                        : 'bg-emerald-500 text-white shadow-lg shadow-emerald-200'
                                         }`}
                                 >
                                     {t.status === 'ACTIVE' ? 'Suspend Access' : 'Activate Now'}

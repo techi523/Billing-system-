@@ -2,59 +2,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SuperAdminDashboard from '../components/SuperAdmin/SuperAdminDashboard';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const SuperAdminPortal = () => {
     const navigate = useNavigate();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const { user, logout, loading: authLoading } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const checkAuth = async () => {
-            const token = localStorage.getItem('token');
-            const user = localStorage.getItem('user');
-
-            // Check if we have demo credentials
-            if (token === 'demo-token' && user) {
-                const userData = JSON.parse(user);
-                if (userData.name === 'Demo Admin') {
-                    setIsAuthenticated(true);
-                    setIsLoading(false);
-                    return;
-                }
-            }
-
-            // Check if we have real authentication
-            if (token) {
-                try {
-                    // Try to verify token with backend
-                    const res = await axios.get('/api/v1/auth/verify', {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    const userData = res.data.user;
-                    // Ensure user is super admin
-                    if (userData.role === 'SUPER_ADMIN') {
-                        setIsAuthenticated(true);
-                    } else {
-                        // Wrong role, redirect to appropriate portal
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
-                        navigate('/login');
-                    }
-                } catch (err) {
-                    // Token invalid, redirect to login
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    navigate('/superadmin-login');
-                }
-            } else {
-                // No token, redirect to super admin login
-                navigate('/superadmin-login');
-            }
+        if (!authLoading) {
             setIsLoading(false);
-        };
-
-        checkAuth();
-    }, [navigate]);
+        }
+    }, [authLoading]);
 
     if (isLoading) {
         return (
@@ -65,10 +24,6 @@ const SuperAdminPortal = () => {
                 </div>
             </div>
         );
-    }
-
-    if (!isAuthenticated) {
-        return null;
     }
 
     return (
@@ -86,11 +41,7 @@ const SuperAdminPortal = () => {
                                 SUPER ADMIN
                             </span>
                             <button
-                                onClick={() => {
-                                    localStorage.removeItem('token');
-                                    localStorage.removeItem('user');
-                                    navigate('/login');
-                                }}
+                                onClick={logout}
                                 className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
                             >
                                 Logout

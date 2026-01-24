@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const WalletPage = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [balance, setBalance] = useState<any>(null);
     const [transactions, setTransactions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -21,10 +23,9 @@ const WalletPage = () => {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const token = localStorage.getItem('token');
             const [balanceRes, transRes] = await Promise.all([
-                axios.get('/api/v1/wallet/balance', { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get('/api/v1/wallet/transactions', { headers: { Authorization: `Bearer ${token}` } })
+                axios.get('/api/v1/wallet/balance'),
+                axios.get('/api/v1/wallet/transactions')
             ]);
             setBalance(balanceRes.data);
             setTransactions(transRes.data);
@@ -37,10 +38,8 @@ const WalletPage = () => {
 
     const handleWithdrawRequest = async () => {
         try {
-            const token = localStorage.getItem('token');
             const res = await axios.post('/api/v1/wallet/withdraw/request',
-                { amount: parseFloat(withdrawAmount), method: withdrawMethod },
-                { headers: { Authorization: `Bearer ${token}` } }
+                { amount: parseFloat(withdrawAmount), method: withdrawMethod }
             );
 
             if (res.data.step === 'VERIFICATION_REQUIRED') {
@@ -58,10 +57,8 @@ const WalletPage = () => {
 
     const handleWithdrawVerify = async () => {
         try {
-            const token = localStorage.getItem('token');
             await axios.post('/api/v1/wallet/withdraw/verify',
-                { amount: parseFloat(withdrawAmount), method: withdrawMethod, otp },
-                { headers: { Authorization: `Bearer ${token}` } }
+                { amount: parseFloat(withdrawAmount), method: withdrawMethod, otp }
             );
             setMessage('Withdrawal request verified and submitted!');
             setShowWithdrawModal(false);
@@ -92,21 +89,21 @@ const WalletPage = () => {
 
                 {/* Balance Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="premium-card bg-white p-6 border-l-4 border-emerald-500">
-                        <p className="text-xs font-black text-slate-400 uppercase mb-1">Total Balance</p>
-                        <h3 className="text-2xl font-black text-slate-900">KES {balance?.balance?.toLocaleString()}</h3>
+                    <div className="premium-card bg-white p-6 border-l-4 border-emerald-500 shadow-sm">
+                        <p className="text-xs font-black text-slate-400 uppercase mb-1">Total Assets</p>
+                        <h3 className="text-2xl font-black text-slate-900">KES {Number(balance?.balance || 0).toLocaleString()}</h3>
                     </div>
-                    <div className="premium-card bg-white p-6 border-l-4 border-blue-500">
+                    <div className="premium-card bg-white p-6 border-l-4 border-blue-500 shadow-sm">
                         <p className="text-xs font-black text-slate-400 uppercase mb-1">Settled (Withdrawable)</p>
-                        <h3 className="text-2xl font-black text-blue-600">KES {balance?.settled?.toLocaleString()}</h3>
+                        <h3 className="text-2xl font-black text-blue-600">KES {Number(balance?.settledBalance || 0).toLocaleString()}</h3>
                     </div>
-                    <div className="premium-card bg-white p-6 border-l-4 border-amber-500">
-                        <p className="text-xs font-black text-slate-400 uppercase mb-1">Pending Clearance</p>
-                        <h3 className="text-2xl font-black text-amber-600">KES {balance?.pending?.toLocaleString()}</h3>
+                    <div className="premium-card bg-white p-6 border-l-4 border-amber-500 shadow-sm">
+                        <p className="text-xs font-black text-slate-400 uppercase mb-1">In Escrow (Pending)</p>
+                        <h3 className="text-2xl font-black text-amber-600">KES {Number(balance?.pendingBalance || 0).toLocaleString()}</h3>
                     </div>
-                    <div className="premium-card bg-white p-6 border-l-4 border-rose-500">
-                        <p className="text-xs font-black text-slate-400 uppercase mb-1">Frozen</p>
-                        <h3 className="text-2xl font-black text-rose-600">KES {balance?.frozen?.toLocaleString()}</h3>
+                    <div className="premium-card bg-white p-6 border-l-4 border-rose-500 shadow-sm">
+                        <p className="text-xs font-black text-slate-400 uppercase mb-1">Frozen / Disputed</p>
+                        <h3 className="text-2xl font-black text-rose-600">KES {Number(balance?.frozenBalance || 0).toLocaleString()}</h3>
                     </div>
                 </div>
 
@@ -141,8 +138,8 @@ const WalletPage = () => {
                                         <td className="px-6 py-4 font-bold text-slate-600">{new Date(tx.createdAt).toLocaleDateString()}</td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded-full text-[10px] font-black ${tx.transactionType === 'CREDIT' ? 'bg-emerald-100 text-emerald-600' :
-                                                    tx.transactionType === 'DEBIT' ? 'bg-rose-100 text-rose-600' :
-                                                        'bg-slate-100 text-slate-600'
+                                                tx.transactionType === 'DEBIT' ? 'bg-rose-100 text-rose-600' :
+                                                    'bg-slate-100 text-slate-600'
                                                 }`}>
                                                 {tx.transactionType}
                                             </span>

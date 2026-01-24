@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Shield, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import logo from '../assets/logo.png';
+import { useAuth } from '../context/AuthContext';
 
 const SuperAdminLogin = () => {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -21,11 +22,11 @@ const SuperAdminLogin = () => {
             const res = await axios.post('/api/v1/auth/superadmin/login', {
                 email,
                 password,
-                ip: window.location.hostname // Client-side IP detection (not reliable, but for demo)
+                ip: window.location.hostname
             });
 
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('user', JSON.stringify(res.data.user));
+            const { token, user } = res.data;
+            login(token, user);
             navigate('/superadmin');
         } catch (err: any) {
             setError(err.response?.data?.error || 'Login failed');

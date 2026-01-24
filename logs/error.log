@@ -7,3 +7,8 @@
 {"error":"Invalid payment for access grant","level":"error","message":"Fulfillment Failed","paymentId":"0b9b16a7-4da9-4bc2-a0d5-9912e1c57608","service":"billing-system","timestamp":"2026-01-16T08:42:58.440Z"}
 {"error":"Timed out after 10 seconds","level":"error","message":"MikroTik Operation Failed after retries","routerId":"c628830a-fb7f-4f1d-bf0d-a215af813e13","service":"billing-system","timestamp":"2026-01-16T09:49:28.830Z"}
 {"checkoutRequestId":"ws_CO_1768556931950_MOCK","error":"Router connection failed: Timed out after 10 seconds","level":"error","message":"Fulfillment Failed","service":"billing-system","timestamp":"2026-01-16T09:49:28.846Z"}
+{"error":"SQLITE_ERROR: no such column: sourceWalletId","level":"error","message":"Matured balance clearing failed","service":"billing-system","timestamp":"2026-01-22T18:20:40.551Z"}
+{"error":"SQLITE_ERROR: table tenants_backup has 14 columns but 32 values were supplied","level":"error","message":"Failed to start server:","service":"billing-system","timestamp":"2026-01-22T18:34:02.989Z"}
+{"error":"SQLITE_ERROR: no such column: sourceWalletId","level":"error","message":"Matured balance clearing failed","service":"billing-system","timestamp":"2026-01-22T18:35:41.955Z"}
+{"error":"SQLITE_ERROR: table tenants_backup has 14 columns but 32 values were supplied","level":"error","message":"Setup failed:","service":"billing-system","timestamp":"2026-01-23T08:57:54.871Z"}
+{"error":"SQLITE_ERROR: table tenants_backup has 14 columns but 32 values were supplied","level":"error","message":"Setup failed:","service":"billing-system","timestamp":"2026-01-23T09:14:28.039Z"}

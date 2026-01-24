@@ -179,17 +179,15 @@ router.post('/mpesa', async (req, res) => {
 
         // 4. ASYNC FULFILLMENT: Execute outside transaction for instant access
         if (shouldFulfill && fulfillmentData) {
-            // Fire-and-forget fulfillment with retry logic
-            const data = fulfillmentData as NonNullable<typeof fulfillmentData>;
+            const dataToProcess = { ...(fulfillmentData as any) };
             setImmediate(async () => {
                 try {
-                    await processFulfillment(data);
+                    await processFulfillment(dataToProcess);
                 } catch (error: any) {
                     logger.error('Async fulfillment failed', {
-                        paymentId: data.paymentId,
+                        paymentId: dataToProcess.paymentId,
                         error: error.message
                     });
-                    // TODO: Queue for retry in production
                 }
             });
         }

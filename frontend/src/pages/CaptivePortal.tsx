@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Smartphone, Zap, Clock, Wifi, ShieldCheck, ChevronRight, Share2, Info, Loader2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import logo from '../assets/logo-main.png';
 
 const CaptivePortal = () => {
     const [packages, setPackages] = useState<any[]>([]);
@@ -11,26 +12,46 @@ const CaptivePortal = () => {
     const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'waiting_pin' | 'success' | 'failed'>('idle');
     const [paymentId, setPaymentId] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string>('');
+    const [tenantConfig, setTenantConfig] = useState<any>(null);
 
     useEffect(() => {
-        const fetchPackages = async () => {
+        const initPortal = async () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const tenantId = urlParams.get('tenantId') || 'demo';
+            const tenantId = urlParams.get('tenantId');
+
+            if (!tenantId) {
+                setErrorMessage('Internal network error: missing tenantId');
+                setLoading(false);
+                return;
+            }
+
             try {
+                // Fetch Branding
+                const configRes = await axios.get(`/api/v1/portal/${tenantId}/config`);
+                setTenantConfig(configRes.data);
+
+                // Fetch Packages
                 const res = await axios.get(`/api/v1/portal/${tenantId}/packages`);
                 setPackages(Array.isArray(res.data) ? res.data : []);
                 setLoading(false);
             } catch (e) {
-                console.error('Failed to load packages');
+                setErrorMessage('Failed to connect to network services');
                 setLoading(false);
             }
         };
-        fetchPackages();
+        initPortal();
+    }, []);
+
+    useEffect(() => {
+        // Stop polling when component unmounts
+        return () => {
+            // Cleanup if needed
+        };
     }, []);
 
     const handlePayment = async () => {
         if (!selectedPackage || !phoneNumber) {
-            setErrorMessage('Please select a package and enter your M-Pesa number');
+            setErrorMessage('Select a package and enter M-Pesa number');
             return;
         }
 
@@ -39,13 +60,19 @@ const CaptivePortal = () => {
 
         try {
             const urlParams = new URLSearchParams(window.location.search);
-            const tenantId = urlParams.get('tenantId') || 'demo';
-            const mac = urlParams.get('mac') || '';
-            const ip = urlParams.get('ip') || '';
-            const routerId = urlParams.get('routerId') || '';
+            const tenantId = urlParams.get('tenantId');
+
+            // Production: Fallback to detection if params missing (for captive portal environment)
+            const mac = urlParams.get('mac') || urlParams.get('client_mac') || '00:00:00:00:00:00';
+            const ip = urlParams.get('ip') || urlParams.get('client_ip') || '127.0.0.1';
+            const routerId = urlParams.get('routerId') || 'unknown';
+
+            if (!tenantId) {
+                throw new Error('Invalid Portal Configuration: Tenant ID missing');
+            }
 
             const response = await axios.post(`/api/v1/portal/${tenantId}/pay`, {
-                phone: phoneNumber,
+                phone: phoneNumber.replace(/^0/, '254').replace(/^\+/, ''), // Normalize
                 packageId: selectedPackage.id,
                 mac,
                 ip,
@@ -54,48 +81,50 @@ const CaptivePortal = () => {
 
             setPaymentId(response.data.paymentId);
             setPaymentStatus('waiting_pin');
-
-            // Start polling for payment status
             pollPaymentStatus(response.data.paymentId);
 
         } catch (error: any) {
+            console.error('Payment Error', error);
             setPaymentStatus('failed');
-            setErrorMessage(error.response?.data?.error || 'Payment initiation failed. Please try again.');
+            setErrorMessage(error.response?.data?.error || 'Payment initiation failed. Please check network.');
         }
     };
 
-    const pollPaymentStatus = async (paymentId: string) => {
+    const pollPaymentStatus = async (currentPaymentId: string) => {
+        let attempts = 0;
+        const maxAttempts = 60; // 3 minutes total (3s interval)
+
         const pollInterval = setInterval(async () => {
+            attempts++;
             try {
-                const response = await axios.get(`/api/v1/portal/payment-status/${paymentId}`);
+                const response = await axios.get(`/api/v1/portal/payment-status/${currentPaymentId}`);
                 const status = response.data.status;
 
                 if (status === 'SUCCESS') {
+                    clearInterval(pollInterval);
                     setPaymentStatus('success');
-                    clearInterval(pollInterval);
-                    // Auto-redirect after success
-                    setTimeout(() => {
-                        window.location.href = 'https://www.google.com'; // Or success page
-                    }, 2000);
-                } else if (status === 'FAILED') {
-                    setPaymentStatus('failed');
-                    setErrorMessage('Payment was cancelled or failed. Please try again.');
-                    clearInterval(pollInterval);
-                }
-                // Continue polling for PENDING status
-            } catch (error) {
-                console.error('Polling error:', error);
-            }
-        }, 2000); // Poll every 2 seconds
 
-        // Timeout after 5 minutes
-        setTimeout(() => {
-            clearInterval(pollInterval);
-            if (paymentStatus === 'waiting_pin') {
-                setPaymentStatus('failed');
-                setErrorMessage('Payment timeout. Please try again.');
+                    // Allow time for animation before redirect
+                    setTimeout(() => {
+                        // Redirect to success URL or Internet Check
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const redirectUrl = urlParams.get('dst') || urlParams.get('link-login-only') || 'https://www.google.com';
+                        window.location.href = redirectUrl;
+                    }, 3000);
+                } else if (status === 'FAILED') {
+                    clearInterval(pollInterval);
+                    setPaymentStatus('failed');
+                    setErrorMessage(response.data.failureReason || 'Payment declined or cancelled.');
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    setPaymentStatus('failed');
+                    setErrorMessage('Payment request timed out. Please try again.');
+                }
+            } catch (error) {
+                // Silent catch for network blips during polling
+                console.warn('Polling network error', error);
             }
-        }, 5 * 60 * 1000);
+        }, 3000);
     };
 
     const resetPayment = () => {
@@ -108,46 +137,39 @@ const CaptivePortal = () => {
         <div className="h-screen flex items-center justify-center bg-[#0f172a] text-white">
             <div className="flex flex-col items-center gap-6">
                 <motion.div
-                    animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    className="w-16 h-16 bg-sky-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-sky-500/40"
+                    animate={{ scale: [1, 1.1, 1], rotate: [0, 90, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="w-20 h-20 bg-sky-500/20 rounded-3xl border border-sky-500/30 flex items-center justify-center shadow-2xl"
                 >
-                    <Wifi size={32} />
+                    <Wifi size={32} className="text-sky-400" />
                 </motion.div>
-                <div className="flex flex-col items-center">
-                    <h2 className="text-2xl font-black tracking-tighter">SurfBill.</h2>
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-sky-400 mt-2">Authenticating Hub</p>
+                <div className="text-center">
+                    <h2 className="text-3xl font-black tracking-tighter">SurfBill</h2>
+                    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-sky-500 mt-2">Connecting...</p>
                 </div>
             </div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-sky-500 overflow-hidden relative">
-            {/* Background Decorative Blobs */}
-            <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}
-                className="absolute top-0 left-0 w-full h-full bg-[#0f172a]"
-            ></motion.div>
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] -mr-32 -mt-32 animate-pulse-slow"></div>
-            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-sky-500/10 rounded-full blur-[100px] -ml-20 -mb-20 animate-float-delayed"></div>
+        <div className="min-h-screen bg-[#0f172a] text-slate-900 font-sans selection:bg-sky-500 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-600/20 rounded-full blur-[120px] -mr-32 -mt-32 animate-pulse"></div>
+            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-500/10 rounded-full blur-[100px] -ml-20 -mb-20"></div>
 
-            {/* Hero Section */}
             <motion.div
                 initial={{ y: -50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6 }}
                 className="relative z-10 pt-12 pb-8 px-8 flex flex-col items-center text-center text-white"
             >
-                <div className="w-20 h-20 bg-white/5 backdrop-blur-2xl rounded-3xl border border-white/10 flex items-center justify-center mb-6 shadow-2xl shadow-indigo-500/20 animate-float">
-                    <Wifi size={32} className="text-sky-400 neon-text" />
+                <div className="w-24 h-24 bg-white/5 backdrop-blur-2xl rounded-3xl border border-white/10 flex items-center justify-center mb-6 shadow-2xl">
+                    <img src={tenantConfig?.logoUrl || logo} alt="Logo" className="w-16 h-16 object-contain" />
                 </div>
-                <h1 className="text-4xl font-black tracking-tighter mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-                    High-Speed <span className="text-sky-400">Flux</span>
+                <h1 className="text-4xl font-black tracking-tighter mb-2">
+                    {tenantConfig?.name || 'SurfBill'} <span className="text-sky-400">Portal</span>
                 </h1>
                 <p className="text-slate-400 font-bold text-xs tracking-[0.2em] uppercase flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                    Secure Access Hub
+                    Verified Network Access
                 </p>
             </motion.div>
 
@@ -318,8 +340,8 @@ const CaptivePortal = () => {
                                     whileHover={(selectedPackage && phoneNumber && paymentStatus === 'idle') ? { scale: 1.02, boxShadow: "0 0 20px rgba(14, 165, 233, 0.4)" } : {}}
                                     whileTap={(selectedPackage && phoneNumber && paymentStatus === 'idle') ? { scale: 0.98 } : {}}
                                     className={`w-full py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 ${(selectedPackage && phoneNumber && paymentStatus === 'idle')
-                                            ? 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-xl shadow-sky-900/20 relative overflow-hidden'
-                                            : 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                                        ? 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-xl shadow-sky-900/20 relative overflow-hidden'
+                                        : 'bg-slate-800 text-slate-600 cursor-not-allowed'
                                         }`}
                                 >
                                     {(selectedPackage && phoneNumber && paymentStatus === 'idle') && <div className="absolute inset-0 bg-white/20 animate-pulse"></div>}
