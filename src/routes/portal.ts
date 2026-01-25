@@ -6,10 +6,20 @@ import logger from '../utils/logger';
 
 const router = Router();
 
-// 0. Get Tenant Configuration (Branding)
+// 0. Get Tenant Configuration (Branding) - by ID
 router.get('/:tenantId/config', async (req, res) => {
     const tenant = await Tenant.findByPk(req.params.tenantId, {
-        attributes: ['name', 'logoUrl', 'primaryColor']
+        attributes: ['id', 'name', 'logoUrl', 'primaryColor', 'subdomain']
+    });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+    res.json(tenant);
+});
+
+// 0b. Get Tenant Configuration by Subdomain
+router.get('/config/:subdomain', async (req, res) => {
+    const tenant = await Tenant.findOne({
+        where: { subdomain: req.params.subdomain },
+        attributes: ['id', 'name', 'logoUrl', 'primaryColor', 'subdomain']
     });
     if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
     res.json(tenant);

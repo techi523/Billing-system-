@@ -64,7 +64,19 @@ export class WalletService {
         totalFees: number;
     }> {
         const wallet = await Wallet.findOne({ where: { ownerId, ownerType } });
-        if (!wallet) throw new Error('Wallet not found');
+
+        // If wallet doesn't exist, return default values (for new tenants)
+        if (!wallet) {
+            return {
+                balance: 0,
+                pending: 0,
+                settled: 0,
+                frozen: 0,
+                id: 'uninitialized',
+                totalEarnings: 0,
+                totalFees: 0
+            };
+        }
 
         // Calculate analytics (Total Earnings and Fees)
         const stats = await WalletTransaction.findAll({

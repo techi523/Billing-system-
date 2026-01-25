@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { AdminUser, Tenant, AdminSession, AuditLog, PasswordResetToken } from '../models';
+import { TenantBootstrapService } from '../services/tenant-bootstrap.service';
 import { sendPasswordResetEmail } from '../services/emailService';
 
 const router = Router();
@@ -33,6 +34,9 @@ router.post('/register', async (req, res) => {
             role: 'TENANT',
             tenantId: tenant.id
         });
+
+        // 3. Bootstrap tenant with essential data
+        await TenantBootstrapService.bootstrapNewTenant(tenant.id, user.id);
 
         res.status(201).json({
             message: 'Tenant registered successfully',
