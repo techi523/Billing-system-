@@ -403,3 +403,16 @@
 {"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-25T16:17:22.391Z"}
 {"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-25T16:28:53.092Z"}
 {"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-25T16:32:24.859Z"}
+{"error":"getaddrinfo ENOTFOUND mysql","level":"error","message":"Failed to start server:","service":"billing-system","timestamp":"2026-01-29T08:18:27.795Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-29T09:05:19.985Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-29T09:05:43.356Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-29T09:05:43.533Z"}
+{"ip":"::1","level":"info","message":"GET /health","service":"billing-system","timestamp":"2026-01-29T09:08:21.699Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-29T09:22:27.598Z"}
+{"error":"Unexpected token ''', \"'{email:te\"... is not valid JSON","level":"error","message":"Unhandled Error","service":"billing-system","stack":"SyntaxError: Unexpected token ''', \"'{email:te\"... is not valid JSON\n    at JSON.parse (<anonymous>)\n    at createStrictSyntaxError (c:\\Users\\samnd\\Billing-system-\\node_modules\\body-parser\\lib\\types\\json.js:109:10)\n    at parse (c:\\Users\\samnd\\Billing-system-\\node_modules\\body-parser\\lib\\types\\json.js:66:15)\n    at c:\\Users\\samnd\\Billing-system-\\node_modules\\body-parser\\lib\\read.js:162:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n    at invokeCallback (c:\\Users\\samnd\\Billing-system-\\node_modules\\raw-body\\index.js:238:16)\n    at done (c:\\Users\\samnd\\Billing-system-\\node_modules\\raw-body\\index.js:227:7)\n    at IncomingMessage.onEnd (c:\\Users\\samnd\\Billing-system-\\node_modules\\raw-body\\index.js:287:7)\n    at IncomingMessage.emit (node:events:508:28)\n    at IncomingMessage.emit (node:domain:489:12)","timestamp":"2026-01-29T09:23:43.623Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-29T09:24:51.050Z"}
+{"level":"info","message":"Tenant bootstrap completed for 9f19d4a9-66b8-448e-89df-c37f19afce46","packagesCreated":4,"service":"billing-system","tenantId":"9f19d4a9-66b8-448e-89df-c37f19afce46","timestamp":"2026-01-29T09:25:01.327Z","walletInitialized":true}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-29T09:28:15.007Z"}
+{"ip":"::1","level":"info","message":"GET /health","service":"billing-system","timestamp":"2026-01-29T09:56:53.021Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-29T10:05:46.192Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-29T11:05:46.206Z"}

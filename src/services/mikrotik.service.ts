@@ -144,5 +144,66 @@ export class MikroTikService {
             return await api.menu('/ip/hotspot/active').get();
         });
     }
+
+    /**
+     * Fetch real-time bandwidth stats for active sessions
+     */
+    static async fetchSessionStats(router: RouterModel) {
+        return this.executeWithRetry(router, async (api) => {
+            const activeSessions = await api.menu('/ip/hotspot/active').get();
+            return (activeSessions as any[]).map(s => ({
+                user: s.user,
+                address: s.address,
+                macAddress: s['mac-address'],
+                uptime: s.uptime,
+                bytesIn: parseInt(s['bytes-in'] || '0'),
+                bytesOut: parseInt(s['bytes-out'] || '0'),
+                packetsIn: parseInt(s['packets-in'] || '0'),
+                packetsOut: parseInt(s['packets-out'] || '0')
+            }));
+        });
+    }
+
+    /**
+     * Generate pre-configured MikroTik .rsc scripts
+     */
+    static async generateConfigScript(type: 'HOTSPOT' | 'PPPOE' | 'RADIUS', version: 'v6' | 'v7' = 'v7'): Promise<string> {
+        const portalUrl = process.env.PUBLIC_PORTAL_URL || 'http://your-server.com';
+
+        if (type === 'HOTSPOT') {
+            return `# SurfBill Hotspot Configuration Script (${version})
+/ip hotspot profile
+add dns-name=hotspot.surfbill.com hotspot-address=10.5.50.1 login-by=http-chap,http-pap,mac name=SurfBill_Profile use-radius=yes
+/ip hotspot
+add address-pool=hs-pool-1 disabled=no interface=bridge-lan name=SurfBill_Hotspot profile=SurfBill_Profile
+/ip hotspot user profile
+set [ find default=yes ] shared-users=1
+/ip hotspot walled-garden
+add comment="Allow SurfBill Portal" dst-host=${new URL(portalUrl).hostname}
+add comment="Allow M-Pesa Callbacks" dst-host=safaricom.co.ke
+`;
+        }
+
+        if (type === 'PPPOE') {
+            return `# SurfBill PPPoE Configuration Script (${version})
+/ppp profile
+add name=SurfBill_PPPoE_Profile use-radius=yes
+/interface pppoe-server server
+add disabled=no interface=bridge-lan service-name=SurfBill_PPPoE profile=SurfBill_PPPoE_Profile
+`;
+        }
+
+        if (type === 'RADIUS') {
+            const radiusSecret = process.env.RADIUS_SECRET || 'surfbill_secret';
+            return `# SurfBill RADIUS Configuration Script (${version})
+/radius
+add address=${new URL(portalUrl).hostname} secret=${radiusSecret} service=hotspot,ppp
+/radius incoming
+set accept=yes
+`;
+        }
+
+        return "# No script template found for this type";
+    }
 }
 

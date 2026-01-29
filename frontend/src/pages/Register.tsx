@@ -4,6 +4,7 @@ import { ArrowRight, Lock, Mail, User, Globe, Building } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import logo from '../assets/logo.png';
+import SupportFooter from '../components/Common/SupportFooter';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -171,6 +172,11 @@ const Register = () => {
                     </p>
                 </div>
             </motion.div>
+
+            {/* Page Footer */}
+            <div className="absolute bottom-0 left-0 w-full z-10 opacity-40 hover:opacity-100 transition-opacity">
+                <SupportFooter />
+            </div>
         </div>
     );
 };

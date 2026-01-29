@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo-main.png';
+import SupportFooter from '../components/Common/SupportFooter';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -163,6 +164,11 @@ const Login = () => {
                     </div>
                 </div>
             </motion.div>
+
+            {/* Background Footer for Login Page */}
+            <div className="absolute bottom-0 left-0 w-full z-10 opacity-40 hover:opacity-100 transition-opacity">
+                <SupportFooter />
+            </div>
         </div>
     );
 };

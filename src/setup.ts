@@ -31,8 +31,30 @@ async function initialSetup() {
             logger.info('Super Admin created successfully.');
         }
 
-        // 2. Create Demo "SurfBill" Tenant
-        const { Tenant, Package, Router: RouterModel, Subscriber, Payment, Voucher, Wallet } = require('./models');
+        // 2. Create Platform Settings (Contact Details)
+        const { Tenant, Package, Router: RouterModel, Subscriber, Payment, Voucher, Wallet, PlatformSetting } = require('./models');
+
+        const settings = [
+            { key: 'CONTACT_WHATSAPP', value: process.env.CONTACT_WHATSAPP || '+254714498996' },
+            { key: 'CONTACT_WHATSAPP_URL', value: process.env.CONTACT_WHATSAPP_URL || 'https://wa.me/254714498996' },
+            { key: 'CONTACT_PHONE', value: process.env.CONTACT_PHONE || '+254714498996' },
+            { key: 'CONTACT_PHONE_TEL', value: process.env.CONTACT_PHONE_TEL || 'tel:+254714498996' },
+            { key: 'CONTACT_EMAIL', value: process.env.CONTACT_EMAIL || 'surfbill0@gmail.com' },
+            { key: 'CONTACT_EMAIL_MAILTO', value: process.env.CONTACT_EMAIL_MAILTO || 'mailto:surfbill0@gmail.com' },
+            { key: 'CONTACT_FACEBOOK_PAGE', value: process.env.CONTACT_FACEBOOK_PAGE || 'SurfBill' },
+            { key: 'CONTACT_FACEBOOK_URL', value: process.env.CONTACT_FACEBOOK_URL || 'https://www.facebook.com/SurfBill' },
+            { key: 'CONTACT_SUPPORT_MESSAGE', value: process.env.CONTACT_SUPPORT_MESSAGE || 'Hello SurfBill Support, I need help with…' }
+        ];
+
+        for (const setting of settings) {
+            await PlatformSetting.findOrCreate({
+                where: { key: setting.key },
+                defaults: { value: setting.value }
+            });
+        }
+        logger.info('Platform settings initialized.');
+
+        // 3. Create Demo "SurfBill" Tenant
 
         // Cleanup demo data
         await Tenant.destroy({ where: { subdomain: 'alpha' }, cascade: true });

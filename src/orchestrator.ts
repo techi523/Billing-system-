@@ -83,4 +83,49 @@ export class SessionOrchestrator {
         session.status = 'EXPIRED';
         await session.save();
     }
+
+    /**
+     * Update session consumption from MikroTik stats
+     */
+    static async updateSessionUsage(sessionId: string, bytesIn: number, bytesOut: number) {
+        const session = await Session.findByPk(sessionId);
+        if (!session) return;
+
+        await session.update({
+            bytesIn: bytesIn,
+            bytesOut: bytesOut,
+            lastUpdated: new Date()
+        });
+    }
+
+    /**
+     * Background task to sync stats for all active sessions on a router
+     */
+    static async refreshAllSessionStats(routerId: string) {
+        const router = await Router.findByPk(routerId);
+        if (!router) return;
+
+        try {
+            const stats = await MikroTikService.fetchSessionStats(router);
+            for (const stat of stats) {
+                const session = await Session.findOne({
+                    where: {
+                        mikrotikUsername: stat.user,
+                        routerId: routerId,
+                        status: 'ACTIVE'
+                    }
+                });
+
+                if (session) {
+                    await session.update({
+                        bytesIn: stat.bytesIn,
+                        bytesOut: stat.bytesOut,
+                        lastUpdated: new Date()
+                    });
+                }
+            }
+        } catch (error) {
+            console.error(`Failed to refresh stats for router ${routerId}`, error);
+        }
+    }
 }

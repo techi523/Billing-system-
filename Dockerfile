@@ -1,29 +1,33 @@
-# PRODUCTION DOCKERFILE
-FROM node:18-alpine
+# Backend Dockerfile
+FROM node:20-alpine
 
-# Set node environment
-ENV NODE_ENV=production
+WORKDIR /app
 
-# Create app directory
-WORKDIR /usr/src/app
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
 
-# Install app dependencies
+# Copy package files
 COPY package*.json ./
-RUN npm install --only=production
+COPY pnpm-lock.yaml ./
 
-# Bundle app source
-COPY . .
+# Install dependencies
+RUN npm ci --prefer-offline || npm install
+
+# Copy source code
+COPY src/ ./src/
 
 # Build TypeScript
-RUN npm install typescript -g
-RUN tsc
+RUN npm run build
+
+# Create logs directory
+RUN mkdir -p logs
 
 # Expose port
 EXPOSE 3000
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD wget -qO- http://localhost:3000/api/v1/portal/health || exit 1
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))" || exit 1
 
 # Start server
-CMD [ "node", "dist/server.js" ]
+CMD ["npm", "start"]

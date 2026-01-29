@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Package, Payment, Tenant, Router as RouterModel } from '../models';
+import { Package, Payment, Tenant, Router as RouterModel, PlatformSetting } from '../models';
 import { MpesaService } from '../services/mpesa.service';
 import { AggregatorService } from '../services/aggregator.service';
 import logger from '../utils/logger';
@@ -154,6 +154,26 @@ router.get('/payment-status/:id', async (req, res) => {
 // 6. SaaS Health Check
 router.get('/health', (req, res) => {
     res.json({ status: 'UP', service: 'SurfBill Portal', timestamp: new Date() });
+});
+
+// 7. Public Platform Settings (Contacts)
+router.get('/public/settings', async (req, res) => {
+    try {
+        const settings = await PlatformSetting.findAll({
+            where: {
+                key: [
+                    'CONTACT_WHATSAPP', 'CONTACT_WHATSAPP_URL',
+                    'CONTACT_PHONE', 'CONTACT_PHONE_TEL',
+                    'CONTACT_EMAIL', 'CONTACT_EMAIL_MAILTO',
+                    'CONTACT_FACEBOOK_PAGE', 'CONTACT_FACEBOOK_URL',
+                    'CONTACT_SUPPORT_MESSAGE'
+                ]
+            }
+        });
+        res.json(settings);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 export default router;

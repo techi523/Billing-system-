@@ -3,6 +3,7 @@ import { Smartphone, Zap, Clock, Wifi, ShieldCheck, ChevronRight, Share2, Info, 
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../assets/logo-main.png';
+import SupportFooter from '../components/Common/SupportFooter';
 
 const CaptivePortal = () => {
     const [packages, setPackages] = useState<any[]>([]);
@@ -373,6 +374,11 @@ const CaptivePortal = () => {
                         Fair Usage Policy
                     </button>
                 </div>
+            </div>
+
+            {/* Persistent Support Footer */}
+            <div className="relative z-30 w-full mt-10">
+                <SupportFooter />
             </div>
         </div>
     );

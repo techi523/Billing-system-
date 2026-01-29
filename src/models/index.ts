@@ -60,6 +60,12 @@ export class Tenant extends Model {
   // Aggregator Model
   public aggregatorSubAccountId!: string | null;
   public commissionPercentage!: number; // e.g. 10 for 10%
+  // Hybrid Pricing Model
+  public baseMonthlyFee!: number;
+  public transactionFee!: number;
+  public smsFee!: number;
+  public activeUserFee!: number;
+  public subscriptionExpiry!: Date | null;
 }
 Tenant.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -92,6 +98,11 @@ Tenant.init({
   bankAccountDetails: { type: DataTypes.TEXT },
   aggregatorSubAccountId: { type: DataTypes.STRING },
   commissionPercentage: { type: DataTypes.FLOAT, defaultValue: 10 },
+  baseMonthlyFee: { type: DataTypes.FLOAT, defaultValue: 0 },
+  transactionFee: { type: DataTypes.FLOAT, defaultValue: 0 },
+  smsFee: { type: DataTypes.FLOAT, defaultValue: 0 },
+  activeUserFee: { type: DataTypes.FLOAT, defaultValue: 0 },
+  subscriptionExpiry: { type: DataTypes.DATE },
 }, { sequelize, modelName: 'tenant' });
 
 export class AdminUser extends Model {
@@ -341,6 +352,10 @@ export class Session extends Model {
   public status!: 'ACTIVE' | 'EXPIRED';
   public fraudScore!: number;
   public tenantId!: string;
+  // Bandwidth Tracking
+  public bytesIn!: number;
+  public bytesOut!: number;
+  public lastUpdated!: Date | null;
 }
 Session.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -355,6 +370,9 @@ Session.init({
   status: { type: DataTypes.ENUM('ACTIVE', 'EXPIRED'), defaultValue: 'ACTIVE' },
   fraudScore: { type: DataTypes.INTEGER, defaultValue: 0 },
   tenantId: { type: DataTypes.UUID, allowNull: false },
+  bytesIn: { type: DataTypes.BIGINT, defaultValue: 0 },
+  bytesOut: { type: DataTypes.BIGINT, defaultValue: 0 },
+  lastUpdated: { type: DataTypes.DATE },
 }, { sequelize, modelName: 'session' });
 
 export class AdminSession extends Model {
@@ -414,6 +432,42 @@ FraudLog.init({
   tenantId: { type: DataTypes.UUID, allowNull: false },
 }, { sequelize, modelName: 'fraud_log' });
 
+export class SMSLog extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public phoneNumber!: string;
+  public message!: string;
+  public status!: 'SENT' | 'FAILED' | 'PENDING';
+  public cost!: number;
+  public providerReference!: string | null;
+}
+SMSLog.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  phoneNumber: { type: DataTypes.STRING, allowNull: false },
+  message: { type: DataTypes.TEXT, allowNull: false },
+  status: { type: DataTypes.ENUM('SENT', 'FAILED', 'PENDING'), defaultValue: 'PENDING' },
+  cost: { type: DataTypes.FLOAT, defaultValue: 0 },
+  providerReference: { type: DataTypes.STRING },
+}, { sequelize, modelName: 'sms_log' });
+
+export class PlatformTransaction extends Model {
+  public id!: string;
+  public type!: 'FEE_SUBSCRIPTION' | 'FEE_TRANSACTION' | 'FEE_SMS' | 'COMMISSION';
+  public amount!: number;
+  public tenantId!: string;
+  public referenceId!: string | null; // e.g. Payment ID or SMS Log ID
+  public metadata!: string | null;
+}
+PlatformTransaction.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  type: { type: DataTypes.ENUM('FEE_SUBSCRIPTION', 'FEE_TRANSACTION', 'FEE_SMS', 'COMMISSION'), allowNull: false },
+  amount: { type: DataTypes.DECIMAL(20, 2), allowNull: false },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  referenceId: { type: DataTypes.UUID },
+  metadata: { type: DataTypes.TEXT },
+}, { sequelize, modelName: 'platform_transaction' });
+
 // Relationships
 Tenant.hasMany(AdminUser, { foreignKey: 'tenantId' });
 AdminUser.belongsTo(Tenant, { foreignKey: 'tenantId' });
@@ -468,8 +522,19 @@ AuditLog.belongsTo(Tenant, { foreignKey: 'tenantId' });
 AdminUser.hasMany(AuditLog, { foreignKey: 'userId' });
 AuditLog.belongsTo(AdminUser, { foreignKey: 'userId' });
 
-Tenant.hasMany(Settlement, { foreignKey: 'tenantId' });
 Settlement.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Tenant.hasMany(SMSLog, { foreignKey: 'tenantId' });
+SMSLog.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Tenant.hasMany(PlatformTransaction, { foreignKey: 'tenantId' });
+PlatformTransaction.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Payment.hasMany(PlatformTransaction, { foreignKey: 'referenceId', constraints: false });
+PlatformTransaction.belongsTo(Payment, { foreignKey: 'referenceId', constraints: false });
+
+SMSLog.hasMany(PlatformTransaction, { foreignKey: 'referenceId', constraints: false });
+PlatformTransaction.belongsTo(SMSLog, { foreignKey: 'referenceId', constraints: false });
 
 // Add new models for wallet transactions and ledger
 export class WalletTransaction extends Model {

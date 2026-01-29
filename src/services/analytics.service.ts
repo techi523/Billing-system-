@@ -97,4 +97,90 @@ export class AnalyticsService {
             activeTenants
         };
     }
+
+    /**
+     * Real-time Revenue Tracking (Today / Week / Month)
+     */
+    static async getRealTimeRevenue(tenantId: string) {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const [today, week, month] = await Promise.all([
+            Payment.sum('amount', { where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: startOfToday } } }),
+            Payment.sum('amount', { where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: startOfWeek } } }),
+            Payment.sum('amount', { where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: startOfMonth } } })
+        ]);
+
+        return {
+            today: today || 0,
+            week: week || 0,
+            month: month || 0
+        };
+    }
+
+    /**
+     * Advanced Bandwidth Usage Analytics
+     */
+    static async getBandwidthUsage(tenantId: string) {
+        const sessions = await Session.findAll({
+            where: { tenantId, status: 'ACTIVE' },
+            attributes: ['bytesIn', 'bytesOut', 'routerId']
+        });
+
+        const usageByRouter: Record<string, { in: number, out: number }> = {};
+        let totalIn = 0;
+        let totalOut = 0;
+
+        sessions.forEach(s => {
+            if (!usageByRouter[s.routerId]) usageByRouter[s.routerId] = { in: 0, out: 0 };
+            usageByRouter[s.routerId].in += Number(s.bytesIn);
+            usageByRouter[s.routerId].out += Number(s.bytesOut);
+            totalIn += Number(s.bytesIn);
+            totalOut += Number(s.bytesOut);
+        });
+
+        return {
+            totalIn,
+            totalOut,
+            usageByRouter,
+            activeSessions: sessions.length
+        };
+    }
+
+    /**
+     * Payment Performance (Success vs Failure Rates)
+     */
+    static async getPaymentPerformance(tenantId: string) {
+        const [success, failed] = await Promise.all([
+            Payment.count({ where: { tenantId, status: 'SUCCESS' } }),
+            Payment.count({ where: { tenantId, status: 'FAILED' } })
+        ]);
+
+        const total = success + failed;
+        return {
+            success,
+            failed,
+            rate: total > 0 ? (success / total) * 100 : 0
+        };
+    }
+
+    /**
+     * SMS Usage and Metrics
+     */
+    static async getSmsMetrics(tenantId: string) {
+        const stats = await (SMSLog as any).findAll({
+            where: { tenantId },
+            attributes: [
+                'status',
+                [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
+                [sequelize.fn('SUM', sequelize.col('cost')), 'totalCost']
+            ],
+            group: ['status'],
+            raw: true
+        });
+
+        return stats;
+    }
 }

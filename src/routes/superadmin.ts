@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { Tenant, AdminUser, Payment, Wallet, WalletTransaction, PlatformFee, TieredFee, sequelize } from '../models';
 import { authMiddleware, AuthRequest, authorize } from '../middleware/auth';
 import { AnalyticsService } from '../services/analytics.service';
 import { AuditService } from '../services/audit.service';
 import { SettlementService } from '../services/settlement.service';
 import { WalletService } from '../services/wallet.service';
 import { AggregatorService } from '../services/aggregator.service';
+import { PlatformSetting } from '../models';
 
 const router = Router();
 router.use(authMiddleware);
@@ -192,6 +192,35 @@ router.put('/platform-fees/:id', async (req: any, res) => {
         res.json(platformFee);
     } catch (e: any) {
         await transaction.rollback();
+        res.status(400).json({ error: e.message });
+    }
+});
+
+// 9. Platform Settings Management
+router.get('/settings', async (req, res) => {
+    try {
+        const settings = await PlatformSetting.findAll();
+        res.json(settings);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.put('/settings/:key', async (req: any, res) => {
+    try {
+        const { value } = req.body;
+        const [setting, created] = await PlatformSetting.findOrCreate({
+            where: { key: req.params.key },
+            defaults: { value }
+        });
+
+        if (!created) {
+            await setting.update({ value });
+        }
+
+        await AuditService.log('PLATFORM_SETTING_UPDATED', `Setting ${req.params.key} updated`, undefined, req.user?.id);
+        res.json(setting);
+    } catch (e: any) {
         res.status(400).json({ error: e.message });
     }
 });

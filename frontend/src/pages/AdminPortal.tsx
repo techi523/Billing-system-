@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminDashboard from '../components/Admin/Dashboard';
 import axios from 'axios';
+import SupportFooter from '../components/Common/SupportFooter';
 
 const AdminPortal = () => {
     const navigate = useNavigate();
@@ -91,6 +92,10 @@ const AdminPortal = () => {
             <div className="max-w-7xl mx-auto p-8 space-y-8">
                 <AdminDashboard />
                 {/* Future admin sections such as TenantList, AuditLog, Settings can be added here */}
+            </div>
+
+            <div className="mt-8 pb-8">
+                <SupportFooter />
             </div>
         </div>
     );

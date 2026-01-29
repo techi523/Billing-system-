@@ -1,4 +1,4 @@
-import { Wallet, WalletTransaction, PlatformWallet, PlatformFee, Tenant, Payment, Settlement, TieredFee } from '../models';
+import { Wallet, WalletTransaction, PlatformWallet, PlatformFee, Tenant, Payment, Settlement, TieredFee, PlatformTransaction, SMSLog, AuditLog } from '../models';
 import { sequelize } from '../models';
 import { Op } from 'sequelize';
 import logger from '../utils/logger';
@@ -137,7 +137,9 @@ export class WalletService {
 
             const transactionAmount = payment.amount;
             const commissionPercentage = tenant.commissionPercentage || 10;
-            const platformFeeAmount = (transactionAmount * commissionPercentage) / 100;
+            const commissionAmount = (transactionAmount * commissionPercentage) / 100;
+            const transactionFee = tenant.transactionFee || 0;
+            const platformFeeAmount = commissionAmount + transactionFee;
             const netAmount = transactionAmount - platformFeeAmount;
 
             // Get tenant wallet
@@ -188,8 +190,28 @@ export class WalletService {
                 completedAt: new Date()
             }, { transaction });
 
-            // Update platform wallet (The 10% commission)
+            // Update platform wallet
             await this.updatePlatformWallet(platformFeeAmount, 'CREDIT', payment.id, transaction);
+
+            // Record Platform Transactions for transparency
+            if (commissionAmount > 0) {
+                await PlatformTransaction.create({
+                    type: 'COMMISSION',
+                    amount: commissionAmount,
+                    tenantId: payment.tenantId,
+                    referenceId: payment.id,
+                    metadata: JSON.stringify({ rate: commissionPercentage })
+                }, { transaction });
+            }
+
+            if (transactionFee > 0) {
+                await PlatformTransaction.create({
+                    type: 'FEE_TRANSACTION',
+                    amount: transactionFee,
+                    tenantId: payment.tenantId,
+                    referenceId: payment.id
+                }, { transaction });
+            }
 
             await transaction.commit();
 
@@ -612,6 +634,110 @@ export class WalletService {
             await transaction.rollback();
             logger.error('Failed to make manual adjustment', { error: error instanceof Error ? error.message : String(error), walletId });
             throw new Error(error instanceof Error ? error.message : String(error));
+        }
+    }
+
+    /**
+     * Bill for SMS usage
+     */
+    static async billSms(tenantId: string, smsLogId: string): Promise<void> {
+        const transaction = await sequelize.transaction();
+        try {
+            const tenant = await Tenant.findByPk(tenantId);
+            if (!tenant || !tenant.smsFee) {
+                await transaction.commit();
+                return;
+            }
+
+            const fee = tenant.smsFee;
+            const wallet = await Wallet.findOne({ where: { ownerId: tenantId, ownerType: 'TENANT' } });
+            if (!wallet) throw new Error('Tenant wallet not found');
+
+            // Deduct from wallet
+            await wallet.update({
+                balance: Number(wallet.balance) - fee,
+                settledBalance: Number(wallet.settledBalance) - fee
+            }, { transaction });
+
+            // Create wallet transaction
+            await WalletTransaction.create({
+                walletId: wallet.id,
+                amount: fee,
+                transactionType: 'FEE',
+                referenceId: smsLogId,
+                referenceType: 'SMS',
+                balanceAfter: Number(wallet.balance) - fee,
+                description: `SMS notification fee`,
+                status: 'COMPLETED',
+                tenantId: tenantId
+            }, { transaction });
+
+            // Update platform wallet
+            await this.updatePlatformWallet(fee, 'CREDIT', smsLogId, transaction);
+
+            // Record Platform Transaction
+            await PlatformTransaction.create({
+                type: 'FEE_SMS',
+                amount: fee,
+                tenantId: tenantId,
+                referenceId: smsLogId
+            }, { transaction });
+
+            await transaction.commit();
+        } catch (error) {
+            await transaction.rollback();
+            logger.error('Failed to bill SMS usage', { error: error instanceof Error ? error.message : String(error), tenantId });
+        }
+    }
+
+    /**
+     * Bill for base subscription
+     */
+    static async billSubscription(tenantId: string): Promise<void> {
+        const transaction = await sequelize.transaction();
+        try {
+            const tenant = await Tenant.findByPk(tenantId);
+            if (!tenant || !tenant.baseMonthlyFee) {
+                await transaction.commit();
+                return;
+            }
+
+            const fee = tenant.baseMonthlyFee;
+            const wallet = await Wallet.findOne({ where: { ownerId: tenantId, ownerType: 'TENANT' } });
+            if (!wallet) throw new Error('Tenant wallet not found');
+
+            // Deduct from wallet
+            await wallet.update({
+                balance: Number(wallet.balance) - fee,
+                settledBalance: Number(wallet.settledBalance) - fee
+            }, { transaction });
+
+            // Create wallet transaction
+            await WalletTransaction.create({
+                walletId: wallet.id,
+                amount: fee,
+                transactionType: 'FEE',
+                referenceType: 'SUBSCRIPTION',
+                balanceAfter: Number(wallet.balance) - fee,
+                description: `Monthly platform subscription fee`,
+                status: 'COMPLETED',
+                tenantId: tenantId
+            }, { transaction });
+
+            // Update platform wallet
+            await this.updatePlatformWallet(fee, 'CREDIT', null, transaction);
+
+            // Record Platform Transaction
+            await PlatformTransaction.create({
+                type: 'FEE_SUBSCRIPTION',
+                amount: fee,
+                tenantId: tenantId
+            }, { transaction });
+
+            await transaction.commit();
+        } catch (error) {
+            await transaction.rollback();
+            logger.error('Failed to bill subscription', { error: error instanceof Error ? error.message : String(error), tenantId });
         }
     }
 
