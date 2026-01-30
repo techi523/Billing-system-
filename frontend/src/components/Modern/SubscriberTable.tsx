@@ -1,11 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import axios from 'axios';
 import {
     Smartphone,
     Shield,
     MoreHorizontal,
     Search,
     Download,
-    Plus
+    Plus,
+    Loader2
 } from 'lucide-react';
 import { Button } from '../Common/Button';
 import { Input } from '../Common/Input';
@@ -30,69 +32,34 @@ const SubscriberTable = () => {
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [sortBy, setSortBy] = useState<string>('lastSeen');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const subscribers: Subscriber[] = useMemo(() => [
-        {
-            id: '1',
-            name: 'Alice Wanjiku',
-            phone: '+254 712 345 678',
-            plan: 'Monthly Pro',
-            status: 'Active',
-            usage: 45,
-            expires: '12 Days',
-            lastSeen: '2 minutes ago',
-            ipAddress: '192.168.1.105',
-            deviceType: 'Smartphone'
-        },
-        {
-            id: '2',
-            name: 'John Doe',
-            phone: '+254 722 000 000',
-            plan: 'Daily',
-            status: 'Expired',
-            usage: 100,
-            expires: 'Expired',
-            lastSeen: '3 hours ago',
-            ipAddress: '192.168.1.106',
-            deviceType: 'Laptop'
-        },
-        {
-            id: '3',
-            name: 'Café Public',
-            phone: '+254 799 887 766',
-            plan: 'Business',
-            status: 'Active',
-            usage: 12,
-            expires: '28 Days',
-            lastSeen: '5 minutes ago',
-            ipAddress: '192.168.1.107',
-            deviceType: 'Router'
-        },
-        {
-            id: '4',
-            name: 'Guest User',
-            phone: '+254 733 112 233',
-            plan: 'Hourly',
-            status: 'Active',
-            usage: 88,
-            expires: '15 Mins',
-            lastSeen: '30 seconds ago',
-            ipAddress: '192.168.1.108',
-            deviceType: 'Tablet'
-        },
-        {
-            id: '5',
-            name: 'Sarah Mike',
-            phone: '+254 755 443 322',
-            plan: 'Weekly',
-            status: 'Warning',
-            usage: 95,
-            expires: '2 Hours',
-            lastSeen: '1 minute ago',
-            ipAddress: '192.168.1.109',
-            deviceType: 'Smartphone'
-        }
-    ], []);
+    useEffect(() => {
+        const fetchSubscribers = async () => {
+            try {
+                const response = await axios.get('/api/v1/admin/subscribers');
+                const mapped = response.data.map((s: any) => ({
+                    id: s.id,
+                    name: s.name || 'Anonymous',
+                    phone: s.phoneNumber,
+                    plan: s.package?.name || 'No Plan',
+                    status: s.displayStatus,
+                    usage: s.usagePercent,
+                    expires: s.expiresIn,
+                    lastSeen: s.activeSession ? 'Online' : (s.lastPaymentDate ? 'Last seen ' + new Date(s.lastPaymentDate).toLocaleDateString() : 'Never'),
+                    ipAddress: s.activeSession?.ipAddress || '',
+                    deviceType: 'Smartphone'
+                }));
+                setSubscribers(mapped);
+            } catch (error) {
+                console.error('Failed to fetch subscribers', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSubscribers();
+    }, []);
 
     const filteredAndSortedSubscribers = useMemo(() => {
         let filtered = subscribers.filter(subscriber => {
@@ -248,64 +215,81 @@ const SubscriberTable = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                        {filteredAndSortedSubscribers.map((subscriber) => (
-                            <tr key={subscriber.id} className="hover:bg-muted/50 transition-colors">
-                                <td className="p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-semibold">
-                                            {subscriber.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <div className="font-medium text-foreground">{subscriber.name}</div>
-                                            <div className="text-sm text-muted-foreground flex items-center gap-1">
-                                                <Smartphone className="h-3 w-3" />
-                                                {subscriber.phone}
-                                            </div>
-                                        </div>
+                        {loading ? (
+                            <tr>
+                                <td colSpan={6} className="p-8 text-center">
+                                    <div className="flex items-center justify-center gap-2 text-muted-foreground font-medium">
+                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                        <span>Loading subscribers...</span>
                                     </div>
-                                </td>
-                                <td className="p-4">
-                                    <div className="flex items-center gap-2">
-                                        <Shield className="h-4 w-4 text-primary" />
-                                        <span className="font-medium text-foreground">{subscriber.plan}</span>
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <div className="w-32">
-                                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                                            <span>Consumed</span>
-                                            <span>{subscriber.usage}%</span>
-                                        </div>
-                                        <div className="w-full bg-muted rounded-full h-2">
-                                            <div
-                                                className={`h-2 rounded-full transition-all ${subscriber.usage > 90 ? 'bg-destructive' : 'bg-primary'
-                                                    }`}
-                                                style={{ width: `${subscriber.usage}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <div className="flex flex-col gap-1">
-                                        <Badge variant={getStatusColor(subscriber.status)}>
-                                            {subscriber.status}
-                                        </Badge>
-                                        <div className="text-xs text-muted-foreground">{subscriber.expires}</div>
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-sm font-medium text-foreground">{subscriber.lastSeen}</span>
-                                        <div className="text-xs text-muted-foreground">{subscriber.ipAddress}</div>
-                                    </div>
-                                </td>
-                                <td className="p-4 text-right">
-                                    <Button variant="ghost" size="sm">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
                                 </td>
                             </tr>
-                        ))}
+                        ) : filteredAndSortedSubscribers.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                                    No subscribers found.
+                                </td>
+                            </tr>
+                        ) : (
+                            filteredAndSortedSubscribers.map((subscriber) => (
+                                <tr key={subscriber.id} className="hover:bg-muted/50 transition-colors">
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-semibold">
+                                                {subscriber.name.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <div className="font-medium text-foreground">{subscriber.name}</div>
+                                                <div className="text-sm text-muted-foreground flex items-center gap-1">
+                                                    <Smartphone className="h-3 w-3" />
+                                                    {subscriber.phone}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-2">
+                                            <Shield className="h-4 w-4 text-primary" />
+                                            <span className="font-medium text-foreground">{subscriber.plan}</span>
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="w-32">
+                                            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                                                <span>Consumed</span>
+                                                <span>{subscriber.usage}%</span>
+                                            </div>
+                                            <div className="w-full bg-muted rounded-full h-2">
+                                                <div
+                                                    className={`h-2 rounded-full transition-all ${subscriber.usage > 90 ? 'bg-destructive' : 'bg-primary'
+                                                        }`}
+                                                    style={{ width: `${subscriber.usage}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="flex flex-col gap-1">
+                                            <Badge variant={getStatusColor(subscriber.status)}>
+                                                {subscriber.status}
+                                            </Badge>
+                                            <div className="text-xs text-muted-foreground">{subscriber.expires}</div>
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-sm font-medium text-foreground">{subscriber.lastSeen}</span>
+                                            <div className="text-xs text-muted-foreground">{subscriber.ipAddress}</div>
+                                        </div>
+                                    </td>
+                                    <td className="p-4 text-right">
+                                        <Button variant="ghost" size="sm">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

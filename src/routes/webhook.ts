@@ -1,7 +1,10 @@
 import { Router } from 'express';
-import { Payment, Package, Tenant, sequelize } from '../models';
+import { Payment, Package, Tenant, Subscriber, sequelize } from '../models';
 import { SessionOrchestrator } from '../orchestrator';
 import { AuditService } from '../services/audit.service';
+import { IntaSendService } from '../services/intasend.service';
+import { WalletService } from '../services/wallet.service';
+import { SocketService } from '../services/socket.service';
 import logger from '../utils/logger';
 
 const router = Router();
@@ -13,194 +16,9 @@ const SAFARICOM_IPS = [
     '196.201.212.127', '196.201.212.138'
 ];
 
-router.post('/mpesa', async (req, res) => {
-    const { Body } = req.body;
-    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-
-    // 1. Enhanced Security: IP Validation with logging
-    if (process.env.NODE_ENV === 'production' && !SAFARICOM_IPS.includes(clientIp as string)) {
-        logger.warn('Unauthorized M-Pesa Callback IP', { ip: clientIp });
-        return res.status(403).send('Unauthorized IP');
-    }
-
-    // 2. Payload validation
-    if (!Body || !Body.stkCallback) {
-        logger.warn('Invalid M-Pesa callback payload', { ip: clientIp });
-        return res.status(400).send('Invalid payload');
-    }
-
-    const callback = Body.stkCallback;
-    const checkoutRequestId = callback.CheckoutRequestID;
-    const resultCode = callback.ResultCode;
-
-    // 3. Idempotency check: Prevent duplicate processing
-    const callbackHash = require('crypto').createHash('sha256')
-        .update(JSON.stringify(req.body))
-        .digest('hex');
-
-    try {
-        let shouldFulfill = false;
-        let fulfillmentData: {
-            paymentId: string;
-            subscriberId: string | null;
-            macAddress: string | null;
-            ipAddress: string | null;
-            routerId: string | null;
-        } | null = null;
-
-        await sequelize.transaction(async (t) => {
-            // Find the pending payment with row-level locking
-            const payment = await Payment.findOne({
-                where: { checkoutRequestId },
-                include: [Package],
-                lock: true,
-                transaction: t
-            });
-
-            if (!payment) {
-                logger.error('Payment not found for CheckoutRequestID', { checkoutRequestId });
-                return res.status(404).send('Payment not found');
-            }
-
-            // Idempotency: Check if this exact callback was already processed
-            if (payment.processedCallbackHash === callbackHash) {
-                logger.info('Duplicate callback detected, ignoring', { paymentId: payment.id });
-                return res.status(200).send('Already processed');
-            }
-
-            // Store callback data with hash for idempotency
-            payment.rawCallback = JSON.stringify(req.body);
-            payment.processedCallbackHash = callbackHash;
-
-            // If already processed, ignore
-            if (payment.status !== 'PENDING') {
-                logger.info('Payment already processed, skipping fulfillment', {
-                    paymentId: payment.id,
-                    status: payment.status
-                });
-                await payment.save({ transaction: t });
-                return res.status(200).send('Already processed');
-            }
-
-            if (resultCode === 0) {
-                // SUCCESS: Enhanced validation
-                const metadata = callback.CallbackMetadata.Item;
-                const receipt = metadata.find((i: any) => i.Name === 'MpesaReceiptNumber')?.Value;
-                const amountPaid = metadata.find((i: any) => i.Name === 'Amount')?.Value;
-                const phoneNumber = metadata.find((i: any) => i.Name === 'PhoneNumber')?.Value;
-
-                const pkg = (payment as any).package;
-
-                // Security validations
-                if (!receipt || !amountPaid) {
-                    logger.error('Missing required callback metadata', { paymentId: payment.id });
-                    payment.status = 'FAILED';
-                    await payment.save({ transaction: t });
-                    return res.status(200).send('OK');
-                }
-
-                if (Number(amountPaid) !== pkg.price) {
-                    logger.warn('Payment amount mismatch', {
-                        expected: pkg.price,
-                        received: amountPaid,
-                        paymentId: payment.id
-                    });
-                    payment.status = 'FAILED';
-                    await payment.save({ transaction: t });
-                    return res.status(200).send('OK');
-                }
-
-                // Duplicate receipt check with time window (24 hours)
-                const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-                const duplicate = await Payment.findOne({
-                    where: {
-                        mpesaReceiptNumber: receipt,
-                        createdAt: { [require('sequelize').Op.gt]: yesterday }
-                    },
-                    transaction: t
-                });
-
-                if (duplicate && duplicate.id !== payment.id) {
-                    logger.error('Duplicate M-Pesa Receipt detected', {
-                        receipt,
-                        paymentId: payment.id,
-                        duplicateId: duplicate.id
-                    });
-                    payment.status = 'FAILED';
-                    await payment.save({ transaction: t });
-                    return res.status(200).send('OK');
-                }
-
-                // SUCCESS: Update payment atomically
-                payment.status = 'SUCCESS';
-                payment.mpesaReceiptNumber = receipt;
-                payment.completedAt = new Date();
-                await payment.save({ transaction: t });
-
-                // Prepare fulfillment data for post-transaction processing
-                fulfillmentData = {
-                    paymentId: payment.id,
-                    subscriberId: payment.subscriberId,
-                    macAddress: payment.macAddress,
-                    ipAddress: payment.ipAddress,
-                    routerId: payment.routerId
-                };
-
-                logger.info('Payment SUCCESS - Ready for fulfillment', {
-                    paymentId: payment.id,
-                    receipt,
-                    amount: amountPaid
-                });
-                shouldFulfill = true;
-
-            } else {
-                // FAILURE: Enhanced failure handling
-                const failureReasons: { [key: number]: string } = {
-                    1: 'Insufficient funds',
-                    1032: 'Cancelled by user',
-                    2001: 'Insufficient funds',
-                    1037: 'Internal error',
-                    1025: 'Timeout',
-                    2000: 'Invalid phone number'
-                };
-
-                payment.status = 'FAILED';
-                payment.failureReason = failureReasons[resultCode] || `M-Pesa Error ${resultCode}`;
-                await payment.save({ transaction: t });
-
-                logger.warn('Payment FAILED/CANCELLED', {
-                    paymentId: payment.id,
-                    resultCode,
-                    reason: payment.failureReason,
-                    desc: callback.ResultDesc
-                });
-            }
-        });
-
-        // 4. ASYNC FULFILLMENT: Execute outside transaction for instant access
-        if (shouldFulfill && fulfillmentData) {
-            const dataToProcess = { ...(fulfillmentData as any) };
-            setImmediate(async () => {
-                try {
-                    await processFulfillment(dataToProcess);
-                } catch (error: any) {
-                    logger.error('Async fulfillment failed', {
-                        paymentId: dataToProcess.paymentId,
-                        error: error.message
-                    });
-                }
-            });
-        }
-
-        res.status(200).send('OK');
-
-    } catch (err: any) {
-        logger.error('Webhook Processing Error', { error: err.message, checkoutRequestId });
-        return res.status(500).send('Internal Server Error');
-    }
-});
-
-// Async fulfillment function with retry logic
+/**
+ * Async fulfillment function with retry logic
+ */
 async function processFulfillment(fulfillmentData: any) {
     const { paymentId, subscriberId, macAddress, ipAddress, routerId } = fulfillmentData;
     const maxRetries = 3;
@@ -238,7 +56,6 @@ async function processFulfillment(fulfillmentData: any) {
 
             if (attempt === maxRetries) {
                 logger.error('Fulfillment failed after all retries', { paymentId, error: error.message });
-                // TODO: Alert admin, queue for manual processing
             } else {
                 // Exponential backoff: 1s, 2s, 4s
                 await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000));
@@ -246,5 +63,246 @@ async function processFulfillment(fulfillmentData: any) {
         }
     }
 }
+
+// M-PESA WEBHOOK
+router.post('/mpesa', async (req, res) => {
+    const { Body } = req.body;
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+    if (process.env.NODE_ENV === 'production' && !SAFARICOM_IPS.includes(clientIp as string)) {
+        logger.warn('Unauthorized M-Pesa Callback IP', { ip: clientIp });
+        return res.status(403).send('Unauthorized IP');
+    }
+
+    if (!Body || !Body.stkCallback) {
+        logger.warn('Invalid M-Pesa callback payload', { ip: clientIp });
+        return res.status(400).send('Invalid payload');
+    }
+
+    const callback = Body.stkCallback;
+    const checkoutRequestId = callback.CheckoutRequestID;
+    const resultCode = callback.ResultCode;
+
+    const callbackHash = require('crypto').createHash('sha256')
+        .update(JSON.stringify(req.body))
+        .digest('hex');
+
+    try {
+        let shouldFulfill = false;
+        let fulfillmentData: any = null;
+
+        await sequelize.transaction(async (t) => {
+            const payment = await Payment.findOne({
+                where: { checkoutRequestId },
+                include: [Package],
+                lock: true,
+                transaction: t
+            });
+
+            if (!payment) {
+                logger.error('Payment not found for CheckoutRequestID', { checkoutRequestId });
+                return res.status(404).send('Payment not found');
+            }
+
+            if (payment.processedCallbackHash === callbackHash) {
+                return res.status(200).send('Already processed');
+            }
+
+            payment.rawCallback = JSON.stringify(req.body);
+            payment.processedCallbackHash = callbackHash;
+
+            if (payment.status !== 'PENDING') {
+                await payment.save({ transaction: t });
+                return res.status(200).send('Already processed');
+            }
+
+            if (resultCode === 0) {
+                const metadata = callback.CallbackMetadata.Item;
+                const receipt = metadata.find((i: any) => i.Name === 'MpesaReceiptNumber')?.Value;
+                const amountPaid = metadata.find((i: any) => i.Name === 'Amount')?.Value;
+
+                const pkg = (payment as any).package;
+
+                if (!receipt || !amountPaid) {
+                    payment.status = 'FAILED';
+                    await payment.save({ transaction: t });
+                    return res.status(200).send('OK');
+                }
+
+                if (Number(amountPaid) !== Number(pkg.price) / 100) { // pkg.price is in cents
+                    logger.warn('Payment amount mismatch', { expected: pkg.price, received: amountPaid });
+                    payment.status = 'FAILED';
+                    await payment.save({ transaction: t });
+                    return res.status(200).send('OK');
+                }
+
+                payment.status = 'SUCCESS';
+                payment.mpesaReceiptNumber = receipt;
+                payment.completedAt = new Date();
+
+                // Auto-provision Subscriber
+                let subscriber = await Subscriber.findOne({
+                    where: { phoneNumber: payment.phoneNumber, tenantId: payment.tenantId }
+                });
+
+                if (!subscriber) {
+                    subscriber = await Subscriber.create({
+                        phoneNumber: payment.phoneNumber,
+                        tenantId: payment.tenantId,
+                        status: 'ACTIVE',
+                        lastPaymentDate: new Date(),
+                        macAddress: payment.macAddress // Link the current device
+                    });
+                    logger.info('Auto-created new subscriber', { phoneNumber: payment.phoneNumber, tenantId: payment.tenantId });
+                } else {
+                    await subscriber.update({
+                        status: 'ACTIVE',
+                        lastPaymentDate: new Date(),
+                        macAddress: payment.macAddress || subscriber.macAddress
+                    });
+                }
+
+                payment.subscriberId = subscriber.id;
+                await payment.save({ transaction: t });
+
+                // Real-time broadcast
+                SocketService.emitToTenant(payment.tenantId, 'PAYMENT_SUCCESS', {
+                    paymentId: payment.id,
+                    amount: payment.amount,
+                    phoneNumber: payment.phoneNumber,
+                    macAddress: payment.macAddress
+                });
+
+                // Process Revenue Split
+                await WalletService.processPayment(payment);
+
+                fulfillmentData = {
+                    paymentId: payment.id,
+                    subscriberId: payment.subscriberId,
+                    macAddress: payment.macAddress,
+                    ipAddress: payment.ipAddress,
+                    routerId: payment.routerId
+                };
+                shouldFulfill = true;
+            } else {
+                payment.status = 'FAILED';
+                await payment.save({ transaction: t });
+            }
+        });
+
+        if (shouldFulfill && fulfillmentData) {
+            setImmediate(() => processFulfillment(fulfillmentData));
+        }
+
+        res.status(200).send('OK');
+    } catch (err: any) {
+        logger.error('M-Pesa Webhook Error', { error: err.message });
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// INTASEND WEBHOOK
+router.post('/intasend', async (req, res) => {
+    const signature = req.headers['intasend-signature'] as string;
+    const bodyString = JSON.stringify(req.body);
+    const token = process.env.INTASEND_WEBHOOK_TOKEN;
+
+    if (process.env.INTASEND_MOCK !== 'true' && token) {
+        if (!signature || !IntaSendService.verifySignature(bodyString, signature, token)) {
+            logger.warn('Invalid IntaSend Signature', { signature });
+            return res.status(403).send('Invalid Signature');
+        }
+    }
+
+    const { tracking_id, state, api_ref } = req.body;
+    const paymentId = api_ref;
+
+    try {
+        let shouldFulfill = false;
+        let fulfillmentData: any = null;
+
+        await sequelize.transaction(async (t) => {
+            const payment = await Payment.findByPk(paymentId, {
+                include: [Package],
+                lock: true,
+                transaction: t
+            });
+
+            if (!payment) {
+                logger.error('Payment not found for IntaSend api_ref', { paymentId });
+                return res.status(404).send('Payment not found');
+            }
+
+            if (payment.status !== 'PENDING') {
+                return res.status(200).send('Already processed');
+            }
+
+            payment.intasendTrackingId = tracking_id;
+            payment.intasendState = state;
+            payment.rawCallback = bodyString;
+
+            if (state === 'COMPLETE') {
+                payment.status = 'SUCCESS';
+                payment.completedAt = new Date();
+
+                // Auto-provision Subscriber
+                let subscriber = await Subscriber.findOne({
+                    where: { phoneNumber: payment.phoneNumber, tenantId: payment.tenantId }
+                });
+
+                if (!subscriber) {
+                    subscriber = await Subscriber.create({
+                        phoneNumber: payment.phoneNumber,
+                        tenantId: payment.tenantId,
+                        status: 'ACTIVE',
+                        lastPaymentDate: new Date(),
+                        macAddress: payment.macAddress
+                    });
+                } else {
+                    await subscriber.update({
+                        status: 'ACTIVE',
+                        lastPaymentDate: new Date(),
+                        macAddress: payment.macAddress || subscriber.macAddress
+                    });
+                }
+
+                payment.subscriberId = subscriber.id;
+                await payment.save({ transaction: t });
+
+                // Real-time broadcast
+                SocketService.emitToTenant(payment.tenantId, 'PAYMENT_SUCCESS', {
+                    paymentId: payment.id,
+                    amount: payment.amount,
+                    channel: 'INTASEND',
+                    macAddress: payment.macAddress
+                });
+
+                // Process Revenue Split
+                await WalletService.processPayment(payment);
+
+                fulfillmentData = {
+                    paymentId: payment.id,
+                    subscriberId: payment.subscriberId,
+                    macAddress: payment.macAddress,
+                    ipAddress: payment.ipAddress,
+                    routerId: payment.routerId
+                };
+                shouldFulfill = true;
+            } else if (['FAILED', 'CANCELLED'].includes(state)) {
+                payment.status = 'FAILED';
+                await payment.save({ transaction: t });
+            }
+        });
+
+        if (shouldFulfill && fulfillmentData) {
+            setImmediate(() => processFulfillment(fulfillmentData));
+        }
+
+        res.status(200).send('OK');
+    } catch (err: any) {
+        logger.error('IntaSend Webhook Error', { error: err.message, paymentId });
+        res.status(500).send('Internal Server Error');
+    }
+});
 
 export default router;

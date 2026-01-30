@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import BackButton from '../components/Common/BackButton';
 
 const WalletPage = () => {
-    const navigate = useNavigate();
-    const { user } = useAuth();
     const [balance, setBalance] = useState<any>(null);
     const [transactions, setTransactions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -75,16 +72,13 @@ const WalletPage = () => {
         <div className="min-h-screen bg-slate-50 p-8">
             <div className="max-w-6xl mx-auto space-y-8">
                 <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-black text-slate-900">Wallet & Settlements</h1>
-                        <p className="text-slate-500 font-bold">Manage your funds and track earnings</p>
+                    <div className="flex items-center gap-6">
+                        <BackButton to="/tenant" variant="dark" label="Back" />
+                        <div>
+                            <h1 className="text-3xl font-black text-slate-900">Wallet & Settlements</h1>
+                            <p className="text-slate-500 font-bold">Manage your funds and track earnings</p>
+                        </div>
                     </div>
-                    <button
-                        onClick={() => navigate('/tenant')}
-                        className="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-300"
-                    >
-                        Back to Portal
-                    </button>
                 </div>
 
                 {/* Balance Cards */}

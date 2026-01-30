@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import BackButton from '../components/Common/BackButton';
 
 const CustomerPortal = () => {
     const navigate = useNavigate();
@@ -84,25 +85,28 @@ const CustomerPortal = () => {
             {/* Customer Header */}
             <div className="bg-white border-b border-slate-200 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-black text-slate-900">Welcome, {customerData?.name || 'Customer'}</h1>
-                            <p className="text-slate-600 font-bold">Your personal internet service dashboard</p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <span className="px-3 py-1 bg-emerald-500/20 text-emerald-600 text-xs font-black rounded-full">
-                                CUSTOMER
-                            </span>
-                            <button
-                                onClick={() => {
-                                    localStorage.removeItem('token');
-                                    localStorage.removeItem('user');
-                                    navigate('/login');
-                                }}
-                                className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
-                            >
-                                Logout
-                            </button>
+                    <div className="flex items-center gap-6">
+                        <BackButton to="/" label="Home" variant="dark" />
+                        <div className="flex-1 flex items-center justify-between">
+                            <div>
+                                <h1 className="text-2xl font-black text-slate-900">Welcome, {customerData?.name || 'Customer'}</h1>
+                                <p className="text-slate-600 font-bold">Your personal internet service dashboard</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-600 text-xs font-black rounded-full">
+                                    CUSTOMER
+                                </span>
+                                <button
+                                    onClick={() => {
+                                        localStorage.removeItem('token');
+                                        localStorage.removeItem('user');
+                                        navigate('/login');
+                                    }}
+                                    className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
+                                >
+                                    Logout
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -207,8 +211,8 @@ const CustomerPortal = () => {
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={`py-4 px-2 font-black text-sm uppercase tracking-widest border-b-2 transition-colors ${activeTab === tab
-                                            ? 'border-sky-500 text-sky-600'
-                                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                                        ? 'border-sky-500 text-sky-600'
+                                        : 'border-transparent text-slate-400 hover:text-slate-600'
                                         }`}
                                 >
                                     {tab}

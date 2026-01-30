@@ -39,7 +39,9 @@ export class IspService {
         const subscriber = await Subscriber.findByPk(subscriberId);
         if (!subscriber) throw new Error('Subscriber not found');
 
+        if (!subscriber.routerId) throw new Error('Subscriber has no associated router');
         const router = await Router.findByPk(subscriber.routerId);
+
         if (!router) throw new Error('Router not found');
 
         // Update expiry date
@@ -51,7 +53,9 @@ export class IspService {
         await subscriber.save();
 
         // Ensure active on MikroTik
-        await MikroTikService.activatePppoeUser(router, subscriber.pppoeUsername);
+        if (subscriber.pppoeUsername) {
+            await MikroTikService.activatePppoeUser(router, subscriber.pppoeUsername);
+        }
 
         return subscriber;
     }
@@ -67,6 +71,8 @@ export class IspService {
 
         for (const sub of expired) {
             try {
+                if (!sub.routerId || !sub.pppoeUsername) continue;
+
                 const router = await Router.findByPk(sub.routerId);
                 if (router) {
                     await MikroTikService.suspendPppoeUser(router, sub.pppoeUsername);

@@ -1,3 +1,7 @@
+packages:
+  - "."
+  - "frontend"
+
 onlyBuiltDependencies:
   - sqlite3
   - unrs-resolver

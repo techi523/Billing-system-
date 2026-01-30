@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
-    allowedRoles?: ('SUPER_ADMIN' | 'TENANT' | 'STAFF')[];
+    allowedRoles?: ('SUPER_ADMIN' | 'TENANT' | 'STAFF' | 'AGENT')[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
@@ -24,8 +24,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     }
 
     if (allowedRoles && !allowedRoles.includes(user.role)) {
+        console.warn(`[ProtectedRoute] Access denied to ${location.pathname}. Role ${user.role} not in [${allowedRoles}]`);
+
         // Redirect to their respective dashboard if they're in the wrong place
         const redirectPath = user.role === 'SUPER_ADMIN' ? '/superadmin' : '/tenant';
+
+        // Prevent infinite redirect if we are already at the redirectPath
+        if (location.pathname === redirectPath) {
+            console.error(`[ProtectedRoute] Already at ${redirectPath} but role ${user.role} still not allowed? Check role strings.`);
+            return <>{children}</>;
+        }
+
+        console.log(`[ProtectedRoute] Redirecting for role ${user.role} to ${redirectPath}`);
         return <Navigate to={redirectPath} replace />;
     }
 

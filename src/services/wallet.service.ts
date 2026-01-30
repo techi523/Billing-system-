@@ -96,8 +96,8 @@ export class WalletService {
             raw: true
         });
 
-        const totalEarnings = Number((stats[0] as any)?.totalEarnings || 0);
-        const totalFees = Number((payments[0] as any)?.totalFees || 0);
+        const totalEarnings = BigInt((stats[0] as any)?.totalEarnings || 0);
+        const totalFees = BigInt((payments[0] as any)?.totalFees || 0);
 
         return {
             balance: Number(wallet.balance),
@@ -105,8 +105,8 @@ export class WalletService {
             settled: Number(wallet.settledBalance),
             frozen: Number(wallet.frozenBalance),
             id: wallet.id,
-            totalEarnings,
-            totalFees
+            totalEarnings: Number(totalEarnings),
+            totalFees: Number(totalFees)
         };
     }
 
@@ -135,10 +135,11 @@ export class WalletService {
             const tenant = await Tenant.findByPk(payment.tenantId);
             if (!tenant) throw new Error('Tenant not found');
 
-            const transactionAmount = payment.amount;
+            const transactionAmount = BigInt(payment.amount);
             const commissionPercentage = tenant.commissionPercentage || 10;
-            const commissionAmount = (transactionAmount * commissionPercentage) / 100;
-            const transactionFee = tenant.transactionFee || 0;
+            // Calculate commission in cents: (amount * percentage) / 100
+            const commissionAmount = (transactionAmount * BigInt(Math.floor(commissionPercentage * 100))) / 10000n;
+            const transactionFee = BigInt(tenant.transactionFee || 0);
             const platformFeeAmount = commissionAmount + transactionFee;
             const netAmount = transactionAmount - platformFeeAmount;
 
@@ -148,8 +149,8 @@ export class WalletService {
 
             // Credit Tenant Wallet
             // Note: With Aggregator Model, funds are often settled instantly or follow a maturation period
-            const newBalance = Number(wallet.balance) + netAmount;
-            const newSettledBalance = Number(wallet.settledBalance) + netAmount; // Instant settlement for aggregator confirm
+            const newBalance = BigInt(wallet.balance) + netAmount;
+            const newSettledBalance = BigInt(wallet.settledBalance) + netAmount; // Instant settlement for aggregator confirm
 
             await wallet.update({
                 balance: newBalance,
@@ -204,7 +205,7 @@ export class WalletService {
                 }, { transaction });
             }
 
-            if (transactionFee > 0) {
+            if (transactionFee > 0n) {
                 await PlatformTransaction.create({
                     type: 'FEE_TRANSACTION',
                     amount: transactionFee,
@@ -264,11 +265,11 @@ export class WalletService {
             const wallet = await Wallet.findByPk(walletId);
             if (!wallet) throw new Error('Wallet not found');
 
-            if (Number(wallet.pendingBalance) < amount) throw new Error('Insufficient pending balance');
+            if (BigInt(wallet.pendingBalance) < BigInt(amount)) throw new Error('Insufficient pending balance');
 
             await wallet.update({
-                pendingBalance: Number(wallet.pendingBalance) - amount,
-                settledBalance: Number(wallet.settledBalance) + amount
+                pendingBalance: BigInt(wallet.pendingBalance) - BigInt(amount),
+                settledBalance: BigInt(wallet.settledBalance) + BigInt(amount)
             }, { transaction });
 
             await transaction.commit();
@@ -282,7 +283,7 @@ export class WalletService {
     /**
      * Update platform wallet
      */
-    static async updatePlatformWallet(amount: number, transactionType: 'CREDIT' | 'DEBIT', referenceId: string | null, transaction?: any): Promise<PlatformWallet> {
+    static async updatePlatformWallet(amount: number | bigint, transactionType: 'CREDIT' | 'DEBIT', referenceId: string | null, transaction?: any): Promise<PlatformWallet> {
         let platformWallet = await PlatformWallet.findOne();
         if (!platformWallet) {
             platformWallet = await PlatformWallet.create({ balance: 0, pendingBalance: 0, currency: 'KES' }, { transaction });
@@ -290,13 +291,13 @@ export class WalletService {
 
         if (transactionType === 'CREDIT') {
             await platformWallet.update({
-                balance: Number(platformWallet.balance) + amount,
-                pendingBalance: Number(platformWallet.pendingBalance) + amount
+                balance: BigInt(platformWallet.balance) + BigInt(amount),
+                pendingBalance: BigInt(platformWallet.pendingBalance) + BigInt(amount)
             }, { transaction });
         } else {
             await platformWallet.update({
-                balance: Number(platformWallet.balance) - amount,
-                pendingBalance: Number(platformWallet.pendingBalance) - amount
+                balance: BigInt(platformWallet.balance) - BigInt(amount),
+                pendingBalance: BigInt(platformWallet.pendingBalance) - BigInt(amount)
             }, { transaction });
         }
 
@@ -315,25 +316,25 @@ export class WalletService {
             if (!wallet) throw new Error('Tenant wallet not found');
 
             // Check available balance
-            if (wallet.balance < amount) throw new Error('Insufficient balance');
+            if (BigInt(wallet.balance) < BigInt(amount)) throw new Error('Insufficient balance');
 
             // Get tenant details
             const tenant = await Tenant.findByPk(tenantId);
             if (!tenant) throw new Error('Tenant not found');
 
             // Check minimum withdrawal
-            if (amount < tenant.minimumWithdrawalAmount) {
-                throw new Error(`Minimum withdrawal amount is ${tenant.minimumWithdrawalAmount}`);
+            if (BigInt(amount) < BigInt(tenant.minimumWithdrawalAmount)) {
+                throw new Error(`Minimum withdrawal amount is ${Number(tenant.minimumWithdrawalAmount) / 100}`);
             }
 
             // Freeze the amount
             // Withdrawal happens from settledBalance
-            if (Number(wallet.settledBalance) < amount) throw new Error('Insufficient settled balance for withdrawal');
+            if (BigInt(wallet.settledBalance) < BigInt(amount)) throw new Error('Insufficient settled balance for withdrawal');
 
             await wallet.update({
-                settledBalance: Number(wallet.settledBalance) - amount,
-                frozenBalance: Number(wallet.frozenBalance) + amount,
-                balance: Number(wallet.balance) - amount
+                settledBalance: BigInt(wallet.settledBalance) - BigInt(amount),
+                frozenBalance: BigInt(wallet.frozenBalance) + BigInt(amount),
+                balance: BigInt(wallet.balance) - BigInt(amount)
             }, { transaction });
 
             // Create settlement record
@@ -408,8 +409,8 @@ export class WalletService {
 
             // Update wallet - move from frozen to settled
             await wallet.update({
-                frozenBalance: wallet.frozenBalance - settlement.amount,
-                settledBalance: wallet.settledBalance + settlement.amount
+                frozenBalance: BigInt(wallet.frozenBalance) - BigInt(settlement.amount),
+                settledBalance: BigInt(wallet.settledBalance) + BigInt(settlement.amount)
             }, { transaction });
 
             // Update settlement
@@ -462,25 +463,25 @@ export class WalletService {
             if (!wallet) throw new Error('Wallet not found');
 
             // Reverse the transaction
-            let newBalance = wallet.balance;
-            let newPendingBalance = wallet.pendingBalance;
-            let newSettledBalance = wallet.settledBalance;
-            let newFrozenBalance = wallet.frozenBalance;
+            let newBalance = BigInt(wallet.balance);
+            let newPendingBalance = BigInt(wallet.pendingBalance);
+            let newSettledBalance = BigInt(wallet.settledBalance);
+            let newFrozenBalance = BigInt(wallet.frozenBalance);
 
             if (walletTransaction.transactionType === 'CREDIT') {
                 // Reverse credit (debit the wallet)
-                newBalance -= walletTransaction.amount;
+                newBalance -= BigInt(walletTransaction.amount);
                 if (walletTransaction.referenceType === 'PAYMENT') {
-                    newPendingBalance -= walletTransaction.amount;
+                    newPendingBalance -= BigInt(walletTransaction.amount);
                 } else if (walletTransaction.referenceType === 'SETTLEMENT') {
-                    newFrozenBalance -= walletTransaction.amount;
+                    newFrozenBalance -= BigInt(walletTransaction.amount);
                 }
             } else if (walletTransaction.transactionType === 'DEBIT' || walletTransaction.transactionType === 'FEE') {
                 // Reverse debit (credit the wallet)
-                newBalance += walletTransaction.amount;
+                newBalance += BigInt(walletTransaction.amount);
                 if (walletTransaction.referenceType === 'SETTLEMENT') {
-                    newSettledBalance -= walletTransaction.amount;
-                    newPendingBalance += walletTransaction.amount;
+                    newSettledBalance -= BigInt(walletTransaction.amount);
+                    newPendingBalance += BigInt(walletTransaction.amount);
                 }
             }
 
@@ -601,7 +602,7 @@ export class WalletService {
             const wallet = await Wallet.findByPk(walletId, { transaction });
             if (!wallet) throw new Error('Wallet not found');
 
-            const newBalance = wallet.balance + amount;
+            const newBalance = BigInt(wallet.balance) + BigInt(amount);
 
             await wallet.update({
                 balance: newBalance
@@ -649,14 +650,17 @@ export class WalletService {
                 return;
             }
 
-            const fee = tenant.smsFee;
+            const fee = BigInt(tenant.smsFee);
             const wallet = await Wallet.findOne({ where: { ownerId: tenantId, ownerType: 'TENANT' } });
             if (!wallet) throw new Error('Tenant wallet not found');
 
+            const currentBalance = BigInt(wallet.balance);
+            const currentSettledBalance = BigInt(wallet.settledBalance);
+
             // Deduct from wallet
             await wallet.update({
-                balance: Number(wallet.balance) - fee,
-                settledBalance: Number(wallet.settledBalance) - fee
+                balance: currentBalance - fee,
+                settledBalance: currentSettledBalance - fee
             }, { transaction });
 
             // Create wallet transaction
@@ -666,7 +670,7 @@ export class WalletService {
                 transactionType: 'FEE',
                 referenceId: smsLogId,
                 referenceType: 'SMS',
-                balanceAfter: Number(wallet.balance) - fee,
+                balanceAfter: currentBalance - fee,
                 description: `SMS notification fee`,
                 status: 'COMPLETED',
                 tenantId: tenantId
@@ -702,14 +706,17 @@ export class WalletService {
                 return;
             }
 
-            const fee = tenant.baseMonthlyFee;
+            const fee = BigInt(tenant.baseMonthlyFee);
             const wallet = await Wallet.findOne({ where: { ownerId: tenantId, ownerType: 'TENANT' } });
             if (!wallet) throw new Error('Tenant wallet not found');
 
+            const currentBalance = BigInt(wallet.balance);
+            const currentSettledBalance = BigInt(wallet.settledBalance);
+
             // Deduct from wallet
             await wallet.update({
-                balance: Number(wallet.balance) - fee,
-                settledBalance: Number(wallet.settledBalance) - fee
+                balance: currentBalance - fee,
+                settledBalance: currentSettledBalance - fee
             }, { transaction });
 
             // Create wallet transaction
@@ -718,7 +725,7 @@ export class WalletService {
                 amount: fee,
                 transactionType: 'FEE',
                 referenceType: 'SUBSCRIPTION',
-                balanceAfter: Number(wallet.balance) - fee,
+                balanceAfter: currentBalance - fee,
                 description: `Monthly platform subscription fee`,
                 status: 'COMPLETED',
                 tenantId: tenantId
@@ -745,11 +752,11 @@ export class WalletService {
      * Get platform wallet balance
      */
     static async getPlatformWalletBalance(): Promise<{ balance: number; pending: number; currency: string }> {
-        const platformWallet = await PlatformWallet.findOne() || { balance: 0, pendingBalance: 0, currency: 'KES' };
+        const platformWallet = await PlatformWallet.findOne() || { balance: BigInt(0), pendingBalance: BigInt(0), currency: 'KES' };
         return {
-            balance: platformWallet.balance,
-            pending: platformWallet.pendingBalance,
-            currency: platformWallet.currency
+            balance: Number(platformWallet.balance),
+            pending: Number(platformWallet.pendingBalance),
+            currency: (platformWallet as any).currency
         };
     }
 }

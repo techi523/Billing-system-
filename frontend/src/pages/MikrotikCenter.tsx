@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
-    Download,
     Terminal,
-    FileText,
     Cpu,
     Settings,
     Info,
@@ -12,9 +10,9 @@ import {
     Globe,
     Shield
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import axios from 'axios';
 import SupportFooter from '../components/Common/SupportFooter';
+import BackButton from '../components/Common/BackButton';
 
 const MikrotikCenter: React.FC = () => {
     const [downloading, setDownloading] = useState<string | null>(null);
@@ -45,6 +43,11 @@ const MikrotikCenter: React.FC = () => {
         <div className="min-h-screen bg-slate-50 font-sans">
             {/* Header */}
             <header className="bg-slate-900 border-b border-white/5 text-white px-8 py-10 rounded-b-[4rem] shadow-2xl relative overflow-hidden">
+                {/* Nav Control */}
+                <div className="absolute top-8 left-8 z-50">
+                    <BackButton to="/tenant" variant="light" label="Back" />
+                </div>
+
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-500/10 rounded-full blur-[100px] -mr-32 -mt-32"></div>
                 <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
                     <div>

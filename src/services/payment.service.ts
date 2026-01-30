@@ -1,5 +1,7 @@
 import { Payment, Package, sequelize } from '../models';
 import { MpesaService } from './mpesa.service';
+import { IntaSendService } from './intasend.service';
+import { WalletService } from './wallet.service';
 import { SessionOrchestrator } from '../orchestrator';
 import logger from '../utils/logger';
 import { Op, Transaction } from 'sequelize';
@@ -14,7 +16,10 @@ export class PaymentService {
         const pendingPayments = await Payment.findAll({
             where: {
                 status: 'PENDING',
-                checkoutRequestId: { [Op.ne]: null },
+                [Op.or]: [
+                    { checkoutRequestId: { [Op.ne]: null } },
+                    { intasendTrackingId: { [Op.ne]: null } }
+                ],
                 createdAt: { [Op.lt]: twoMinutesAgo }
             }
         });
@@ -34,21 +39,42 @@ export class PaymentService {
                     if (!lockedPayment || lockedPayment.status !== 'PENDING') return;
 
                     logger.info('Polling status for pending payment', { paymentId: payment.id });
-                    const status = await MpesaService.checkTransactionStatus(payment.checkoutRequestId as string);
 
-                    if (!status) return;
+                    let isSuccess = false;
 
-                    // Safaricom ResultCode 0 means Success
-                    if (status.ResultCode === "0") {
+                    if (lockedPayment.checkoutRequestId) {
+                        // Original M-Pesa polling
+                        const status = await MpesaService.checkTransactionStatus(lockedPayment.checkoutRequestId);
+                        if (status && status.ResultCode === "0") {
+                            lockedPayment.mpesaReceiptNumber = status.MpesaReceiptNumber || `QUERY-${payment.id.slice(0, 8)}`;
+                            isSuccess = true;
+                        } else if (status && ["1032", "2001", "1"].includes(status.ResultCode)) {
+                            lockedPayment.status = 'FAILED';
+                            await lockedPayment.save({ transaction: t });
+                        }
+                    } else if (lockedPayment.intasendTrackingId) {
+                        // IntaSend polling
+                        const status = await IntaSendService.checkStatus(lockedPayment.intasendTrackingId);
+                        if (status && status.state === "COMPLETE") {
+                            lockedPayment.intasendState = status.state;
+                            isSuccess = true;
+                        } else if (status && ["FAILED", "CANCELLED"].includes(status.state)) {
+                            lockedPayment.status = 'FAILED';
+                            lockedPayment.intasendState = status.state;
+                            await lockedPayment.save({ transaction: t });
+                        }
+                    }
+
+                    if (isSuccess) {
                         lockedPayment.status = 'SUCCESS';
-                        lockedPayment.mpesaReceiptNumber = status.MpesaReceiptNumber || `QUERY-${payment.id.slice(0, 8)}`;
+                        lockedPayment.completedAt = new Date();
                         await lockedPayment.save({ transaction: t });
+
+                        // Process Revenue Split
+                        await WalletService.processPayment(lockedPayment);
+
                         shouldFulfill = true;
-                        updatedPayment = lockedPayment; // Keep reference for fulfillment
-                    } else if (["1032", "2001", "1"].includes(status.ResultCode)) {
-                        lockedPayment.status = 'FAILED';
-                        await lockedPayment.save({ transaction: t });
-                        logger.warn('Payment marked as FAILED via polling', { paymentId: payment.id, code: status.ResultCode });
+                        updatedPayment = lockedPayment;
                     }
                 });
 

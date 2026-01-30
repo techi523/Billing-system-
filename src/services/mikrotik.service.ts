@@ -165,15 +165,83 @@ export class MikroTikService {
     }
 
     /**
+     * Test connectivity to a router
+     */
+    static async testConnection(router: RouterModel): Promise<{ status: boolean; message: string; version?: string; identity?: string }> {
+        const client = await this.getClient(router);
+        try {
+            const api = await client.connect();
+
+            // Fetch system info
+            const identity = await api.menu('/system/identity').get();
+            const resource = await api.menu('/system/resource').get();
+
+            await client.close();
+
+            return {
+                status: true,
+                message: 'Connected successfully',
+                version: resource?.[0]?.version,
+                identity: identity?.[0]?.name
+            };
+        } catch (error: any) {
+            return {
+                status: false,
+                message: error.message || 'Connection failed'
+            };
+        }
+    }
+
+    /**
+     * Validate RouterOS compatibility (Check if required services are configured)
+     */
+    static async validateCompatibility(router: RouterModel): Promise<{ status: boolean; issues: string[] }> {
+        const client = await this.getClient(router);
+        const issues: string[] = [];
+
+        try {
+            const api = await client.connect();
+
+            // 1. Check for Hotspot Servers
+            const hotspotServers = await api.menu('/ip/hotspot').get();
+            if (hotspotServers.length === 0) {
+                issues.push('No Hotspot server configured');
+            }
+
+            // 2. Check for RADIUS configuration if needed
+            const radius = await api.menu('/radius').get();
+            if (radius.length === 0) {
+                issues.push('RADIUS client not configured (required for central billing)');
+            }
+
+            await client.close();
+
+            return {
+                status: issues.length === 0,
+                issues
+            };
+        } catch (error: any) {
+            return {
+                status: false,
+                issues: ['Could not determine compatibility: ' + error.message]
+            };
+        }
+    }
+
+    /**
      * Generate pre-configured MikroTik .rsc scripts
      */
-    static async generateConfigScript(type: 'HOTSPOT' | 'PPPOE' | 'RADIUS', version: 'v6' | 'v7' = 'v7'): Promise<string> {
+    static async generateConfigScript(type: 'HOTSPOT' | 'PPPOE' | 'RADIUS', tenantId: string, version: 'v6' | 'v7' = 'v7'): Promise<string> {
         const portalUrl = process.env.PUBLIC_PORTAL_URL || 'http://your-server.com';
+        const tenant = await RouterModel.sequelize?.models.tenant.findByPk(tenantId) as any;
+        const tenantSubdomain = tenant?.subdomain || 'hotspot';
+        const tenantName = tenant?.name || 'SurfBill';
 
         if (type === 'HOTSPOT') {
-            return `# SurfBill Hotspot Configuration Script (${version})
+            return `# SurfBill Hotspot Configuration Script (${version}) for ${tenantName}
+/system identity set name="SurfBill-${tenantSubdomain}"
 /ip hotspot profile
-add dns-name=hotspot.surfbill.com hotspot-address=10.5.50.1 login-by=http-chap,http-pap,mac name=SurfBill_Profile use-radius=yes
+add dns-name=${tenantSubdomain}.surfbill.link hotspot-address=10.5.50.1 login-by=http-chap,http-pap,mac name=SurfBill_Profile use-radius=yes
 /ip hotspot
 add address-pool=hs-pool-1 disabled=no interface=bridge-lan name=SurfBill_Hotspot profile=SurfBill_Profile
 /ip hotspot user profile
@@ -181,11 +249,13 @@ set [ find default=yes ] shared-users=1
 /ip hotspot walled-garden
 add comment="Allow SurfBill Portal" dst-host=${new URL(portalUrl).hostname}
 add comment="Allow M-Pesa Callbacks" dst-host=safaricom.co.ke
+add comment="Allow IntaSend" dst-host=intasend.com
+add comment="Allow IntaSend Payments" dst-host=payment.intasend.com
 `;
         }
 
         if (type === 'PPPOE') {
-            return `# SurfBill PPPoE Configuration Script (${version})
+            return `# SurfBill PPPoE Configuration Script (${version}) for ${tenantName}
 /ppp profile
 add name=SurfBill_PPPoE_Profile use-radius=yes
 /interface pppoe-server server
@@ -195,11 +265,14 @@ add disabled=no interface=bridge-lan service-name=SurfBill_PPPoE profile=SurfBil
 
         if (type === 'RADIUS') {
             const radiusSecret = process.env.RADIUS_SECRET || 'surfbill_secret';
-            return `# SurfBill RADIUS Configuration Script (${version})
+            const portalHost = new URL(portalUrl).hostname;
+            return `# SurfBill RADIUS Configuration Script (${version}) for ${tenantName}
 /radius
-add address=${new URL(portalUrl).hostname} secret=${radiusSecret} service=hotspot,ppp
+add address=${portalHost} secret=${radiusSecret} service=hotspot,ppp authentication-port=1812 accounting-port=1813 src-address=0.0.0.0
 /radius incoming
-set accept=yes
+set accept=yes port=3799
+/ip hotspot profile
+set [ find name=SurfBill_Profile ] use-radius=yes nas-port-type=19
 `;
         }
 

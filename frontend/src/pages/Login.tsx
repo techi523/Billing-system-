@@ -6,6 +6,8 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo-main.png';
 import SupportFooter from '../components/Common/SupportFooter';
+import { OFFICIAL_SUPPORT } from '../constants';
+import BackButton from '../components/Common/BackButton';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -42,6 +44,11 @@ const Login = () => {
 
     return (
         <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6 relative overflow-hidden font-sans">
+            {/* Nav Control */}
+            <div className="absolute top-8 left-8 z-50">
+                <BackButton to="/" label="Back to Home" variant="light" />
+            </div>
+
             {/* Ambient Background */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-600/20 rounded-full blur-[120px] animate-pulse"></div>
@@ -154,8 +161,13 @@ const Login = () => {
                                 </button>
                             </p>
 
-                            <div className="pt-4 border-t border-white/5 opacity-0 pointer-events-none">
-                                {/* Hidden Super Admin Access */}
+                            <div className="pt-6 border-t border-white/5">
+                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-3">Scaling Support & Technical Help</p>
+                                <div className="flex justify-center gap-4">
+                                    <a href={OFFICIAL_SUPPORT.whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 text-xs font-bold flex items-center gap-1.5 transition-colors">
+                                        WhatsApp: {OFFICIAL_SUPPORT.whatsapp}
+                                    </a>
+                                </div>
                             </div>
                             <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest pt-2">
                                 SurfBill Production Cloud v3.0
@@ -166,7 +178,7 @@ const Login = () => {
             </motion.div>
 
             {/* Background Footer for Login Page */}
-            <div className="absolute bottom-0 left-0 w-full z-10 opacity-40 hover:opacity-100 transition-opacity">
+            <div className="absolute bottom-0 left-0 w-full z-10 opacity-60 hover:opacity-100 transition-opacity">
                 <SupportFooter />
             </div>
         </div>

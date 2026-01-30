@@ -62,6 +62,14 @@ router.post('/:tenantId/pay', async (req, res) => {
     const tenant = await Tenant.findByPk(tenantId);
     if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
 
+    // ENFORCE PRODUCTION MODE
+    if (!tenant.isProduction) {
+        logger.warn('Payment blocked: Tenant not in production mode', { tenantId });
+        return res.status(403).json({
+            error: 'This service is currently in setup mode and cannot process payments. Please contact the administrator.'
+        });
+    }
+
     const pkg = await Package.findByPk(packageId);
     if (!pkg || pkg.tenantId !== tenantId || !pkg.isEnabled) {
         logger.warn('Unauthorized payment attempt: Package/Tenant mismatch or disabled', { packageId, tenantId });

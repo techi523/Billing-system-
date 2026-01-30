@@ -1,4 +1,4 @@
-import { Payment, Session, Package, Subscriber, Voucher, sequelize } from '../models';
+import { Payment, Session, Package, Subscriber, Voucher, SMSLog, sequelize } from '../models';
 import { Op } from 'sequelize';
 
 export class AnalyticsService {
@@ -38,11 +38,14 @@ export class AnalyticsService {
         });
 
         return {
-            totalRevenue: totalRevenue || 0,
+            totalRevenue: Number(totalRevenue || 0),
             activeSessions,
             totalSubscribers,
             voucherSales,
-            dailyRevenue
+            dailyRevenue: dailyRevenue.map((r: any) => ({
+                date: r.date,
+                total: Number(r.total)
+            }))
         };
     }
 
@@ -182,5 +185,41 @@ export class AnalyticsService {
         });
 
         return stats;
+    }
+
+    /**
+     * Get hourly trends for the last 24 hours (Revenue & Active Sessions)
+     */
+    static async getHourlyTrends(tenantId: string) {
+        const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+        // Revenue trend
+        const isMySQL = process.env.DB_TYPE === 'mysql';
+        const dateFunc = isMySQL ? 'DATE_FORMAT' : 'STRFTIME';
+        const format = isMySQL ? '%Y-%m-%d %H:00' : '%Y-%m-%d %H:00';
+
+        const revenueTrend = await Payment.findAll({
+            attributes: [
+                [sequelize.fn(dateFunc, sequelize.col('createdAt'), format), 'hour'],
+                [sequelize.fn('SUM', sequelize.col('amount')), 'amount']
+            ],
+            where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: last24h } },
+            group: ['hour'],
+            order: [['hour', 'ASC']],
+            raw: true
+        });
+
+        // Current active users count
+        const activeUsersCount = await Session.count({
+            where: { tenantId, status: 'ACTIVE' }
+        });
+
+        return {
+            revenueTrend: revenueTrend.map((r: any) => ({
+                hour: r.hour,
+                amount: Number(r.amount) // Cents to Number for charts
+            })),
+            activeUsersCount
+        };
     }
 }

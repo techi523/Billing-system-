@@ -17,6 +17,8 @@ import { SupportProvider } from './context/SupportContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import SupportButton from './components/Common/SupportButton';
 
+import LandingPage from './pages/LandingPage';
+
 function App() {
     return (
         <SupportProvider>
@@ -30,7 +32,7 @@ function App() {
                         <Route path="/password-reset" element={<PasswordResetRequest />} />
                         <Route path="/reset-password" element={<PasswordResetConfirm />} />
                         <Route path="/portal" element={<CaptivePortal />} />
-                        <Route path="/" element={<Login />} />
+                        <Route path="/" element={<LandingPage />} />
 
                         {/* Tenant Routes */}
                         <Route

@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import SuperAdminDashboard from '../components/SuperAdmin/SuperAdminDashboard';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import BackButton from '../components/Common/BackButton';
 
 const SuperAdminPortal = () => {
-    const navigate = useNavigate();
-    const { user, logout, loading: authLoading } = useAuth();
+    const { logout, loading: authLoading } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -31,21 +29,24 @@ const SuperAdminPortal = () => {
             {/* Super Admin Header */}
             <div className="bg-white border-b border-slate-200 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-black text-slate-900">Super Admin Dashboard</h1>
-                            <p className="text-slate-600 font-bold">Platform-wide Governance & Control</p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <span className="px-3 py-1 bg-indigo-500/20 text-indigo-600 text-xs font-black rounded-full">
-                                SUPER ADMIN
-                            </span>
-                            <button
-                                onClick={logout}
-                                className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
-                            >
-                                Logout
-                            </button>
+                    <div className="flex items-center gap-6">
+                        <BackButton to="/" label="Home" variant="dark" />
+                        <div className="flex-1 flex items-center justify-between">
+                            <div>
+                                <h1 className="text-2xl font-black text-slate-900">Super Admin Dashboard</h1>
+                                <p className="text-slate-600 font-bold">Platform-wide Governance & Control</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="px-3 py-1 bg-indigo-500/20 text-indigo-600 text-xs font-black rounded-full">
+                                    SUPER ADMIN
+                                </span>
+                                <button
+                                    onClick={logout}
+                                    className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
+                                >
+                                    Logout
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -4,6 +4,7 @@ import { ArrowRight, Shield, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import BackButton from '../components/Common/BackButton';
 
 const SuperAdminLogin = () => {
     const navigate = useNavigate();
@@ -20,8 +21,8 @@ const SuperAdminLogin = () => {
 
         try {
             const res = await axios.post('/api/v1/auth/superadmin/login', {
-                email,
-                password,
+                email: email.trim(),
+                password: password.trim(),
                 ip: window.location.hostname
             });
 
@@ -41,6 +42,11 @@ const SuperAdminLogin = () => {
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-red-900/10 rounded-full blur-[150px] animate-pulse"></div>
                 <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[70%] bg-orange-900/5 rounded-full blur-[120px]"></div>
+            </div>
+
+            {/* Nav Control */}
+            <div className="absolute top-8 left-8 z-50">
+                <BackButton to="/login" label="Back" variant="light" />
             </div>
 
             <motion.div
@@ -144,13 +150,8 @@ const SuperAdminLogin = () => {
                         </motion.button>
                     </form>
 
-                    <div className="mt-8 text-center">
-                        <button
-                            onClick={() => navigate('/login')}
-                            className="text-red-400/60 hover:text-red-400 text-xs font-bold underline transition-colors"
-                        >
-                            ← Back to Standard Login
-                        </button>
+                    <div className="mt-8 text-center text-xs font-bold text-red-500/60">
+                        Restricted Platform Access Only
                     </div>
                 </div>
             </motion.div>

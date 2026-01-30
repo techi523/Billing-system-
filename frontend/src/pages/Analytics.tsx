@@ -4,18 +4,17 @@ import {
     ArrowUpRight,
     ArrowDownRight,
     Zap,
-    Smartphone,
     ShieldCheck,
     RefreshCw,
-    Search,
     Filter,
     BarChart3,
     Clock,
     Wifi
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import axios from 'axios';
 import SupportFooter from '../components/Common/SupportFooter';
+import BackButton from '../components/Common/BackButton';
 
 const Analytics: React.FC = () => {
     const [revenue, setRevenue] = useState<any>(null);
@@ -63,15 +62,18 @@ const Analytics: React.FC = () => {
             {/* Header */}
             <header className="bg-white border-b border-slate-200 sticky top-0 z-40 px-8 py-6">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div>
-                        <div className="flex items-center gap-3 mb-1">
-                            <h1 className="text-3xl font-black text-slate-900 tracking-tighter">Real-time <span className="text-sky-500">Insights</span></h1>
-                            <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 text-[10px] font-black rounded-full flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                                LIVE STREAMING
+                    <div className="flex flex-col md:flex-row items-center gap-6">
+                        <BackButton to="/tenant" variant="dark" />
+                        <div>
+                            <div className="flex items-center gap-3 mb-1">
+                                <h1 className="text-3xl font-black text-slate-900 tracking-tighter">Real-time <span className="text-sky-500">Insights</span></h1>
+                                <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 text-[10px] font-black rounded-full flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                                    LIVE STREAMING
+                                </div>
                             </div>
+                            <p className="text-slate-500 font-bold text-sm tracking-tight">ISP-Grade Analytics & Revenue Monitoring</p>
                         </div>
-                        <p className="text-slate-500 font-bold text-sm tracking-tight">ISP-Grade Analytics & Revenue Monitoring</p>
                     </div>
 
                     <div className="flex items-center gap-4">

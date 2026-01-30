@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Lock, Mail, User, Globe, Building } from 'lucide-react';
+import { ArrowRight, Lock, Mail, Globe, Building } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import logo from '../assets/logo.png';
 import SupportFooter from '../components/Common/SupportFooter';
+import { OFFICIAL_SUPPORT } from '../constants';
+import BackButton from '../components/Common/BackButton';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -65,6 +67,11 @@ const Register = () => {
 
     return (
         <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6 relative overflow-hidden font-sans">
+            {/* Nav Control */}
+            <div className="absolute top-8 left-8 z-50">
+                <BackButton to="/" label="Back to Home" variant="light" />
+            </div>
+
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-sky-600/20 rounded-full blur-[120px] animate-pulse"></div>
                 <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[60%] bg-blue-500/10 rounded-full blur-[100px]"></div>
@@ -170,11 +177,20 @@ const Register = () => {
                             Sign In
                         </button>
                     </p>
+
+                    <div className="mt-8 pt-6 border-t border-white/5 text-center">
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-3">Scale with Confidence</p>
+                        <div className="flex justify-center gap-4">
+                            <a href={OFFICIAL_SUPPORT.whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 text-xs font-bold flex items-center gap-1.5 transition-colors">
+                                Technical Support: {OFFICIAL_SUPPORT.whatsapp}
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </motion.div>
 
             {/* Page Footer */}
-            <div className="absolute bottom-0 left-0 w-full z-10 opacity-40 hover:opacity-100 transition-opacity">
+            <div className="absolute bottom-0 left-0 w-full z-10 opacity-60 hover:opacity-100 transition-opacity">
                 <SupportFooter />
             </div>
         </div>

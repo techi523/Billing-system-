@@ -416,3 +416,317 @@
 {"ip":"::1","level":"info","message":"GET /health","service":"billing-system","timestamp":"2026-01-29T09:56:53.021Z"}
 {"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-29T10:05:46.192Z"}
 {"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-29T11:05:46.206Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-30T09:32:50.761Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-30T09:32:50.993Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-30T09:32:50.996Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T09:35:13.656Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T09:35:13.711Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T09:35:14.238Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T09:35:14.250Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T09:35:23.500Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T09:35:23.518Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T09:35:27.753Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T09:35:27.776Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T09:35:31.390Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T09:35:31.419Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T09:35:34.692Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T09:35:34.704Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-30T09:59:00.127Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T10:22:32.600Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T10:22:32.646Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-30T10:22:49.549Z"}
+{"level":"info","message":"Tenant bootstrap completed for 3c81e062-49ca-459a-86a1-7c0a2e45094e","packagesCreated":4,"service":"billing-system","tenantId":"3c81e062-49ca-459a-86a1-7c0a2e45094e","timestamp":"2026-01-30T10:22:56.666Z","walletInitialized":true}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-30T10:23:09.920Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T10:23:10.462Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T10:23:10.542Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T10:23:10.543Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T10:23:10.544Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T10:23:10.609Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T10:23:10.619Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/mikrotik/generate-script?type=PPPOE&version=v6","service":"billing-system","timestamp":"2026-01-30T10:27:43.414Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/mikrotik/generate-script?type=HOTSPOT&version=v6","service":"billing-system","timestamp":"2026-01-30T10:27:50.000Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T10:28:20.357Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T10:28:20.389Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T10:28:20.392Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T10:28:20.394Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T10:28:20.457Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T10:28:20.458Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/revenue","service":"billing-system","timestamp":"2026-01-30T10:28:33.929Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/bandwidth","service":"billing-system","timestamp":"2026-01-30T10:28:33.932Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/performance","service":"billing-system","timestamp":"2026-01-30T10:28:33.935Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/performance","service":"billing-system","timestamp":"2026-01-30T10:28:33.990Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/bandwidth","service":"billing-system","timestamp":"2026-01-30T10:28:33.991Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/revenue","service":"billing-system","timestamp":"2026-01-30T10:28:33.994Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T10:28:55.412Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T10:28:55.448Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T10:28:55.460Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T10:28:55.461Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T10:28:55.583Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T10:28:55.631Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T10:29:21.831Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T10:29:21.866Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T10:29:21.871Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T10:29:21.873Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T10:29:21.922Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T10:29:21.926Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-30T10:32:50.995Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:19:47.715Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:19:47.784Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:19:47.797Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:19:47.800Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:19:47.862Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:19:47.877Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T11:28:48.911Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T11:28:48.934Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:28:48.962Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:28:49.039Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:28:49.046Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:28:49.050Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:28:49.156Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:28:49.182Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T11:28:55.636Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T11:28:55.642Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:28:55.662Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:28:55.702Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:28:55.705Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:28:55.707Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:28:55.780Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:28:55.787Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T11:30:40.292Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T11:30:40.316Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:30:40.318Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:30:40.365Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:30:40.366Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:30:40.366Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:30:40.430Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:30:40.448Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:32:14.356Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-30T11:32:51.001Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:35:50.374Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/transactions","service":"billing-system","timestamp":"2026-01-30T11:35:50.377Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/transactions","service":"billing-system","timestamp":"2026-01-30T11:35:50.421Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:35:50.422Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/wallet/withdraw/request","service":"billing-system","timestamp":"2026-01-30T11:36:16.979Z"}
+{"amount":-1,"error":"Minimum withdrawal amount is 100","level":"error","message":"Failed to create settlement","service":"billing-system","tenantId":"3c81e062-49ca-459a-86a1-7c0a2e45094e","timestamp":"2026-01-30T11:36:17.009Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/wallet/withdraw/request","service":"billing-system","timestamp":"2026-01-30T11:36:35.017Z"}
+{"amount":100,"error":"Insufficient balance","level":"error","message":"Failed to create settlement","service":"billing-system","tenantId":"3c81e062-49ca-459a-86a1-7c0a2e45094e","timestamp":"2026-01-30T11:36:35.038Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/wallet/withdraw/request","service":"billing-system","timestamp":"2026-01-30T11:36:36.617Z"}
+{"amount":100,"error":"Insufficient balance","level":"error","message":"Failed to create settlement","service":"billing-system","tenantId":"3c81e062-49ca-459a-86a1-7c0a2e45094e","timestamp":"2026-01-30T11:36:36.633Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/wallet/withdraw/request","service":"billing-system","timestamp":"2026-01-30T11:36:37.330Z"}
+{"amount":100,"error":"Insufficient balance","level":"error","message":"Failed to create settlement","service":"billing-system","tenantId":"3c81e062-49ca-459a-86a1-7c0a2e45094e","timestamp":"2026-01-30T11:36:37.346Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/wallet/withdraw/request","service":"billing-system","timestamp":"2026-01-30T11:36:37.609Z"}
+{"amount":100,"error":"Insufficient balance","level":"error","message":"Failed to create settlement","service":"billing-system","tenantId":"3c81e062-49ca-459a-86a1-7c0a2e45094e","timestamp":"2026-01-30T11:36:37.625Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:36:46.992Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:36:47.028Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:36:47.030Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:36:47.032Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:36:47.092Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:36:47.099Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:36:47.112Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:36:47.160Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/revenue","service":"billing-system","timestamp":"2026-01-30T11:36:57.422Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/bandwidth","service":"billing-system","timestamp":"2026-01-30T11:36:57.424Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/performance","service":"billing-system","timestamp":"2026-01-30T11:36:57.427Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/bandwidth","service":"billing-system","timestamp":"2026-01-30T11:36:57.476Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/performance","service":"billing-system","timestamp":"2026-01-30T11:36:57.478Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/revenue","service":"billing-system","timestamp":"2026-01-30T11:36:57.481Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/revenue","service":"billing-system","timestamp":"2026-01-30T11:37:27.429Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/bandwidth","service":"billing-system","timestamp":"2026-01-30T11:37:27.430Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/performance","service":"billing-system","timestamp":"2026-01-30T11:37:27.431Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/revenue","service":"billing-system","timestamp":"2026-01-30T11:37:57.980Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/bandwidth","service":"billing-system","timestamp":"2026-01-30T11:37:57.981Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/performance","service":"billing-system","timestamp":"2026-01-30T11:37:57.982Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/revenue","service":"billing-system","timestamp":"2026-01-30T11:38:27.984Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/bandwidth","service":"billing-system","timestamp":"2026-01-30T11:38:27.985Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/performance","service":"billing-system","timestamp":"2026-01-30T11:38:27.987Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/revenue","service":"billing-system","timestamp":"2026-01-30T11:38:57.983Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/bandwidth","service":"billing-system","timestamp":"2026-01-30T11:38:57.984Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/performance","service":"billing-system","timestamp":"2026-01-30T11:38:57.986Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/revenue","service":"billing-system","timestamp":"2026-01-30T11:39:27.429Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/bandwidth","service":"billing-system","timestamp":"2026-01-30T11:39:27.430Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/analytics/performance","service":"billing-system","timestamp":"2026-01-30T11:39:27.432Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:39:37.266Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:39:37.289Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:39:37.296Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:39:37.298Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:39:37.352Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:39:37.353Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:39:37.366Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:39:37.570Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:46:58.430Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:46:58.475Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:46:58.476Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:46:58.476Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:46:58.554Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:46:58.563Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:46:58.577Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:46:58.646Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T11:53:36.571Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T11:53:36.587Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:53:36.609Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:53:36.652Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:53:36.654Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:53:36.655Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:53:36.756Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:53:36.767Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:53:36.816Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:53:36.851Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T11:53:38.053Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T11:53:38.059Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:53:38.076Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:53:38.120Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:53:38.121Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:53:38.123Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:53:38.249Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:53:38.304Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:53:38.311Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:53:38.427Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T11:53:52.050Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T11:53:52.065Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:53:52.082Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T11:53:52.108Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:53:52.115Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:53:52.117Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T11:53:52.176Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T11:53:52.183Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:53:52.215Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T11:53:52.252Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-30T12:32:51.013Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T12:51:15.448Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T12:51:15.469Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T12:51:15.483Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T12:51:15.537Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T12:51:15.548Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T12:51:15.550Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T12:51:15.681Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T12:51:15.699Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T12:51:15.826Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T12:51:15.853Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T12:53:50.191Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T12:53:50.204Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T12:53:50.207Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T12:53:50.283Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T12:53:50.284Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T12:53:50.285Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T12:53:50.389Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T12:53:50.399Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T12:53:50.446Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T12:53:50.478Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T12:56:27.848Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T12:56:27.861Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T12:56:27.867Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T12:56:27.908Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T12:56:27.909Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T12:56:27.912Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T12:56:28.087Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T12:56:28.102Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T12:56:28.138Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T12:56:28.187Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T12:59:59.008Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T12:59:59.031Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T12:59:59.049Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T12:59:59.056Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T12:59:59.132Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T12:59:59.138Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T12:59:59.188Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T12:59:59.210Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T13:00:00.037Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/initialize/status","service":"billing-system","timestamp":"2026-01-30T13:00:00.056Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T13:00:00.063Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T13:00:00.066Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/dashboard-summary","service":"billing-system","timestamp":"2026-01-30T13:00:00.119Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/wallet/balance","service":"billing-system","timestamp":"2026-01-30T13:00:00.140Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T13:00:00.180Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/admin/subscribers","service":"billing-system","timestamp":"2026-01-30T13:00:00.198Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T13:03:11.390Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T13:03:11.455Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T13:03:12.185Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T13:03:12.200Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:03:48.516Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:04:42.060Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:07:37.493Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:07:38.702Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:09:12.007Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:09:44.479Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:12:46.491Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:12:47.704Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:12:48.880Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:13:11.062Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:13:12.383Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:13:12.983Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:19:37.285Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:19:38.468Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:19:39.171Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:19:39.654Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:19:40.090Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:19:40.503Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:19:40.739Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:29:32.812Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:29:34.152Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:29:34.801Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T13:29:35.688Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T13:29:48.883Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T13:29:48.921Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T13:29:49.540Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T13:29:49.566Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-30T17:23:09.754Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (no-alter checking).","service":"billing-system","timestamp":"2026-01-30T17:23:09.851Z"}
+{"intervalMs":300000,"level":"info","message":"Traffic Monitor Service Started","service":"billing-system","timestamp":"2026-01-30T17:23:09.852Z"}
+{"level":"info","message":"Socket.io service initialized","service":"billing-system","timestamp":"2026-01-30T17:23:09.857Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3000","service":"billing-system","timestamp":"2026-01-30T17:23:09.862Z"}
+{"error":{"name":"SequelizeDatabaseError","original":{"code":"SQLITE_ERROR","errno":1,"sql":"DELETE FROM `subscribers` WHERE `lastPaymentDate` < '2025-11-01 17:23:09.866 +00:00'"},"parameters":{},"parent":{"code":"SQLITE_ERROR","errno":1,"sql":"DELETE FROM `subscribers` WHERE `lastPaymentDate` < '2025-11-01 17:23:09.866 +00:00'"},"sql":"DELETE FROM `subscribers` WHERE `lastPaymentDate` < '2025-11-01 17:23:09.866 +00:00'"},"level":"error","message":"Background purge failed","service":"billing-system","timestamp":"2026-01-30T17:23:09.868Z"}
+{"error":"SQLITE_ERROR: no such column: location","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-30T17:23:09.870Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-30T17:27:35.881Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (alter enabled).","service":"billing-system","timestamp":"2026-01-30T17:27:48.266Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-30T17:44:49.908Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (alter enabled).","service":"billing-system","timestamp":"2026-01-30T17:45:02.469Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-30T17:46:02.763Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced (alter enabled).","service":"billing-system","timestamp":"2026-01-30T17:46:14.886Z"}
+{"intervalMs":300000,"level":"info","message":"Traffic Monitor Service Started","service":"billing-system","timestamp":"2026-01-30T17:46:14.887Z"}
+{"level":"info","message":"Socket.io service initialized","service":"billing-system","timestamp":"2026-01-30T17:46:14.894Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3010","service":"billing-system","timestamp":"2026-01-30T17:46:14.899Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T17:46:54.260Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T17:46:54.288Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T17:46:54.302Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T17:46:54.310Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-30T17:47:30.488Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T17:52:29.802Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T17:52:29.817Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-30T18:03:42.327Z"}
+{"error":"SQLITE_CONSTRAINT: FOREIGN KEY constraint failed","level":"error","message":"Failed to start server:","service":"billing-system","timestamp":"2026-01-30T18:03:44.405Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-30T18:05:25.658Z"}
+{"error":"Validation error","level":"error","message":"Failed to start server:","service":"billing-system","timestamp":"2026-01-30T18:05:27.664Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-30T18:06:29.176Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced.","service":"billing-system","timestamp":"2026-01-30T18:06:29.232Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-30T18:07:47.097Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced.","service":"billing-system","timestamp":"2026-01-30T18:07:47.156Z"}
+{"intervalMs":300000,"level":"info","message":"Traffic Monitor Service Started","service":"billing-system","timestamp":"2026-01-30T18:07:47.157Z"}
+{"level":"info","message":"Socket.io service initialized","service":"billing-system","timestamp":"2026-01-30T18:07:47.162Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3010","service":"billing-system","timestamp":"2026-01-30T18:07:47.167Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:08:15.720Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:08:15.735Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:08:15.743Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:08:15.750Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:08:20.384Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:08:20.392Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:08:36.973Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:08:36.988Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:08:46.341Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:08:46.516Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:08:46.562Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:08:46.613Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-30T18:08:56.165Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-30T18:15:49.049Z"}
+{"action":"WALLET_INITIALIZED","level":"info","message":"Audit Log Created","service":"billing-system","tenantId":"3e1aa622-5b9b-4e04-a598-a9fb2b2c5507","timestamp":"2026-01-30T18:15:49.412Z"}
+{"action":"TENANT_BOOTSTRAPPED","level":"info","message":"Audit Log Created","service":"billing-system","tenantId":"3e1aa622-5b9b-4e04-a598-a9fb2b2c5507","timestamp":"2026-01-30T18:15:49.420Z","userId":"26ebc355-5114-4249-b9ab-b04d605fca70"}
+{"level":"info","message":"Tenant bootstrap completed for 3e1aa622-5b9b-4e04-a598-a9fb2b2c5507. Manual configuration required.","service":"billing-system","tenantId":"3e1aa622-5b9b-4e04-a598-a9fb2b2c5507","timestamp":"2026-01-30T18:15:49.420Z","walletInitialized":true}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T18:16:10.028Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:20:43.948Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:20:43.959Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-30T18:20:46.881Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:21:05.987Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:21:05.999Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:21:31.944Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:21:31.963Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-30T18:21:48.825Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-30T18:23:09.893Z"}

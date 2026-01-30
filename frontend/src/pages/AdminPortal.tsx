@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AdminDashboard from '../components/Admin/Dashboard';
 import axios from 'axios';
 import SupportFooter from '../components/Common/SupportFooter';
+import BackButton from '../components/Common/BackButton';
 
 const AdminPortal = () => {
     const navigate = useNavigate();
@@ -65,25 +66,28 @@ const AdminPortal = () => {
             {/* Admin Header */}
             <div className="bg-white border-b border-slate-200 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-black text-slate-900">Admin Dashboard</h1>
-                            <p className="text-slate-600 font-bold">SurfBill Platform Management</p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <span className="px-3 py-1 bg-emerald-500/20 text-emerald-600 text-xs font-black rounded-full">
-                                AUTHENTICATED
-                            </span>
-                            <button
-                                onClick={() => {
-                                    localStorage.removeItem('token');
-                                    localStorage.removeItem('user');
-                                    navigate('/login');
-                                }}
-                                className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
-                            >
-                                Logout
-                            </button>
+                    <div className="flex items-center gap-6">
+                        <BackButton to="/" label="Home" variant="dark" />
+                        <div className="flex-1 flex items-center justify-between">
+                            <div>
+                                <h1 className="text-2xl font-black text-slate-900">Admin Dashboard</h1>
+                                <p className="text-slate-600 font-bold">SurfBill Platform Management</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-600 text-xs font-black rounded-full">
+                                    AUTHENTICATED
+                                </span>
+                                <button
+                                    onClick={() => {
+                                        localStorage.removeItem('token');
+                                        localStorage.removeItem('user');
+                                        navigate('/login');
+                                    }}
+                                    className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
+                                >
+                                    Logout
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

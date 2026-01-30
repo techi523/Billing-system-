@@ -66,6 +66,13 @@ export class Tenant extends Model {
   public smsFee!: number;
   public activeUserFee!: number;
   public subscriptionExpiry!: Date | null;
+  // IntaSend Credentials (Optional per tenant)
+  public intasendPublishableKey!: string | null;
+  public intasendSecretKey!: string | null;
+  public isProduction!: boolean;
+  public isGoLiveChecked!: boolean;
+  public productionReadyAt!: Date | null;
+  public lastSanitizedAt!: Date | null;
 }
 Tenant.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -85,8 +92,8 @@ Tenant.init({
   bankAccountName: { type: DataTypes.STRING },
   bankBranch: { type: DataTypes.STRING },
   bankSwiftCode: { type: DataTypes.STRING },
-  minimumWithdrawalAmount: { type: DataTypes.FLOAT, defaultValue: 100 },
-  settlementMethod: { type: DataTypes.STRING, defaultValue: 'MPESA' },
+  minimumWithdrawalAmount: { type: DataTypes.BIGINT, defaultValue: 10000 }, // 100.00 KES
+  settlementMethod: { type: DataTypes.STRING, defaultValue: 'INTASEND' },
   settlementSchedule: { type: DataTypes.STRING, defaultValue: 'MANUAL' },
   idNumber: { type: DataTypes.STRING },
   businessRegistrationNumber: { type: DataTypes.STRING },
@@ -98,11 +105,17 @@ Tenant.init({
   bankAccountDetails: { type: DataTypes.TEXT },
   aggregatorSubAccountId: { type: DataTypes.STRING },
   commissionPercentage: { type: DataTypes.FLOAT, defaultValue: 10 },
-  baseMonthlyFee: { type: DataTypes.FLOAT, defaultValue: 0 },
-  transactionFee: { type: DataTypes.FLOAT, defaultValue: 0 },
-  smsFee: { type: DataTypes.FLOAT, defaultValue: 0 },
-  activeUserFee: { type: DataTypes.FLOAT, defaultValue: 0 },
+  baseMonthlyFee: { type: DataTypes.BIGINT, defaultValue: 0 },
+  transactionFee: { type: DataTypes.BIGINT, defaultValue: 0 },
+  smsFee: { type: DataTypes.BIGINT, defaultValue: 0 },
+  activeUserFee: { type: DataTypes.BIGINT, defaultValue: 0 },
   subscriptionExpiry: { type: DataTypes.DATE },
+  intasendPublishableKey: { type: DataTypes.STRING },
+  intasendSecretKey: { type: DataTypes.STRING },
+  isProduction: { type: DataTypes.BOOLEAN, defaultValue: false },
+  isGoLiveChecked: { type: DataTypes.BOOLEAN, defaultValue: false },
+  productionReadyAt: { type: DataTypes.DATE },
+  lastSanitizedAt: { type: DataTypes.DATE },
 }, { sequelize, modelName: 'tenant' });
 
 export class AdminUser extends Model {
@@ -130,6 +143,11 @@ export class Router extends Model {
   public username!: string;
   public password!: string;
   public tenantId!: string;
+  public location!: string | null;
+  public isOnline!: boolean;
+  public lastSeen!: Date | null;
+  public identity!: string | null;
+  public validationStatus!: 'PENDING' | 'VALIDATED' | 'FAILED';
 }
 Router.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -139,6 +157,11 @@ Router.init({
   username: { type: DataTypes.STRING, allowNull: false },
   password: { type: DataTypes.STRING, allowNull: false },
   tenantId: { type: DataTypes.UUID, allowNull: false },
+  location: { type: DataTypes.STRING },
+  isOnline: { type: DataTypes.BOOLEAN, defaultValue: false },
+  lastSeen: { type: DataTypes.DATE },
+  identity: { type: DataTypes.STRING },
+  validationStatus: { type: DataTypes.ENUM('PENDING', 'VALIDATED', 'FAILED'), defaultValue: 'PENDING' },
 }, { sequelize, modelName: 'router' });
 
 export class Package extends Model {
@@ -155,7 +178,7 @@ export class Package extends Model {
 Package.init({
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   name: { type: DataTypes.STRING, allowNull: false },
-  price: { type: DataTypes.FLOAT, allowNull: false },
+  price: { type: DataTypes.BIGINT, allowNull: false },
   durationMinutes: { type: DataTypes.INTEGER, allowNull: true },
   dataLimitBytes: { type: DataTypes.BIGINT, allowNull: true },
   speedLimit: { type: DataTypes.STRING, allowNull: true },
@@ -166,29 +189,35 @@ Package.init({
 
 export class Subscriber extends Model {
   public id!: string;
-  public name!: string;
+  public name!: string | null;
   public phoneNumber!: string;
-  public pppoeUsername!: string;
-  public pppoePassword!: string;
+  public macAddress!: string | null;
+  public pppoeUsername!: string | null;
+  public pppoePassword!: string | null;
   public address!: string | null;
-  public status!: 'ACTIVE' | 'SUSPENDED' | 'EXPIRED';
+  public status!: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   public tenantId!: string;
-  public packageId!: number;
-  public routerId!: string;
+  public routerId!: string | null;
+  public packageId!: number | null;
   public expiryDate!: Date | null;
+  public lastPaymentDate!: Date | null;
+  public notes!: string | null;
 }
 Subscriber.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
-  name: { type: DataTypes.STRING, allowNull: false },
+  name: { type: DataTypes.STRING, allowNull: true },
   phoneNumber: { type: DataTypes.STRING, allowNull: false },
-  pppoeUsername: { type: DataTypes.STRING, unique: true, allowNull: false },
-  pppoePassword: { type: DataTypes.STRING, allowNull: false },
+  macAddress: { type: DataTypes.STRING, allowNull: true },
+  pppoeUsername: { type: DataTypes.STRING, unique: true, allowNull: true },
+  pppoePassword: { type: DataTypes.STRING, allowNull: true },
   address: { type: DataTypes.STRING },
-  status: { type: DataTypes.ENUM('ACTIVE', 'SUSPENDED', 'EXPIRED'), defaultValue: 'ACTIVE' },
+  status: { type: DataTypes.ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED'), defaultValue: 'INACTIVE' },
   tenantId: { type: DataTypes.UUID, allowNull: false },
-  packageId: { type: DataTypes.INTEGER, allowNull: false },
-  routerId: { type: DataTypes.UUID, allowNull: false },
+  routerId: { type: DataTypes.UUID, allowNull: true },
+  packageId: { type: DataTypes.INTEGER, allowNull: true },
   expiryDate: { type: DataTypes.DATE },
+  lastPaymentDate: { type: DataTypes.DATE },
+  notes: { type: DataTypes.TEXT },
 }, { sequelize, modelName: 'subscriber' });
 
 export class Invoice extends Model {
@@ -202,7 +231,7 @@ export class Invoice extends Model {
 Invoice.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   subscriberId: { type: DataTypes.UUID, allowNull: false },
-  amount: { type: DataTypes.FLOAT, allowNull: false },
+  amount: { type: DataTypes.BIGINT, allowNull: false },
   dueDate: { type: DataTypes.DATE, allowNull: false },
   status: { type: DataTypes.ENUM('UNPAID', 'PAID', 'CANCELLED'), defaultValue: 'UNPAID' },
   tenantId: { type: DataTypes.UUID, allowNull: false },
@@ -223,10 +252,10 @@ Wallet.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   ownerId: { type: DataTypes.UUID, allowNull: false },
   ownerType: { type: DataTypes.ENUM('SUBSCRIBER', 'TENANT', 'AGENT'), allowNull: false },
-  balance: { type: DataTypes.DECIMAL(20, 2), defaultValue: 0 },
-  frozenBalance: { type: DataTypes.DECIMAL(20, 2), defaultValue: 0 },
-  pendingBalance: { type: DataTypes.DECIMAL(20, 2), defaultValue: 0 },
-  settledBalance: { type: DataTypes.DECIMAL(20, 2), defaultValue: 0 },
+  balance: { type: DataTypes.BIGINT, defaultValue: 0 },
+  frozenBalance: { type: DataTypes.BIGINT, defaultValue: 0 },
+  pendingBalance: { type: DataTypes.BIGINT, defaultValue: 0 },
+  settledBalance: { type: DataTypes.BIGINT, defaultValue: 0 },
   currency: { type: DataTypes.STRING, defaultValue: 'KES' },
   tenantId: { type: DataTypes.UUID, allowNull: false },
 }, { sequelize, modelName: 'wallet' });
@@ -246,12 +275,12 @@ export class Settlement extends Model {
 Settlement.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   tenantId: { type: DataTypes.UUID, allowNull: false },
-  amount: { type: DataTypes.DECIMAL(20, 2), allowNull: false },
+  amount: { type: DataTypes.BIGINT, allowNull: false },
   status: { type: DataTypes.ENUM('PENDING', 'PAID', 'FAILED', 'REVERSED'), defaultValue: 'PENDING' },
   method: { type: DataTypes.STRING },
   paidAt: { type: DataTypes.DATE },
   referenceNumber: { type: DataTypes.STRING },
-  transactionFee: { type: DataTypes.FLOAT, defaultValue: 0 },
+  transactionFee: { type: DataTypes.BIGINT, defaultValue: 0 },
   walletTransactionId: { type: DataTypes.UUID, allowNull: true },
   processedBy: { type: DataTypes.UUID, allowNull: true },
 }, { sequelize, modelName: 'settlement' });
@@ -309,12 +338,16 @@ export class Payment extends Model {
   public walletTransactionId!: string | null;
   public aggregatorTransactionId!: string | null;
   public rawAggregatorPayload!: string | null;
+  // IntaSend tracking
+  public intasendCheckoutId!: string | null;
+  public intasendTrackingId!: string | null;
+  public intasendState!: string | null;
 }
 Payment.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   mpesaReceiptNumber: { type: DataTypes.STRING, unique: true },
   checkoutRequestId: { type: DataTypes.STRING, unique: true },
-  amount: { type: DataTypes.FLOAT, allowNull: false },
+  amount: { type: DataTypes.BIGINT, allowNull: false },
   phoneNumber: { type: DataTypes.STRING, allowNull: false },
   status: { type: DataTypes.ENUM('PENDING', 'SUCCESS', 'FAILED', 'REVERSED'), defaultValue: 'PENDING' },
   packageId: { type: DataTypes.INTEGER, allowNull: false },
@@ -331,12 +364,15 @@ Payment.init({
   metadata: { type: DataTypes.TEXT }, // JSON metadata storage
   paymentChannel: { type: DataTypes.STRING, defaultValue: 'MPESA' },
   paymentMethod: { type: DataTypes.STRING, defaultValue: 'STK_PUSH' },
-  transactionFee: { type: DataTypes.FLOAT, defaultValue: 0 },
-  platformFee: { type: DataTypes.FLOAT, defaultValue: 0 },
-  netAmount: { type: DataTypes.FLOAT, defaultValue: 0 },
+  transactionFee: { type: DataTypes.BIGINT, defaultValue: 0 },
+  platformFee: { type: DataTypes.BIGINT, defaultValue: 0 },
+  netAmount: { type: DataTypes.BIGINT, defaultValue: 0 },
   walletTransactionId: { type: DataTypes.UUID, allowNull: true },
   aggregatorTransactionId: { type: DataTypes.STRING },
   rawAggregatorPayload: { type: DataTypes.TEXT },
+  intasendCheckoutId: { type: DataTypes.STRING },
+  intasendTrackingId: { type: DataTypes.STRING },
+  intasendState: { type: DataTypes.STRING },
 }, { sequelize, modelName: 'payment' });
 
 export class Session extends Model {
@@ -447,7 +483,7 @@ SMSLog.init({
   phoneNumber: { type: DataTypes.STRING, allowNull: false },
   message: { type: DataTypes.TEXT, allowNull: false },
   status: { type: DataTypes.ENUM('SENT', 'FAILED', 'PENDING'), defaultValue: 'PENDING' },
-  cost: { type: DataTypes.FLOAT, defaultValue: 0 },
+  cost: { type: DataTypes.BIGINT, defaultValue: 0 },
   providerReference: { type: DataTypes.STRING },
 }, { sequelize, modelName: 'sms_log' });
 
@@ -462,7 +498,7 @@ export class PlatformTransaction extends Model {
 PlatformTransaction.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   type: { type: DataTypes.ENUM('FEE_SUBSCRIPTION', 'FEE_TRANSACTION', 'FEE_SMS', 'COMMISSION'), allowNull: false },
-  amount: { type: DataTypes.DECIMAL(20, 2), allowNull: false },
+  amount: { type: DataTypes.BIGINT, allowNull: false },
   tenantId: { type: DataTypes.UUID, allowNull: false },
   referenceId: { type: DataTypes.UUID },
   metadata: { type: DataTypes.TEXT },
@@ -560,11 +596,11 @@ WalletTransaction.init({
   walletId: { type: DataTypes.UUID, allowNull: false },
   sourceWalletId: { type: DataTypes.UUID },
   destinationWalletId: { type: DataTypes.UUID },
-  amount: { type: DataTypes.DECIMAL(20, 2), allowNull: false },
+  amount: { type: DataTypes.BIGINT, allowNull: false },
   transactionType: { type: DataTypes.ENUM('CREDIT', 'DEBIT', 'FEE', 'SETTLEMENT', 'REVERSAL'), allowNull: false },
   referenceId: { type: DataTypes.UUID },
   referenceType: { type: DataTypes.STRING },
-  balanceAfter: { type: DataTypes.DECIMAL(20, 2), allowNull: false },
+  balanceAfter: { type: DataTypes.BIGINT, allowNull: false },
   description: { type: DataTypes.TEXT },
   status: { type: DataTypes.ENUM('PENDING', 'COMPLETED', 'FAILED', 'REVERSED'), defaultValue: 'COMPLETED' },
   settlementStatus: { type: DataTypes.ENUM('PENDING', 'SETTLED', 'NA'), defaultValue: 'NA' },
@@ -585,9 +621,9 @@ export class TieredFee extends Model {
 TieredFee.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   platformFeeId: { type: DataTypes.UUID, allowNull: false },
-  minAmount: { type: DataTypes.FLOAT, defaultValue: 0 },
-  maxAmount: { type: DataTypes.FLOAT, defaultValue: 0 },
-  feeValue: { type: DataTypes.FLOAT, allowNull: false },
+  minAmount: { type: DataTypes.BIGINT, defaultValue: 0 },
+  maxAmount: { type: DataTypes.BIGINT, defaultValue: 0 },
+  feeValue: { type: DataTypes.BIGINT, allowNull: false },
   isPercentage: { type: DataTypes.BOOLEAN, defaultValue: true },
 }, { sequelize, modelName: 'tieredFee' });
 
@@ -599,8 +635,8 @@ export class PlatformWallet extends Model {
 }
 PlatformWallet.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
-  balance: { type: DataTypes.DECIMAL(20, 2), defaultValue: 0 },
-  pendingBalance: { type: DataTypes.DECIMAL(20, 2), defaultValue: 0 },
+  balance: { type: DataTypes.BIGINT, defaultValue: 0 },
+  pendingBalance: { type: DataTypes.BIGINT, defaultValue: 0 },
   currency: { type: DataTypes.STRING, defaultValue: 'KES' },
 }, { sequelize, modelName: 'platformWallet' });
 
@@ -617,10 +653,10 @@ export class PlatformFee extends Model {
 PlatformFee.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   feeType: { type: DataTypes.STRING, allowNull: false },
-  feeValue: { type: DataTypes.FLOAT, allowNull: false },
+  feeValue: { type: DataTypes.BIGINT, allowNull: false },
   isPercentage: { type: DataTypes.BOOLEAN, defaultValue: true },
-  minAmount: { type: DataTypes.FLOAT, defaultValue: 0 },
-  maxAmount: { type: DataTypes.FLOAT, defaultValue: 0 },
+  minAmount: { type: DataTypes.BIGINT, defaultValue: 0 },
+  maxAmount: { type: DataTypes.BIGINT, defaultValue: 0 },
   isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
   description: { type: DataTypes.TEXT },
 }, { sequelize, modelName: 'platformFee' });

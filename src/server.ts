@@ -1,4 +1,5 @@
 import express from 'express';
+import { createServer } from 'http';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -15,6 +16,9 @@ import paymentCallbackRoutes from './routes/payment-callback.routes';
 import aggregatorCallbackRoutes from './routes/aggregator-callback.routes';
 import { IspService } from './services/isp.service';
 import { SettlementEngine } from './services/settlement-engine';
+import { TrafficMonitorService } from './services/traffic-monitor.service';
+import { ProductionService } from './services/production.service';
+import { SocketService } from './services/socket.service';
 import logger from './utils/logger';
 
 const app = express();
@@ -38,14 +42,14 @@ app.use('/api/', globalLimiter);
 // STRICT RATE LIMITING (Auth & Payments)
 const strictLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10, // 10 attempts per 15 mins
+    max: 200, // Increased for dev
     message: 'Security threshold reached. Please try again later.',
 });
 
 // SUPER ADMIN RATE LIMITING (Extra strict)
 const superAdminLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 5, // 5 attempts per hour
+    max: 100, // Increased for dev
     message: 'Super Admin access restricted. Please contact platform support.',
 });
 
@@ -115,11 +119,21 @@ async function startServer() {
         if (process.env.NODE_ENV === 'production') {
             logger.warn('PRODUCTION MODE: Skipping automated schema synchronization. Use migrations.');
         } else {
-            await sequelize.sync({ alter: false });
-            logger.info('DEVELOPMENT MODE: Database schema synced (no-alter checking).');
+            await sequelize.sync();
+            logger.info('DEVELOPMENT MODE: Database schema synced.');
         }
 
-        // Background Tasks
+        // Start Background Monitoring Services
+        TrafficMonitorService.start(5 * 60 * 1000); // Poll routers every 5 minutes
+
+        // Schedule Production Purge (Every 24 hours)
+        setInterval(() => {
+            ProductionService.purgeOldData();
+        }, 24 * 60 * 60 * 1000);
+
+        // Initial purge on startup
+        ProductionService.purgeOldData();
+
         setInterval(async () => {
             logger.info('Running automated billing/suspension checks...');
             try {
@@ -162,7 +176,10 @@ async function startServer() {
             }
         }, 24 * 60 * 60 * 1000);
 
-        app.listen(PORT, () => {
+        const httpServer = createServer(app);
+        SocketService.init(httpServer);
+
+        httpServer.listen(PORT, () => {
             logger.info(`Production SaaS Billing System running on port ${PORT}`);
         });
     } catch (err) {

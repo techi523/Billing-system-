@@ -5,7 +5,7 @@ import { AuditService } from '../services/audit.service';
 import { SettlementService } from '../services/settlement.service';
 import { WalletService } from '../services/wallet.service';
 import { AggregatorService } from '../services/aggregator.service';
-import { PlatformSetting } from '../models';
+import { PlatformSetting, Tenant, Wallet, PlatformFee, TieredFee, sequelize } from '../models';
 
 const router = Router();
 router.use(authMiddleware);
