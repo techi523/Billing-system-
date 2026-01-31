@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import { createServer } from 'http';
 import bodyParser from 'body-parser';
@@ -128,6 +129,27 @@ async function startServer() {
         }
 
         // Start Background Monitoring Services
+        // Start Background Monitoring Services
+        console.log('[System Init] Checking Environment Configuration...');
+
+        const checkEnv = (key: string) => {
+            if (process.env[key]) {
+                console.log(`[System Init] ENV CHECK: ${key} -> [EXISTS]`);
+            } else {
+                console.error(`[System Init] ENV CHECK: ${key} -> [MISSING] ❌`);
+            }
+        };
+
+        checkEnv('SUPER_ADMIN_EMAIL');
+        checkEnv('SUPER_ADMIN_PASSWORD');
+        checkEnv('SUPER_ADMIN_JWT_SECRET');
+
+        if (!process.env.SUPER_ADMIN_EMAIL || !process.env.SUPER_ADMIN_PASSWORD) {
+            console.error('[System Init] CRITICAL: Super Admin Credentials: [INCOMPLETE]');
+        }
+
+        TrafficMonitorService.start(5 * 60 * 1000); // Poll routers every 5 minutes
+
         TrafficMonitorService.start(5 * 60 * 1000); // Poll routers every 5 minutes
 
         // Schedule Production Purge (Every 24 hours)

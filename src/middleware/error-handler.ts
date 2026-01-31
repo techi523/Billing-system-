@@ -5,7 +5,7 @@ export class ErrorHandler {
     static async handleTenantError(err: any, req: Request, res: Response, next: NextFunction) {
         if (err.name === 'SequelizeForeignKeyConstraintError' && err.message.includes('tenantId')) {
             // Handle tenant resolution errors
-            logger.error('Tenant resolution error', { error: err.message, userId: req.user?.id });
+            logger.error('Tenant resolution error', { error: err.message, userId: (req as any).user?.id });
 
             return res.status(403).json({
                 error: 'Workspace access required',
@@ -16,7 +16,7 @@ export class ErrorHandler {
 
         if (err.name === 'Error' && err.message.includes('TENANT_ID_REQUIRED')) {
             // Handle missing tenantId validation
-            logger.error('Missing tenantId error', { error: err.message, userId: req.user?.id });
+            logger.error('Missing tenantId error', { error: err.message, userId: (req as any).user?.id });
 
             return res.status(403).json({
                 error: 'You don\'t have a workspace yet',
@@ -30,7 +30,7 @@ export class ErrorHandler {
     }
 
     static async handleGeneralError(err: any, req: Request, res: Response, next: NextFunction) {
-        logger.error('Unhandled error', { error: err.message, stack: err.stack, userId: req.user?.id });
+        logger.error('Unhandled error', { error: err.message, stack: err.stack, userId: (req as any).user?.id });
 
         res.status(500).json({
             error: 'System error',

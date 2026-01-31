@@ -142,19 +142,19 @@ router.get('/:id', authMiddleware, async (req, res) => {
                 sharedUsers: result.package.sharedUsers,
                 isActive: result.package.isEnabled
             },
-            compatibleRouters: result.compatibleRouters.map(router => ({
-                id: router.id,
-                name: router.name,
-                host: router.host,
-                version: router.version,
-                identity: router.identity
+            compatibleRouters: result.compatibleRouters.map(r => ({
+                id: r.id,
+                name: r.name,
+                host: r.host,
+                version: r.version,
+                identity: r.identity
             })),
-            incompatibleRouters: result.incompatibleRouters.map(router => ({
-                id: router.id,
-                name: router.name,
-                host: router.host,
-                version: router.version,
-                identity: router.identity
+            incompatibleRouters: result.incompatibleRouters.map(r => ({
+                id: r.id,
+                name: r.name,
+                host: r.host,
+                version: r.version,
+                identity: r.identity
             }))
         });
 
@@ -332,13 +332,13 @@ router.post('/:id/sync', authMiddleware, async (req, res) => {
         const result = await PackageService.getPackageWithCompatibility(id, tenantId);
 
         // Sync to all compatible routers
-        for (const router of result.compatibleRouters) {
+        for (const routerRecord of result.compatibleRouters) {
             try {
-                await PackageService.syncPackageToRouter(result.package, router);
+                await PackageService.syncPackageToRouter(result.package, routerRecord);
             } catch (error) {
                 logger.error('Failed to sync package to router', {
                     packageId: id,
-                    routerId: router.id,
+                    routerId: routerRecord.id,
                     error
                 });
             }

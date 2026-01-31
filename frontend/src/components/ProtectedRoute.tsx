@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -10,6 +10,13 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
     const { user, loading } = useAuth();
     const location = useLocation();
+
+    // DEBUG: Trace Role Evaluation
+    useEffect(() => {
+        if (!loading) {
+            console.log(`[ProtectedRoute] Path: ${location.pathname} | User Role: ${user?.role} | TenantID: ${user?.tenantId}`);
+        }
+    }, [user, loading, location]);
 
     if (loading) {
         return (
@@ -23,6 +30,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
+    // FIX: Explicitly allow SUPER_ADMIN if they are in the allowed roles
+    if (user.role === 'SUPER_ADMIN' && allowedRoles?.includes('SUPER_ADMIN')) {
+        return <>{children}</>;
+    }
+
     // MANDATORY TENANT RESOLUTION: Redirect TENANT users without a workspace to setup
     if (user.role === 'TENANT' && !user.tenantId && location.pathname !== '/tenant/setup') {
         console.warn(`[ProtectedRoute] User ${user.id} has no workspace. Redirecting to setup.`);
@@ -30,21 +42,26 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     }
 
     if (allowedRoles && !allowedRoles.includes(user.role)) {
-        console.warn(`[ProtectedRoute] Access denied to ${location.pathname}. Role ${user.role} not in [${allowedRoles}]`);
+        console.warn(`[ProtectedRoute] Access denied to ${location.pathname}. Job Role: ${user.role}. Allowed: [${allowedRoles}]`);
 
-        // Redirect to their respective dashboard if they're in the wrong place
-        // If they are a tenant without a workspace, they should go to setup
-        const redirectPath = user.role === 'SUPER_ADMIN'
-            ? '/superadmin'
-            : (user.tenantId ? '/tenant' : '/tenant/setup');
+        // FIX: Precise Redirection Logic
+        let redirectPath = '/login';
 
-        // Prevent infinite redirect if we are already at the redirectPath
-        if (location.pathname === redirectPath) {
-            console.error(`[ProtectedRoute] Already at ${redirectPath} but role ${user.role} still not allowed? Check role strings.`);
+        if (user.role === 'SUPER_ADMIN') {
+            redirectPath = '/superadmin';
+        } else if (user.role === 'TENANT') {
+            redirectPath = user.tenantId ? '/tenant' : '/tenant/setup';
+        } else if (user.role === 'STAFF' || user.role === 'AGENT') {
+            redirectPath = '/admin'; // Legacy/Standard Admin Portal
+        }
+
+        // Prevent infinite redirect loops
+        if (location.pathname.startsWith(redirectPath)) {
+            console.error(`[ProtectedRoute] Loop detected for ${user.role} at ${location.pathname}. Rendering children as fallback.`);
             return <>{children}</>;
         }
 
-        console.log(`[ProtectedRoute] Redirecting for role ${user.role} to ${redirectPath}`);
+        console.log(`[ProtectedRoute] Redirecting ${user.role} from ${location.pathname} to ${redirectPath}`);
         return <Navigate to={redirectPath} replace />;
     }
 

@@ -136,12 +136,6 @@ router.post('/superadmin/login', async (req, res) => {
     const { email, password, ip } = req.body;
     try {
         console.log(`[SuperAdmin Login] Attempt for email: ${email}`);
-        console.log(`[DEBUG] Env Email: '${process.env.SUPER_ADMIN_EMAIL}'`);
-        console.log(`[DEBUG] Received Email: '${email}'`);
-        console.log(`[DEBUG] Env Pass Length: ${process.env.SUPER_ADMIN_PASSWORD?.length}`);
-        console.log(`[DEBUG] Received Pass Length: ${password?.length}`);
-        console.log(`[DEBUG] Env Pass: '${process.env.SUPER_ADMIN_PASSWORD}'`); // TEMPORARY: Remove after debug
-        console.log(`[DEBUG] Received Pass: '${password}'`);     // TEMPORARY: Remove after debug
 
         // IP allow-listing for Super Admin
         const allowedIPs = process.env.SUPER_ADMIN_IPS?.split(',') || [];
@@ -166,13 +160,11 @@ router.post('/superadmin/login', async (req, res) => {
 
         // 1. Validate against Environment Variables (Master Record)
         if (email !== envEmail) {
-            // Fail fast on email mismatch, but check DB just in case of old config? No, explicit .env priority.
             console.warn(`[SuperAdmin Login] Email mismatch with .env`);
             return res.status(401).json({ error: 'Invalid super admin credentials' });
         }
 
         // 2. Validate Password (Case-sensitive comparison against .env first)
-        // We compare checks: if invalid, we reject. If valid, we allow and Sync DB.
         if (password !== envPass) {
             console.warn(`[SuperAdmin Login] Password verification failed against .env`);
             await AuditLog.create({
@@ -208,11 +200,6 @@ router.post('/superadmin/login', async (req, res) => {
         }
 
         // 4. Session & Token Issuance
-        // Expire old sessions for this user
-        // We know 'user' exists here because we either found it or created it
-        // and if User.create failed, we would be in the catch block.
-        // Still, safe handling.
-
         if (!user) throw new Error('User creation failed unexpectedly');
 
         await AdminSession.update(
@@ -220,9 +207,16 @@ router.post('/superadmin/login', async (req, res) => {
             { where: { userId: user.id, status: 'ACTIVE' } }
         );
 
+        // USE THE SPECIFIC SUPER ADMIN SECRET
+        const secret = process.env.SUPER_ADMIN_JWT_SECRET;
+        if (!secret) {
+            console.error('[SuperAdmin Login] CRITICAL: SUPER_ADMIN_JWT_SECRET is missing!');
+            return res.status(500).json({ error: 'System configuration error' });
+        }
+
         const token = jwt.sign(
             { id: user.id, role: user.role, scope: 'SUPER_ADMIN', tenantId: null },
-            process.env.SUPER_ADMIN_JWT_SECRET || process.env.JWT_SECRET || 'super_secret_key',
+            secret,
             { expiresIn: '2h' } // Shorter expiry for super admin
         );
 
@@ -241,7 +235,7 @@ router.post('/superadmin/login', async (req, res) => {
         // Log successful super admin login
         await AuditLog.create({
             action: 'SUPER_ADMIN_LOGIN',
-            details: `Super admin ${user.email} logged in (via .env auth)`,
+            details: `Super admin ${user.email} logged in`,
             userId: user.id,
             ipAddress: req.ip
         });

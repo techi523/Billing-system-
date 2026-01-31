@@ -1,103 +1,54 @@
-import { Routes, Route } from 'react-router-dom';
-import AdminPortal from './pages/AdminPortal';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { SupportProvider } from './context/SupportContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// Pages
+import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
-import SuperAdminLogin from './pages/SuperAdminLogin';
-import CaptivePortal from './pages/CaptivePortal';
-import SuperAdminPortal from './pages/SuperAdminPortal';
-import TenantPortal from './pages/TenantPortal';
-import CustomerPortal from './pages/CustomerPortal';
-import WalletPage from './pages/Wallet';
 import Register from './pages/Register';
+import SuperAdminLogin from './pages/SuperAdminLogin';
 import PasswordResetRequest from './pages/PasswordResetRequest';
-import PasswordResetConfirm from './pages/PasswordResetConfirm';
+import CaptivePortal from './pages/CaptivePortal';
+
+// Protected Pages - Admin
+import AdminPortal from './pages/AdminPortal';
+import DemoAdmin from './pages/DemoAdmin';
+
+// Protected Pages - Super Admin
+import SuperAdminPortal from './pages/SuperAdminPortal';
+
+// Protected Pages - Tenant
+import TenantPortal from './pages/TenantPortal';
+import TenantSetup from './pages/TenantSetup';
+import Packages from './pages/Packages';
 import Analytics from './pages/Analytics';
 import MikrotikCenter from './pages/MikrotikCenter';
-import Packages from './pages/Packages';
-import TenantSetup from './pages/TenantSetup';
-import { AuthProvider } from './context/AuthContext';
-import { SupportProvider } from './context/SupportContext';
-import { ThemeProvider } from './context/ThemeContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import SupportButton from './components/Common/SupportButton';
-import LandingPage from './pages/LandingPage';
+import Wallet from './pages/Wallet';
+import CustomerPortal from './pages/CustomerPortal';
 
 function App() {
     return (
-        <SupportProvider>
-            <ThemeProvider>
-                <AuthProvider>
-                    <div className="App">
+        <ErrorBoundary>
+            <AuthProvider>
+                <ThemeProvider>
+                    <SupportProvider>
                         <Routes>
                             {/* Public Routes */}
+                            <Route path="/" element={<LandingPage />} />
                             <Route path="/login" element={<Login />} />
-                            <Route path="/superadmin-login" element={<SuperAdminLogin />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/password-reset" element={<PasswordResetRequest />} />
-                            <Route path="/reset-password" element={<PasswordResetConfirm />} />
-                            <Route path="/portal" element={<CaptivePortal />} />
-                            <Route path="/" element={<LandingPage />} />
+                            <Route path="/captive-portal" element={<CaptivePortal />} />
 
-                            {/* Tenant Routes */}
-                            <Route
-                                path="/tenant"
-                                element={
-                                    <ProtectedRoute allowedRoles={['TENANT', 'STAFF']}>
-                                        <TenantPortal />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/tenant/setup"
-                                element={
-                                    <ProtectedRoute allowedRoles={['TENANT', 'STAFF']}>
-                                        <TenantSetup />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/tenant/wallet"
-                                element={
-                                    <ProtectedRoute allowedRoles={['TENANT']}>
-                                        <WalletPage />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/tenant/analytics"
-                                element={
-                                    <ProtectedRoute allowedRoles={['TENANT', 'STAFF']}>
-                                        <Analytics />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/tenant/mikrotik"
-                                element={
-                                    <ProtectedRoute allowedRoles={['TENANT', 'STAFF']}>
-                                        <MikrotikCenter />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/tenant/packages"
-                                element={
-                                    <ProtectedRoute allowedRoles={['TENANT', 'STAFF']}>
-                                        <Packages />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/admin"
-                                element={
-                                    <ProtectedRoute allowedRoles={['STAFF']}>
-                                        <AdminPortal />
-                                    </ProtectedRoute>
-                                }
-                            />
+                            {/* Super Admin Login (Explicit) */}
+                            <Route path="/superadmin/login" element={<SuperAdminLogin />} />
 
-                            {/* Super Admin Routes */}
+                            {/* Protected Super Admin Routes */}
                             <Route
-                                path="/superadmin"
+                                path="/superadmin/*"
                                 element={
                                     <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
                                         <SuperAdminPortal />
@@ -105,16 +56,62 @@ function App() {
                                 }
                             />
 
-                            {/* Customer Routes (Public/Self-Care) */}
-                            <Route path="/customer" element={<CustomerPortal />} />
-                        </Routes>
+                            {/* Protected Tenant Routes */}
+                            <Route path="/tenant/setup" element={
+                                <ProtectedRoute allowedRoles={['TENANT']}>
+                                    <TenantSetup />
+                                </ProtectedRoute>
+                            } />
 
-                        {/* Floating Global Support Button */}
-                        <SupportButton />
-                    </div>
-                </AuthProvider>
-            </ThemeProvider>
-        </SupportProvider>
+                            <Route path="/tenant" element={
+                                <ProtectedRoute allowedRoles={['TENANT', 'STAFF', 'AGENT']}>
+                                    <TenantPortal />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/tenant/packages" element={
+                                <ProtectedRoute allowedRoles={['TENANT', 'STAFF']}>
+                                    <Packages />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/tenant/analytics" element={
+                                <ProtectedRoute allowedRoles={['TENANT', 'STAFF']}>
+                                    <Analytics />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/tenant/mikrotik" element={
+                                <ProtectedRoute allowedRoles={['TENANT', 'STAFF']}>
+                                    <MikrotikCenter />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/tenant/wallet" element={
+                                <ProtectedRoute allowedRoles={['TENANT']}>
+                                    <Wallet />
+                                </ProtectedRoute>
+                            } />
+
+                            {/* Legacy / Admin Routes */}
+                            <Route path="/admin/*" element={
+                                <ProtectedRoute allowedRoles={['TENANT', 'STAFF']}>
+                                    <AdminPortal />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/demo" element={<DemoAdmin />} />
+
+                            {/* Customer Portal */}
+                            <Route path="/customer/*" element={<CustomerPortal />} />
+
+                            {/* Fallback */}
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                    </SupportProvider>
+                </ThemeProvider>
+            </AuthProvider>
+        </ErrorBoundary>
     );
 }
 

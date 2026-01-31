@@ -5,7 +5,7 @@ import { AuditService } from '../services/audit.service';
 import { SettlementService } from '../services/settlement.service';
 import { WalletService } from '../services/wallet.service';
 import { AggregatorService } from '../services/aggregator.service';
-import { PlatformSetting, Tenant, Wallet, PlatformFee, TieredFee, sequelize } from '../models';
+import { PlatformSetting, Tenant, Wallet, PlatformFee, TieredFee, sequelize, Router as RouterModel } from '../models';
 
 const router = Router();
 router.use(authMiddleware);
@@ -17,6 +17,30 @@ router.get('/tenants', async (req, res) => {
         attributes: ['id', 'name', 'subdomain', 'status', 'aggregatorSubAccountId', 'commissionPercentage']
     });
     res.json(tenants);
+});
+
+// 1.1 List all Routers (Stats)
+router.get('/routers', async (req, res) => {
+    try {
+        const total = await RouterModel.count();
+        const online = await RouterModel.count({ where: { isOnline: true } });
+        const offline = total - online;
+
+        // Get list of critical offline routers (example top 5)
+        const criticalOffline = await RouterModel.findAll({
+            where: { isOnline: false },
+            limit: 5,
+            include: [{ model: Tenant, attributes: ['name', 'subdomain'] }],
+            attributes: ['id', 'name', 'host', 'lastSeen']
+        });
+
+        res.json({
+            stats: { total, online, offline },
+            criticalOffline
+        });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // Update Tenant Aggregator Settings

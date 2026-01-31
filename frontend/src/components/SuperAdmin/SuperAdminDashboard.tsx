@@ -3,46 +3,87 @@ import { Globe, Building2, TrendingUp, CheckCircle2, Clock, Activity } from 'luc
 import axios from 'axios';
 
 const SuperAdminDashboard = () => {
+    const [error, setError] = useState<string | null>(null);
     const [stats, setStats] = useState<any>(null);
     const [tenants, setTenants] = useState<any[]>([]);
     const [auditLogs, setAuditLogs] = useState<any[]>([]);
     const [wallets, setWallets] = useState<any[]>([]);
     const [platformFees, setPlatformFees] = useState<any[]>([]);
+    const [routerStats, setRouterStats] = useState<any>(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('token');
+                if (!token) throw new Error('No auth token found');
+
                 const config = { headers: { Authorization: `Bearer ${token}` } };
 
-                const [statsRes, tenantsRes, logsRes, walletsRes, feesRes] = await Promise.all([
-                    axios.get('/api/v1/superadmin/platform-stats', config),
-                    axios.get('/api/v1/superadmin/tenants', config),
-                    axios.get('/api/v1/superadmin/audit-logs', config),
-                    axios.get('/api/v1/superadmin/wallets', config),
-                    axios.get('/api/v1/superadmin/platform-fees', config)
+                // Allow independent failures for widgets
+                const fetchSafe = async (url: string) => {
+                    try {
+                        const res = await axios.get(url, config);
+                        return res.data;
+                    } catch (e) {
+                        console.error(`Failed to fetch ${url}`, e);
+                        return null;
+                    }
+                };
+
+                const [statsData, tenantsData, logsData, walletsData, feesData, routersData] = await Promise.all([
+                    fetchSafe('/api/v1/superadmin/platform-stats'),
+                    fetchSafe('/api/v1/superadmin/tenants'),
+                    fetchSafe('/api/v1/superadmin/audit-logs'),
+                    fetchSafe('/api/v1/superadmin/wallets'),
+                    fetchSafe('/api/v1/superadmin/platform-fees'),
+                    fetchSafe('/api/v1/superadmin/routers')
                 ]);
-                setStats(statsRes.data);
-                setTenants(Array.isArray(tenantsRes.data) ? tenantsRes.data : []);
-                setAuditLogs(Array.isArray(logsRes.data) ? logsRes.data : []);
-                setWallets(walletsRes.data || []);
-                setPlatformFees(feesRes.data || []);
-            } catch (error) {
-                console.error('Failed to fetch SuperAdmin data');
+
+                if (!statsData) setError('Failed to load critical platform stats. Backend may be unreachable.');
+
+                setStats(statsData || { totalRevenue: 0, activeTenants: 0, totalTenants: 0, totalPayments: 0 });
+                setTenants(Array.isArray(tenantsData) ? tenantsData : []);
+                setAuditLogs(Array.isArray(logsData) ? logsData : []);
+                setWallets(walletsData || []);
+                setPlatformFees(feesData || []);
+                setRouterStats(routersData || { stats: { total: 0, online: 0, offline: 0 }, criticalOffline: [] });
+
+            } catch (error: any) {
+                console.error('Failed to fetch SuperAdmin data', error);
+                setError(error.message || 'Fatal dashboard error');
             }
         };
         fetchData();
     }, []);
 
     const toggleTenantStatus = async (id: string, currentStatus: string) => {
-        const token = localStorage.getItem('token');
-        const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
-        await axios.put(`/api/v1/superadmin/tenants/${id}/status`,
-            { status: newStatus },
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setTenants(tenants.map(t => t.id === id ? { ...t, status: newStatus } : t));
+        try {
+            const token = localStorage.getItem('token');
+            const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+            await axios.put(`/api/v1/superadmin/tenants/${id}/status`,
+                { status: newStatus },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            setTenants(tenants.map(t => t.id === id ? { ...t, status: newStatus } : t));
+        } catch (e) {
+            alert('Failed to update tenant status');
+        }
     };
+
+    if (error) {
+        return (
+            <div className="h-[60vh] flex flex-col items-center justify-center gap-4 text-red-500">
+                <div className="text-2xl font-black">System Error</div>
+                <p className="font-bold">{error}</p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="px-6 py-2 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-colors"
+                >
+                    Retry Connection
+                </button>
+            </div>
+        );
+    }
 
     if (!stats) return (
         <div className="h-[60vh] flex flex-col items-center justify-center gap-4 transition-colors duration-300">
@@ -94,6 +135,38 @@ const SuperAdminDashboard = () => {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            {/* Router Status Widget (New) */}
+            <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-8 rounded-[2rem] shadow-xl transition-all">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
+                        <Activity className="text-orange-500" />
+                        MikroTik Router Fleet
+                    </h3>
+                    <div className="flex gap-2 text-xs font-bold">
+                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full">{routerStats?.stats.online} ONLINE</span>
+                        <span className="px-3 py-1 bg-rose-500/10 text-rose-500 rounded-full">{routerStats?.stats.offline} OFFLINE</span>
+                    </div>
+                </div>
+                <div className="flex gap-4 overflow-x-auto pb-2">
+                    {routerStats?.criticalOffline.length === 0 ? (
+                        <div className="w-full p-4 text-center text-sm font-bold text-emerald-500 bg-emerald-500/5 rounded-xl border border-emerald-500/20">
+                            All systems normal. No critical outages reported.
+                        </div>
+                    ) : (
+                        routerStats?.criticalOffline.map((r: any) => (
+                            <div key={r.id} className="min-w-[200px] p-4 bg-rose-500/5 border border-rose-500/20 rounded-xl flex flex-col gap-1">
+                                <div className="text-xs font-black text-rose-500 uppercase">Offline Alert</div>
+                                <div className="font-bold text-[var(--text-primary)]">{r.name}</div>
+                                <div className="text-[10px] text-[var(--text-muted)]">{r.host}</div>
+                                <div className="mt-2 text-[10px] font-mono bg-black/20 p-1 rounded text-center">
+                                    Last seen: {new Date(r.lastSeen).toLocaleDateString()}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
