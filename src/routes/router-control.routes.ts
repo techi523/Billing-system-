@@ -66,10 +66,7 @@ router.post('/:id/users', authMiddleware, async (req, res) => {
             routerRecord,
             username,
             password,
-            macAddress,
-            ipAddress,
-            limitBytes,
-            limitTime
+            macAddress
         );
 
         // Log the action
@@ -163,8 +160,7 @@ router.delete('/:id/users/:username', authMiddleware, async (req, res) => {
         // Disconnect and remove user
         await MikroTikService.disconnectHotspotUser(
             routerRecord,
-            username,
-            ipAddress as string
+            username
         );
 
         await RouterConnectionLog.create({
@@ -209,8 +205,7 @@ router.post('/:id/users/:username/disconnect', authMiddleware, async (req, res) 
 
         await MikroTikService.disconnectHotspotUser(
             routerRecord,
-            username,
-            ipAddress
+            username
         );
 
         await RouterConnectionLog.create({
@@ -384,7 +379,7 @@ router.get('/:id/stats', authMiddleware, async (req, res) => {
         }
 
         // Get session stats
-        const sessionStats = await MikroTikService.fetchSessionStats(routerRecord);
+        const sessionStats = await MikroTikService.getActiveHotspotSessions(routerRecord);
 
         res.json({
             sessions: sessionStats,

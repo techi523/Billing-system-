@@ -37,8 +37,7 @@ export class SessionOrchestrator {
             username,
             password,
             macAddress,
-            ipAddress,
-            pkg.dataLimitBytes || undefined,
+            pkg.dataLimitBytes ? pkg.dataLimitBytes.toString() : undefined,
             limitTime
         );
 
@@ -76,8 +75,7 @@ export class SessionOrchestrator {
 
         await MikroTikService.disconnectHotspotUser(
             router,
-            session.mikrotikUsername,
-            session.ipAddress
+            session.mikrotikUsername
         );
 
         session.status = 'EXPIRED';
@@ -106,22 +104,27 @@ export class SessionOrchestrator {
         if (!router) return;
 
         try {
-            const stats = await MikroTikService.fetchSessionStats(router);
-            for (const stat of stats) {
-                const session = await Session.findOne({
-                    where: {
-                        mikrotikUsername: stat.user,
-                        routerId: routerId,
-                        status: 'ACTIVE'
-                    }
-                });
+            const sessions = await Session.findAll({
+                where: {
+                    routerId: routerId,
+                    status: 'ACTIVE'
+                }
+            });
 
-                if (session) {
-                    await session.update({
-                        bytesIn: stat.bytesIn,
-                        bytesOut: stat.bytesOut,
-                        lastUpdated: new Date()
-                    });
+            for (const session of sessions) {
+                try {
+                    const stats = await MikroTikService.getActiveHotspotSessions(router);
+                    const sessionStats = stats.find(s => s.username === session.mikrotikUsername);
+
+                    if (sessionStats) {
+                        await session.update({
+                            bytesIn: sessionStats.bytesIn,
+                            bytesOut: sessionStats.bytesOut,
+                            lastUpdated: new Date()
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Failed to refresh stats for session ${session.id}`, error);
                 }
             }
         } catch (error) {

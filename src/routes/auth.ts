@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { AdminUser, Tenant, AdminSession, AuditLog, PasswordResetToken } from '../models';
 import { TenantBootstrapService } from '../services/tenant-bootstrap.service';
 import { sendPasswordResetEmail } from '../services/emailService';
+import { TenantResolver } from '../middleware/tenant-resolver';
 
 const router = Router();
 
@@ -38,10 +39,37 @@ router.post('/register', async (req, res) => {
         // 3. Bootstrap tenant with essential data
         await TenantBootstrapService.bootstrapNewTenant(tenant.id, user.id);
 
+        // Create session
+        const token = jwt.sign(
+            { id: user.id, role: user.role, tenantId: user.tenantId },
+            process.env.JWT_SECRET || 'secret_key',
+            { expiresIn: '1d' }
+        );
+
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const expiryTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day
+
+        await AdminSession.create({
+            userId: user.id,
+            tokenHash,
+            ipAddress: req.ip || 'unknown',
+            userAgent: req.get('User-Agent') || '',
+            expiryTime
+        });
+
+        // Log successful registration
+        await AuditLog.create({
+            action: 'REGISTRATION',
+            details: `User ${user.email} registered successfully`,
+            userId: user.id,
+            tenantId: user.tenantId,
+            ipAddress: req.ip
+        });
+
         res.status(201).json({
             message: 'Tenant registered successfully',
             tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
-            user: { id: user.id, email: user.email }
+            user: { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId }
         });
     } catch (error: any) {
         console.error('Registration Error:', error);

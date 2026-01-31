@@ -3,6 +3,7 @@ import { Package, Payment, Tenant, Router as RouterModel, PlatformSetting } from
 import { MpesaService } from '../services/mpesa.service';
 import { AggregatorService } from '../services/aggregator.service';
 import logger from '../utils/logger';
+import { TenantResolver } from '../middleware/tenant-resolver';
 
 const router = Router();
 

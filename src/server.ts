@@ -22,6 +22,8 @@ import { TrafficMonitorService } from './services/traffic-monitor.service';
 import { ProductionService } from './services/production.service';
 import { SocketService } from './services/socket.service';
 import logger from './utils/logger';
+import { TenantResolver } from './middleware/tenant-resolver';
+import { ErrorHandler } from './middleware/error-handler';
 
 const app = express();
 
@@ -66,10 +68,10 @@ app.use((req, res, next) => {
 
 // ROUTES
 app.use('/api/v1/auth', strictLimiter, authRoutes);
-app.use('/api/v1/portal', portalRoutes);
-app.use('/api/v1/portal/:tenantId/pay', strictLimiter);
-app.use('/api/v1/admin', adminRoutes);
-app.use('/api/v1/agent', agentRoutes);
+app.use('/api/v1/portal', TenantResolver.resolveTenant, portalRoutes);
+app.use('/api/v1/portal/:tenantId/pay', strictLimiter, TenantResolver.resolveTenant);
+app.use('/api/v1/admin', TenantResolver.resolveTenant, adminRoutes);
+app.use('/api/v1/agent', TenantResolver.resolveTenant, agentRoutes);
 app.use('/api/v1/superadmin', superAdminLimiter, superadminRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
 app.use('/api/v1/wallet', walletRoutes);
@@ -107,10 +109,8 @@ app.get('/health', async (req, res) => {
 });
 
 // ERROR HANDLING
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    logger.error('Unhandled Error', { error: err.message, stack: err.stack });
-    res.status(500).json({ error: 'Internal Server Error' });
-});
+app.use(ErrorHandler.handleTenantError);
+app.use(ErrorHandler.handleGeneralError);
 
 const PORT = process.env.PORT || 3000;
 

@@ -24,12 +24,14 @@ export class IspService {
             status: 'ACTIVE' // Start as active (usually after first payment)
         });
 
-        // 2. Create on MikroTik
-        await MikroTikService.createPppoeUser(
+        // 2. Create on MikroTik (using hotspot user for now)
+        await MikroTikService.createHotspotUser(
             router,
             pppoeUsername,
             pppoePassword,
-            pkg.speedLimit || 'default'
+            undefined, // macAddress
+            pkg.dataLimitBytes ? pkg.dataLimitBytes.toString() : undefined,
+            pkg.durationMinutes ? `${pkg.durationMinutes}m` : undefined
         );
 
         return subscriber;
@@ -52,9 +54,9 @@ export class IspService {
         subscriber.status = 'ACTIVE';
         await subscriber.save();
 
-        // Ensure active on MikroTik
+        // Ensure active on MikroTik (using hotspot user for now)
         if (subscriber.pppoeUsername) {
-            await MikroTikService.activatePppoeUser(router, subscriber.pppoeUsername);
+            await MikroTikService.toggleHotspotUser(router, subscriber.pppoeUsername, true);
         }
 
         return subscriber;
@@ -75,7 +77,7 @@ export class IspService {
 
                 const router = await Router.findByPk(sub.routerId);
                 if (router) {
-                    await MikroTikService.suspendPppoeUser(router, sub.pppoeUsername);
+                    await MikroTikService.toggleHotspotUser(router, sub.pppoeUsername, false);
                 }
                 sub.status = 'SUSPENDED';
                 await sub.save();

@@ -24,3 +24,22 @@
 {"error":"SQLITE_ERROR: no such column: location","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-30T17:23:09.870Z"}
 {"error":"SQLITE_CONSTRAINT: FOREIGN KEY constraint failed","level":"error","message":"Failed to start server:","service":"billing-system","timestamp":"2026-01-30T18:03:44.405Z"}
 {"error":"Validation error","level":"error","message":"Failed to start server:","service":"billing-system","timestamp":"2026-01-30T18:05:27.664Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T09:55:01.910Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T09:56:41.916Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T09:57:56.600Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T09:59:40.295Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T10:04:40.282Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T10:09:40.295Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T10:12:33.555Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T10:17:33.509Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T10:22:33.544Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T10:27:33.519Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T10:32:33.542Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T10:37:33.542Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T10:42:33.544Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T10:47:33.558Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T10:52:33.578Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T10:57:33.589Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T11:02:33.602Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T11:07:33.614Z"}
+{"error":"SQLITE_ERROR: no such column: apiUser","level":"error","message":"Traffic Monitor loop encountered an error","service":"billing-system","timestamp":"2026-01-31T11:12:33.623Z"}

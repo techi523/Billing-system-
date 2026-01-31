@@ -131,9 +131,30 @@ AdminUser.init({
   email: { type: DataTypes.STRING, unique: true, allowNull: false },
   password: { type: DataTypes.STRING, allowNull: false },
   role: { type: DataTypes.ENUM('SUPER_ADMIN', 'TENANT', 'STAFF', 'AGENT'), defaultValue: 'TENANT' },
-  tenantId: { type: DataTypes.UUID, allowNull: true }, // null for super admin
+  tenantId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: { model: 'tenants', key: 'id' },
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE'
+  },
   commissionRate: { type: DataTypes.FLOAT, defaultValue: 0.0 },
-}, { sequelize, modelName: 'admin_user' });
+}, {
+  sequelize,
+  modelName: 'admin_user',
+  hooks: {
+    beforeCreate: async (user) => {
+      if (user.role !== 'SUPER_ADMIN' && !user.tenantId) {
+        throw new Error('Tenant ID is required for non-super admin users');
+      }
+    },
+    beforeUpdate: async (user) => {
+      if (user.role !== 'SUPER_ADMIN' && !user.tenantId) {
+        throw new Error('Tenant ID is required for non-super admin users');
+      }
+    }
+  }
+});
 
 export class Router extends Model {
   public id!: string;

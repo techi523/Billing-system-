@@ -3,6 +3,7 @@ import { Package, Subscriber, Invoice, Tenant, AuditLog, Payment, Session, Vouch
 import { authMiddleware, authorize } from '../middleware/auth';
 import { TenantBootstrapService } from '../services/tenant-bootstrap.service';
 import logger from '../utils/logger';
+import { TenantResolver } from '../middleware/tenant-resolver';
 
 const router = Router();
 
