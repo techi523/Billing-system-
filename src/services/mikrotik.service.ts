@@ -263,33 +263,52 @@ export class MikroTikService {
     }
 
     /**
-     * Create hotspot profile
+     * Create or update hotspot profile
      */
-    static async createHotspotProfile(
+    static async createOrUpdateHotspotProfile(
         router: RouterModel,
         profileName: string,
         settings: {
-            rateLimit?: string;
+            rateLimit?: string | null;
             sharedUsers?: number;
+            transparentProxy?: boolean;
         }
     ): Promise<void> {
         const client = await this.getConnection(router);
         try {
             const api = await client.connect();
+            const profileMenu = api.menu('/ip/hotspot/user/profile');
+
+            // Check if exists
+            const existing = await profileMenu.where({ name: profileName }).get();
 
             const profileData: any = {
                 name: profileName,
-                'shared-users': settings.sharedUsers?.toString() || '1'
+                'shared-users': settings.sharedUsers?.toString() || '1',
+                // Default hotspot profile settings
+                'status-autorefresh': '1m',
+                'transparent-proxy': settings.transparentProxy ? 'yes' : 'no'
             };
 
             if (settings.rateLimit) {
                 profileData['rate-limit'] = settings.rateLimit;
             }
 
-            await api.menu('/ip/hotspot/user/profile').add(profileData);
+            if (existing.length > 0) {
+                // Update
+                await profileMenu.set(profileData, existing[0]['.id']);
+                logger.info('Updated MikroTik profile', { routerId: router.id, profileName });
+            } else {
+                // Create
+                await profileMenu.add(profileData);
+                logger.info('Created MikroTik profile', { routerId: router.id, profileName });
+            }
+
             await client.close();
+            await this.logRouterAction(router.id, router.tenantId, 'SYNC_PROFILE', 'SUCCESS', `Profile ${profileName} synced`);
         } catch (error: any) {
-            logger.error('Failed to create hotspot profile', { routerId: router.id, profileName, error: error.message });
+            logger.error('Failed to sync hotspot profile', { routerId: router.id, profileName, error: error.message });
+            await this.logRouterAction(router.id, router.tenantId, 'SYNC_PROFILE', 'FAILED', `Failed to sync profile ${profileName}: ${error.message}`);
             throw error;
         }
     }

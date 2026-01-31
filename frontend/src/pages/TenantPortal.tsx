@@ -7,6 +7,7 @@ import BackButton from '../components/Common/BackButton';
 import SupportFooter from '../components/Common/SupportFooter';
 import SupportSection from '../components/Common/SupportSection';
 import { Shield, Zap } from 'lucide-react';
+import ThemeToggle from '../components/Common/ThemeToggle';
 
 const TenantPortal = () => {
     const navigate = useNavigate();
@@ -119,33 +120,61 @@ const TenantPortal = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-50">
+        <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] transition-colors duration-300">
             {/* Tenant Header */}
-            <div className="bg-white border-b border-slate-200 sticky top-0 z-50">
+            <div className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] sticky top-0 z-50 transition-colors duration-300">
                 <div className="max-w-7xl mx-auto px-6 py-4">
                     <div className="flex items-center gap-6">
                         <BackButton to="/" label="Home" variant="dark" />
                         <div className="flex-1 flex items-center justify-between">
                             <div>
-                                <h1 className="text-2xl font-black text-slate-900">{tenantData?.tenantName || 'Tenant'} Portal</h1>
-                                <p className="text-slate-600 font-bold">Subscriber Management & Analytics</p>
+                                <h1 className="text-2xl font-black text-[var(--text-primary)]">{tenantData?.tenantName || 'Tenant'} Portal</h1>
+                                <p className="text-[var(--text-secondary)] font-bold">Subscriber Management & Analytics</p>
                             </div>
                             <div className="flex items-center gap-4">
+                                <ThemeToggle />
                                 <span className="px-3 py-1 bg-sky-500/20 text-sky-600 text-xs font-black rounded-full text-center">
                                     {user?.role}
                                 </span>
-                                <button
-                                    onClick={() => navigate('/tenant/wallet')}
-                                    className="px-4 py-2 bg-sky-100 text-sky-700 font-bold rounded-lg hover:bg-sky-200 transition-colors"
-                                >
-                                    Wallet
-                                </button>
-                                <button
-                                    onClick={logout}
-                                    className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
-                                >
-                                    Logout
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => navigate('/tenant')}
+                                        className={`px-4 py-2 font-bold rounded-lg transition-colors ${window.location.pathname === '/tenant' ? 'bg-sky-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                                    >
+                                        Dashboard
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/tenant/packages')}
+                                        className={`px-4 py-2 font-bold rounded-lg transition-colors ${window.location.pathname === '/tenant/packages' ? 'bg-sky-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                                    >
+                                        Packages
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/tenant/analytics')}
+                                        className={`px-4 py-2 font-bold rounded-lg transition-colors ${window.location.pathname === '/tenant/analytics' ? 'bg-sky-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                                    >
+                                        Analytics
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/tenant/mikrotik')}
+                                        className={`px-4 py-2 font-bold rounded-lg transition-colors ${window.location.pathname === '/tenant/mikrotik' ? 'bg-sky-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                                    >
+                                        Routers
+                                    </button>
+                                    <div className="w-px h-6 bg-slate-200 mx-2"></div>
+                                    <button
+                                        onClick={() => navigate('/tenant/wallet')}
+                                        className="px-4 py-2 bg-sky-100 text-sky-700 font-bold rounded-lg hover:bg-sky-200 transition-colors"
+                                    >
+                                        Wallet
+                                    </button>
+                                    <button
+                                        onClick={logout}
+                                        className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -248,7 +277,7 @@ const TenantPortal = () => {
                 </div>
 
                 {/* New Feature Shortcuts */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div
                         onClick={() => navigate('/tenant/analytics')}
                         className="premium-card bg-slate-900 border-none cursor-pointer group overflow-hidden relative"
@@ -262,7 +291,23 @@ const TenantPortal = () => {
                             </div>
                             <div>
                                 <h3 className="text-xl font-black mb-1">Real-time Analytics</h3>
-                                <p className="text-white/60 text-xs font-bold uppercase tracking-widest">Live Revenue & Bandwidth Stream</p>
+                                <p className="text-white/60 text-[10px] font-black uppercase tracking-widest">Live Revenue Stream</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        onClick={() => navigate('/tenant/packages')}
+                        className="premium-card bg-sky-500 border-none cursor-pointer group overflow-hidden relative"
+                    >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+                        <div className="flex items-center gap-6 p-2 relative z-10 text-white">
+                            <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-md">
+                                <Zap className="w-8 h-8 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black mb-1">Billing Packages</h3>
+                                <p className="text-white/80 text-[10px] font-black uppercase tracking-widest">Pricing & Speed Sync</p>
                             </div>
                         </div>
                     </div>
@@ -279,7 +324,7 @@ const TenantPortal = () => {
                             </div>
                             <div>
                                 <h3 className="text-xl font-black mb-1 text-slate-900">MikroTik Center</h3>
-                                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Connect & Manage Routers</p>
+                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Router Management</p>
                             </div>
                         </div>
                     </div>

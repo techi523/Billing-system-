@@ -3,3 +3,4 @@ node_modules/
 *.sqlite
 server_log.txt
 dist/
+logs/

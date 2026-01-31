@@ -27,15 +27,21 @@ router.get('/config/:subdomain', async (req, res) => {
 });
 
 // 1. Get Packages for a specific tenant
-router.get('/:tenantId/packages', async (req, res) => {
-    const packages = await Package.findAll({
-        where: {
-            tenantId: req.params.tenantId,
-            isEnabled: true,
-            type: 'HOTSPOT'
-        }
-    });
-    res.json(packages);
+router.get('/:tenantId/packages', async (req: any, res) => {
+    try {
+        const packages = await Package.findAll({
+            where: {
+                tenantId: req.params.tenantId,
+                isEnabled: true,
+                isVisible: true,
+                type: 'HOTSPOT'
+            },
+            order: [['price', 'ASC']]
+        });
+        res.json(packages);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // 2. Initiate Payment (Hotspot or ISP)

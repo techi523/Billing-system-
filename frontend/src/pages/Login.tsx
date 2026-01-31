@@ -8,6 +8,7 @@ import logo from '../assets/logo-main.png';
 import SupportFooter from '../components/Common/SupportFooter';
 import { OFFICIAL_SUPPORT } from '../constants';
 import BackButton from '../components/Common/BackButton';
+import ThemeToggle from '../components/Common/ThemeToggle';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -43,10 +44,11 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6 relative overflow-hidden font-sans">
+        <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] flex items-center justify-center p-6 relative overflow-hidden font-sans transition-colors duration-300">
             {/* Nav Control */}
-            <div className="absolute top-8 left-8 z-50">
-                <BackButton to="/" label="Back to Home" variant="light" />
+            <div className="absolute top-8 left-8 right-8 z-50 flex justify-between items-center">
+                <BackButton to="/" label="Back to Home" variant="dark" />
+                <ThemeToggle />
             </div>
 
             {/* Ambient Background */}
@@ -61,7 +63,7 @@ const Login = () => {
                 transition={{ duration: 0.5, ease: "circOut" }}
                 className="w-full max-w-md relative z-10"
             >
-                <div className="bg-white/5 backdrop-blur-3xl border border-white/10 p-10 rounded-[3rem] shadow-2xl shadow-black/50">
+                <div className="bg-[var(--bg-surface)] backdrop-blur-3xl border border-[var(--border-subtle)] p-10 rounded-[3rem] shadow-2xl transition-colors duration-300">
                     <div className="text-center mb-10">
                         <motion.div
                             initial={{ y: -20, opacity: 0 }}
@@ -75,7 +77,7 @@ const Login = () => {
                             initial={{ y: -10, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.3 }}
-                            className="text-3xl font-black text-white tracking-tight"
+                            className="text-3xl font-black text-[var(--text-primary)] tracking-tight"
                         >
                             Welcome Back
                         </motion.h1>
@@ -83,7 +85,7 @@ const Login = () => {
                             initial={{ y: -10, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.4 }}
-                            className="text-slate-400 text-sm font-medium mt-2"
+                            className="text-[var(--text-secondary)] text-sm font-medium mt-2"
                         >
                             Sign in to your SurfBill Command Center
                         </motion.p>
@@ -100,7 +102,7 @@ const Login = () => {
                                         placeholder="Account Email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl py-4 pl-12 pr-6 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-sky-500 focus:bg-slate-900/80 transition-all"
+                                        className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold placeholder:text-[var(--text-muted)] focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
                                     />
                                 </div>
                                 <div className="relative group">
@@ -113,7 +115,7 @@ const Login = () => {
                                         placeholder="Password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl py-4 pl-12 pr-6 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-sky-500 focus:bg-slate-900/80 transition-all"
+                                        className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold placeholder:text-[var(--text-muted)] focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
                                     />
                                 </div>
                             </div>
@@ -151,18 +153,18 @@ const Login = () => {
                         </form>
 
                         <div className="mt-8 text-center space-y-4">
-                            <p className="text-slate-400 text-xs font-bold">
+                            <p className="text-[var(--text-secondary)] text-xs font-bold">
                                 Don't have an account?{' '}
                                 <button
                                     onClick={() => navigate('/register')}
-                                    className="text-sky-400 hover:text-sky-300 underline transition-colors"
+                                    className="text-sky-500 hover:text-sky-400 underline transition-colors"
                                 >
                                     Register Tenant
                                 </button>
                             </p>
 
-                            <div className="pt-6 border-t border-white/5">
-                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-3">Scaling Support & Technical Help</p>
+                            <div className="pt-6 border-t border-[var(--border-subtle)]">
+                                <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest mb-3">Scaling Support & Technical Help</p>
                                 <div className="flex justify-center gap-4">
                                     <a href={OFFICIAL_SUPPORT.whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 text-xs font-bold flex items-center gap-1.5 transition-colors">
                                         WhatsApp: {OFFICIAL_SUPPORT.whatsapp}

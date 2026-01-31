@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Package, Subscriber, Invoice, Tenant, AuditLog, Payment, Session, Voucher, FraudLog, Router as RouterModel } from '../models';
+import { Package, Subscriber, Invoice, Tenant, AuditLog, Payment, Session, Voucher, FraudLog, Router as RouterModel, AdminUser } from '../models';
 import { authMiddleware, authorize } from '../middleware/auth';
 import { TenantBootstrapService } from '../services/tenant-bootstrap.service';
 import logger from '../utils/logger';
@@ -9,6 +9,55 @@ const router = Router();
 
 // Middleware to ensure all routes here require authentication and at least TENANT_ADMIN role
 router.use(authMiddleware);
+
+// Workspace Setup for new users
+router.post('/tenants/setup', async (req: any, res) => {
+    try {
+        const { tenantName, subdomain } = req.body;
+        const userId = req.user.id;
+
+        // Check if user already has a tenant
+        const user = await AdminUser.findByPk(userId);
+        if (user?.tenantId) {
+            return res.status(400).json({ error: 'You already have an active workspace' });
+        }
+
+        // Validate subdomain
+        const existingTenant = await Tenant.findOne({ where: { subdomain } });
+        if (existingTenant) {
+            return res.status(400).json({ error: 'This subdomain is already in use. Please choose another one.' });
+        }
+
+        // 1. Create Tenant
+        const tenant = await Tenant.create({
+            name: tenantName,
+            subdomain: subdomain,
+            status: 'ACTIVE'
+        });
+
+        // 2. Assign to user
+        await user!.update({ tenantId: tenant.id });
+
+        // 3. Bootstrap essential data
+        await TenantBootstrapService.bootstrapNewTenant(tenant.id, userId);
+
+        await AuditLog.create({
+            action: 'WORKSPACE_SETUP',
+            details: `User ${user!.email} initialized workspace: ${tenant.name}`,
+            userId: userId,
+            tenantId: tenant.id,
+            ipAddress: req.ip
+        });
+
+        res.status(201).json({
+            message: 'Workspace created successfully',
+            tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain }
+        });
+    } catch (error: any) {
+        logger.error('Workspace setup failed', { error });
+        res.status(500).json({ error: `Setup failed: ${error.message}` });
+    }
+});
 
 // Admin dashboard summary
 router.get('/dashboard-summary', async (req: any, res) => {
@@ -271,43 +320,135 @@ router.post('/routers/:id/test', async (req: any, res) => {
 
 // --- PACKAGE MANAGEMENT ---
 
-// List packages
+// List packages with optional analytics
 router.get('/packages', async (req: any, res) => {
     try {
-        const packages = await Package.findAll({ where: { tenantId: req.user.tenantId } });
-        res.json(packages);
+        const { PackageService } = require('../services/package.service');
+        const [packages, analytics] = await Promise.all([
+            Package.findAll({ where: { tenantId: req.user.tenantId }, order: [['createdAt', 'DESC']] }),
+            PackageService.getPackageAnalytics(req.user.tenantId)
+        ]);
+
+        // Merge analytics into packages
+        const enriched = packages.map(pkg => {
+            const stats = analytics.find((a: any) => a.id === pkg.id) || {
+                salesCount: 0, revenue: 0, activeUsers: 0, expiredSessions: 0
+            };
+            return { ...pkg.toJSON(), stats };
+        });
+
+        res.json(enriched);
     } catch (error) {
+        logger.error('Failed to fetch packages', { error });
         res.status(500).json({ error: 'Failed to fetch packages' });
     }
 });
 
-// Create manual package with validation
+// Create manual package with validation & auto-sync
 router.post('/packages', async (req: any, res) => {
     try {
-        const { name, price, durationMinutes, dataLimitBytes, speedLimit, type } = req.body;
+        const {
+            name, price, type,
+            durationMinutes, dataLimitBytes,
+            downloadSpeed, uploadSpeed,
+            validity, sharedUsers, expiryAction,
+            description, isVisible
+        } = req.body;
 
         // Validation
-        if (!name || price === undefined) return res.status(400).json({ error: 'Name and Price are required' });
-        if (!durationMinutes && !dataLimitBytes) return res.status(400).json({ error: 'Package must have either a time limit or a data limit' });
+        if (!name || price === undefined) return res.status(400).json({ error: 'Package Name and Price are mandatory' });
+
+        // Ensure name is unique for this tenant
+        const existing = await Package.findOne({ where: { name, tenantId: req.user.tenantId } });
+        if (existing) return res.status(400).json({ error: 'A package with this name already exists' });
 
         const pkg = await Package.create({
             name,
             price: BigInt(price),
-            durationMinutes,
-            dataLimitBytes,
-            speedLimit,
             type: type || 'HOTSPOT',
+            durationMinutes: durationMinutes || null,
+            dataLimitBytes: dataLimitBytes || null,
+            downloadSpeed: downloadSpeed || '2M',
+            uploadSpeed: uploadSpeed || '1M',
+            validity: validity || 30, // Default 30 days
+            sharedUsers: sharedUsers || 1,
+            expiryAction: expiryAction || 'SUSPEND',
+            description,
+            isVisible: isVisible !== undefined ? isVisible : true,
             tenantId: req.user.tenantId,
             isEnabled: true
         });
 
+        // Trigger auto-sync
+        const { PackageService } = require('../services/package.service');
+        await PackageService.syncPackageToAllRouters(pkg.id, req.user.tenantId);
+
         const { AuditService } = require('../services/audit.service');
-        await AuditService.log('PACKAGE_CREATED', `Manual package created: ${name} (${price} cents)`, req.user.tenantId, req.user.id);
+        await AuditService.log('PACKAGE_CREATED', `Package created and synced: ${name}`, req.user.tenantId, req.user.id);
 
         res.status(201).json(pkg);
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Package creation failed', { error });
-        res.status(500).json({ error: 'Failed to create package' });
+        res.status(500).json({ error: `Creation failed: ${error.message}` });
+    }
+});
+
+// Update package
+router.put('/packages/:id', async (req: any, res) => {
+    try {
+        const pkg = await Package.findOne({ where: { id: req.params.id, tenantId: req.user.tenantId } });
+        if (!pkg) return res.status(404).json({ error: 'Package not found' });
+
+        const updates = req.body;
+        // Prevent editing tenantId or id
+        delete updates.id;
+        delete updates.tenantId;
+
+        if (updates.price) updates.price = BigInt(updates.price);
+
+        await pkg.update(updates);
+
+        // Re-sync after update
+        const { PackageService } = require('../services/package.service');
+        await PackageService.syncPackageToAllRouters(pkg.id, req.user.tenantId);
+
+        res.json({ message: 'Package updated and re-synced', package: pkg });
+    } catch (error: any) {
+        res.status(500).json({ error: `Update failed: ${error.message}` });
+    }
+});
+
+// Delete package (safety check)
+router.post('/packages/:id/delete', async (req: any, res) => {
+    try {
+        const pkg = await Package.findOne({ where: { id: req.params.id, tenantId: req.user.tenantId } });
+        if (!pkg) return res.status(404).json({ error: 'Package not found' });
+
+        // Check if in use by active subscribers
+        const { Subscriber } = require('../models');
+        const usageCount = await Subscriber.count({ where: { packageId: pkg.id, status: 'ACTIVE' } });
+
+        if (usageCount > 0) {
+            return res.status(400).json({
+                error: `Cannot delete package while it has ${usageCount} active subscribers. Disable it instead.`
+            });
+        }
+
+        await pkg.destroy();
+        res.json({ message: 'Package deleted successfully' });
+    } catch (error: any) {
+        res.status(500).json({ error: `Deletion failed: ${error.message}` });
+    }
+});
+
+// Manual Sync
+router.post('/packages/:id/sync', async (req: any, res) => {
+    try {
+        const { PackageService } = require('../services/package.service');
+        const result = await PackageService.syncPackageToAllRouters(req.params.id, req.user.tenantId);
+        res.json(result);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
     }
 });
 

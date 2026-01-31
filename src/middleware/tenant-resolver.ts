@@ -25,6 +25,11 @@ export class TenantResolver {
                 return next();
             }
 
+            // Bypass for setup route to allow creating the first workspace
+            if (req.path === '/tenants/setup' || req.path === '/api/v1/admin/tenants/setup') {
+                return next();
+            }
+
             // Check if user has tenantId
             if (!req.user.tenantId) {
                 // Log the issue
@@ -38,7 +43,8 @@ export class TenantResolver {
                 // Redirect to tenant setup
                 return res.status(403).json({
                     error: 'You don\'t have a workspace yet',
-                    action: 'CREATE_WORKSPACE',
+                    action: 'NAVIGATE_TO_SETUP',
+                    path: '/tenant/setup',
                     message: 'Please create a workspace to continue'
                 });
             }
@@ -58,7 +64,8 @@ export class TenantResolver {
                 // Redirect to tenant setup
                 return res.status(403).json({
                     error: 'Your workspace is not available',
-                    action: 'CREATE_WORKSPACE',
+                    action: 'NAVIGATE_TO_SETUP',
+                    path: '/tenant/setup',
                     message: 'Please create a workspace to continue'
                 });
             }

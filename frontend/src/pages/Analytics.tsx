@@ -49,30 +49,30 @@ const Analytics: React.FC = () => {
     }, []);
 
     if (loading) return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center transition-colors duration-300">
             <div className="flex flex-col items-center gap-4">
                 <RefreshCw className="w-12 h-12 text-sky-500 animate-spin" />
-                <p className="font-black text-slate-400 uppercase tracking-widest text-xs">Streaming Real-time Data...</p>
+                <p className="font-black text-[var(--text-muted)] uppercase tracking-widest text-xs">Streaming Real-time Data...</p>
             </div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans selection:bg-sky-500">
+        <div className="min-h-screen bg-[var(--bg-main)] font-sans selection:bg-sky-500 transition-colors duration-300">
             {/* Header */}
-            <header className="bg-white border-b border-slate-200 sticky top-0 z-40 px-8 py-6">
+            <header className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] sticky top-0 z-40 px-8 py-6 transition-colors duration-300">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex flex-col md:flex-row items-center gap-6">
                         <BackButton to="/tenant" variant="dark" />
                         <div>
                             <div className="flex items-center gap-3 mb-1">
-                                <h1 className="text-3xl font-black text-slate-900 tracking-tighter">Real-time <span className="text-sky-500">Insights</span></h1>
+                                <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tighter">Real-time <span className="text-sky-500">Insights</span></h1>
                                 <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 text-[10px] font-black rounded-full flex items-center gap-1">
                                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
                                     LIVE STREAMING
                                 </div>
                             </div>
-                            <p className="text-slate-500 font-bold text-sm tracking-tight">ISP-Grade Analytics & Revenue Monitoring</p>
+                            <p className="text-[var(--text-secondary)] font-bold text-sm tracking-tight">ISP-Grade Analytics & Revenue Monitoring</p>
                         </div>
                     </div>
 
@@ -80,7 +80,7 @@ const Analytics: React.FC = () => {
                         <button
                             onClick={fetchData}
                             disabled={refreshing}
-                            className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2 group"
+                            className="p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl text-[var(--text-secondary)] hover:bg-[var(--bg-surface-elevated)] transition-all flex items-center gap-2 group shadow-sm"
                         >
                             <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
                             <span className="text-sm font-black uppercase tracking-widest">Refresh</span>
@@ -133,11 +133,11 @@ const Analytics: React.FC = () => {
                 {/* Main Charts Area */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Bandwidth Usage */}
-                    <div className="lg:col-span-2 bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm">
+                    <div className="bg-[var(--bg-surface)] rounded-[2.5rem] border border-[var(--border-subtle)] p-8 shadow-sm transition-colors duration-300">
                         <div className="flex justify-between items-center mb-8">
                             <div>
-                                <h2 className="text-xl font-black text-slate-900 tracking-tight">Bandwidth Consumption</h2>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Real-time throughput across routers</p>
+                                <h2 className="text-xl font-black text-[var(--text-primary)] tracking-tight">Bandwidth Consumption</h2>
+                                <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Real-time throughput across routers</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="flex items-center gap-1.5 px-3 py-1 bg-sky-50 text-sky-600 rounded-full text-[10px] font-black uppercase">
@@ -155,11 +155,11 @@ const Analytics: React.FC = () => {
                         <div className="space-y-6">
                             {Object.entries(bandwidth?.usageByRouter || {}).map(([routerId, usage]: any) => (
                                 <div key={routerId} className="space-y-2">
-                                    <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-500">
+                                    <div className="flex justify-between text-xs font-black uppercase tracking-widest text-[var(--text-secondary)]">
                                         <span>Router: {routerId.split('-')[0]}...</span>
                                         <span>{formatBytes(usage.in + usage.out)} Total</span>
                                     </div>
-                                    <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                                    <div className="h-4 w-full bg-[var(--bg-surface-elevated)] rounded-full overflow-hidden flex">
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${Math.min(100, (usage.out / (bandwidth.totalOut || 1)) * 100)}%` }}
@@ -229,7 +229,7 @@ const KPICard: React.FC<{ title: string, value: string | number, trend: string, 
     return (
         <motion.div
             whileHover={{ y: -5 }}
-            className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm"
+            className="bg-[var(--bg-surface)] p-6 rounded-[2rem] border border-[var(--border-subtle)] shadow-sm transition-colors duration-300"
         >
             <div className="flex justify-between items-start mb-4">
                 <div className={`p-3 rounded-2xl ${colorMap[color]}`}>
@@ -241,8 +241,8 @@ const KPICard: React.FC<{ title: string, value: string | number, trend: string, 
                 </div>
             </div>
             <div>
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{title}</p>
-                <h3 className="text-2xl font-black text-slate-900 tracking-tighter">{value}</h3>
+                <p className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">{title}</p>
+                <h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tighter">{value}</h3>
             </div>
         </motion.div>
     );

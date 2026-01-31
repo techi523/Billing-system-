@@ -24,14 +24,14 @@ export class IspService {
             status: 'ACTIVE' // Start as active (usually after first payment)
         });
 
-        // 2. Create on MikroTik (using hotspot user for now)
+        // 2. Create on MikroTik (using profile from package)
         await MikroTikService.createHotspotUser(
             router,
             pppoeUsername,
             pppoePassword,
             undefined, // macAddress
-            pkg.dataLimitBytes ? pkg.dataLimitBytes.toString() : undefined,
-            pkg.durationMinutes ? `${pkg.durationMinutes}m` : undefined
+            pkg.name,
+            `Subscriber: ${name}`
         );
 
         return subscriber;

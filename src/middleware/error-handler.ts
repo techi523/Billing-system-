@@ -14,13 +14,14 @@ export class ErrorHandler {
             });
         }
 
-        if (err.name === 'Error' && err.message.includes('Tenant ID is required for non-super admin users')) {
+        if (err.name === 'Error' && err.message.includes('TENANT_ID_REQUIRED')) {
             // Handle missing tenantId validation
             logger.error('Missing tenantId error', { error: err.message, userId: req.user?.id });
 
             return res.status(403).json({
                 error: 'You don\'t have a workspace yet',
-                action: 'CREATE_WORKSPACE',
+                action: 'NAVIGATE_TO_SETUP',
+                path: '/tenant/setup',
                 message: 'Please create a workspace to continue'
             });
         }

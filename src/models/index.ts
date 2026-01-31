@@ -73,6 +73,7 @@ export class Tenant extends Model {
   public isGoLiveChecked!: boolean;
   public productionReadyAt!: Date | null;
   public lastSanitizedAt!: Date | null;
+  public themePreference!: 'light' | 'dark' | 'system';
 }
 Tenant.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -80,6 +81,7 @@ Tenant.init({
   subdomain: { type: DataTypes.STRING, unique: true, allowNull: false },
   logoUrl: { type: DataTypes.STRING },
   primaryColor: { type: DataTypes.STRING, defaultValue: '#3b82f6' },
+  themePreference: { type: DataTypes.ENUM('light', 'dark', 'system'), defaultValue: 'light' },
   mpesaShortcode: { type: DataTypes.STRING },
   mpesaConsumerKey: { type: DataTypes.STRING },
   mpesaConsumerSecret: { type: DataTypes.STRING },
@@ -124,6 +126,7 @@ export class AdminUser extends Model {
   public password!: string;
   public role!: 'SUPER_ADMIN' | 'TENANT' | 'STAFF' | 'AGENT';
   public tenantId!: string | null;
+  public themePreference!: 'light' | 'dark' | 'system';
   public commissionRate!: number; // Percentage (e.g., 0.1 for 10%)
 }
 AdminUser.init({
@@ -131,6 +134,7 @@ AdminUser.init({
   email: { type: DataTypes.STRING, unique: true, allowNull: false },
   password: { type: DataTypes.STRING, allowNull: false },
   role: { type: DataTypes.ENUM('SUPER_ADMIN', 'TENANT', 'STAFF', 'AGENT'), defaultValue: 'TENANT' },
+  themePreference: { type: DataTypes.ENUM('light', 'dark', 'system'), defaultValue: 'light' },
   tenantId: {
     type: DataTypes.UUID,
     allowNull: true,
@@ -143,14 +147,20 @@ AdminUser.init({
   sequelize,
   modelName: 'admin_user',
   hooks: {
-    beforeCreate: async (user) => {
+    beforeCreate: async (user: AdminUser) => {
       if (user.role !== 'SUPER_ADMIN' && !user.tenantId) {
-        throw new Error('Tenant ID is required for non-super admin users');
+        throw new Error('TENANT_ID_REQUIRED: A workspace is required for all non-superadmin accounts.');
       }
     },
-    beforeUpdate: async (user) => {
+    beforeUpdate: async (user: AdminUser) => {
       if (user.role !== 'SUPER_ADMIN' && !user.tenantId) {
-        throw new Error('Tenant ID is required for non-super admin users');
+        throw new Error('TENANT_ID_REQUIRED: Cannot remove workspace from a non-superadmin account.');
+      }
+    },
+    beforeValidate: (user: AdminUser) => {
+      // Ensure super-admins always have null tenantId to prevent logic mix
+      if (user.role === 'SUPER_ADMIN') {
+        user.tenantId = null;
       }
     }
   }

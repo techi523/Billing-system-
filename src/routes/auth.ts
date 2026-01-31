@@ -69,7 +69,7 @@ router.post('/register', async (req, res) => {
         res.status(201).json({
             message: 'Tenant registered successfully',
             tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
-            user: { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId }
+            user: { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId, themePreference: user.themePreference }
         });
     } catch (error: any) {
         console.error('Registration Error:', error);
@@ -125,7 +125,7 @@ router.post('/login', async (req, res) => {
             ipAddress: req.ip
         });
 
-        res.json({ token, user: { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId } });
+        res.json({ token, user: { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId, themePreference: user.themePreference } });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
@@ -246,7 +246,7 @@ router.post('/superadmin/login', async (req, res) => {
             ipAddress: req.ip
         });
 
-        res.json({ token, user: { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId } });
+        res.json({ token, user: { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId, themePreference: user.themePreference } });
 
     } catch (error: any) {
         console.error('[SuperAdmin Login] System Error:', error);
@@ -272,7 +272,37 @@ router.get('/verify', async (req: any, res) => {
         const user = await AdminUser.findByPk(decoded.id);
         if (!user) return res.status(401).json({ error: 'User not found' });
 
-        res.json({ user: { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId } });
+        res.json({ user: { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId, themePreference: user.themePreference } });
+    } catch (error) {
+        res.status(401).json({ error: 'Invalid token' });
+    }
+});
+
+router.post('/theme', async (req: any, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Missing token' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    try {
+        let decoded: any;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev_secret_key_12345') as any;
+        } catch {
+            decoded = jwt.verify(token, process.env.SUPER_ADMIN_JWT_SECRET || process.env.JWT_SECRET || 'super_secret_platform_key_999') as any;
+        }
+
+        const { theme } = req.body;
+        if (!['light', 'dark', 'system'].includes(theme)) {
+            return res.status(400).json({ error: 'Invalid theme' });
+        }
+
+        const user = await AdminUser.findByPk(decoded.id);
+        if (!user) return res.status(401).json({ error: 'User not found' });
+
+        await user.update({ themePreference: theme });
+        res.json({ success: true, theme: user.themePreference });
     } catch (error) {
         res.status(401).json({ error: 'Invalid token' });
     }

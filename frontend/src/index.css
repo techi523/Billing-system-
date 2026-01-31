@@ -10,19 +10,39 @@
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
+  
+  /* Semantic Tokens - Light */
   --bg-main: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border-subtle: #f1f5f9;
+  --border-strong: #e2e8f0;
+  
   --sidebar-w: 280px;
   --sidebar-collapsed: 88px;
-  
-  /* Production Grid & Spacing */
   --card-radius: 2rem;
   --input-radius: 1rem;
   --shadow-premium: 0 20px 50px -12px rgba(15, 23, 42, 0.1);
 }
 
+.dark {
+  --bg-main: #0f172a;
+  --bg-surface: #1e293b;
+  --bg-surface-elevated: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-subtle: #1e293b;
+  --border-strong: #334155;
+  --shadow-premium: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 font-["Plus_Jakarta_Sans"] antialiased selection:bg-sky-500 selection:text-white;
+    @apply bg-[var(--bg-main)] text-[var(--text-primary)] font-["Plus_Jakarta_Sans"] antialiased selection:bg-sky-500 selection:text-white transition-colors duration-300;
     letter-spacing: -0.01em;
   }
 
@@ -53,21 +73,21 @@
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none bg-[var(--bg-surface)] border border-[var(--border-strong)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-elevated)] hover:border-sky-500 shadow-sm;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none text-slate-500 hover:bg-slate-100 hover:text-slate-900;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none text-[var(--text-secondary)] hover:bg-[var(--bg-surface-elevated)] hover:text-[var(--text-primary)];
   }
 
   /* Cards */
   .premium-card {
-    @apply bg-white rounded-[2rem] border border-slate-100 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] p-8 transition-all duration-500 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)];
+    @apply bg-[var(--bg-surface)] rounded-[2rem] border border-[var(--border-subtle)] shadow-[var(--shadow-premium)] p-8 transition-all duration-500 hover:shadow-2xl;
   }
 
   /* Inputs */
   .input-field {
-    @apply w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 px-6 text-sm font-semibold transition-all duration-300 focus:outline-none focus:border-sky-500 focus:bg-white placeholder:text-slate-400;
+    @apply w-full bg-[var(--bg-surface-elevated)] border-2 border-[var(--border-subtle)] text-[var(--text-primary)] rounded-2xl py-4 px-6 text-sm font-semibold transition-all duration-300 focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] placeholder:text-[var(--text-muted)];
   }
 
   /* --- Deep Flow Design System --- */

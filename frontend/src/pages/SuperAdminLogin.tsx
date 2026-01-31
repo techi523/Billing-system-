@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/Common/BackButton';
+import ThemeToggle from '../components/Common/ThemeToggle';
 
 const SuperAdminLogin = () => {
     const navigate = useNavigate();
@@ -37,16 +38,11 @@ const SuperAdminLogin = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 relative overflow-hidden font-sans">
-            {/* Security-themed background */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-red-900/10 rounded-full blur-[150px] animate-pulse"></div>
-                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[70%] bg-orange-900/5 rounded-full blur-[120px]"></div>
-            </div>
-
+        <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center p-6 relative overflow-hidden font-sans transition-colors duration-300">
             {/* Nav Control */}
-            <div className="absolute top-8 left-8 z-50">
-                <BackButton to="/login" label="Back" variant="light" />
+            <div className="absolute top-8 left-8 right-8 z-50 flex justify-between items-center">
+                <BackButton to="/login" label="Back" variant="dark" />
+                <ThemeToggle />
             </div>
 
             <motion.div
@@ -55,7 +51,7 @@ const SuperAdminLogin = () => {
                 transition={{ duration: 0.5, ease: "circOut" }}
                 className="w-full max-w-md relative z-10"
             >
-                <div className="bg-black/40 backdrop-blur-3xl border border-red-500/20 p-10 rounded-[3rem] shadow-2xl shadow-red-500/10">
+                <div className="bg-[var(--bg-surface)] backdrop-blur-3xl border border-red-500/20 p-10 rounded-[3rem] shadow-2xl transition-colors duration-300">
                     <div className="text-center mb-10">
                         <motion.div
                             initial={{ y: -20, opacity: 0 }}
@@ -69,7 +65,7 @@ const SuperAdminLogin = () => {
                             initial={{ y: -10, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.3 }}
-                            className="text-3xl font-black text-white tracking-tight"
+                            className="text-3xl font-black text-[var(--text-primary)] tracking-tight"
                         >
                             Super Admin Access
                         </motion.h1>
@@ -110,7 +106,7 @@ const SuperAdminLogin = () => {
                                     placeholder="Super Admin Email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-red-950/30 border border-red-500/30 rounded-2xl py-4 pl-12 pr-6 text-white text-sm font-semibold placeholder:text-red-600/60 focus:outline-none focus:border-red-500 focus:bg-red-950/50 transition-all"
+                                    className="w-full bg-[var(--bg-surface-elevated)] border border-red-500/30 rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold placeholder:text-red-600/60 focus:outline-none focus:border-red-500 focus:bg-[var(--bg-surface)] transition-all"
                                 />
                             </div>
                             <div className="relative group">
@@ -123,7 +119,7 @@ const SuperAdminLogin = () => {
                                     placeholder="Master Password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-red-950/30 border border-red-500/30 rounded-2xl py-4 pl-12 pr-6 text-white text-sm font-semibold placeholder:text-red-600/60 focus:outline-none focus:border-red-500 focus:bg-red-950/50 transition-all"
+                                    className="w-full bg-[var(--bg-surface-elevated)] border border-red-500/30 rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold placeholder:text-red-600/60 focus:outline-none focus:border-red-500 focus:bg-[var(--bg-surface)] transition-all"
                                 />
                             </div>
                         </div>

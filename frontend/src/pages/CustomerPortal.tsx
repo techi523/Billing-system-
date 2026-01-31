@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import BackButton from '../components/Common/BackButton';
+import ThemeToggle from '../components/Common/ThemeToggle';
 
 const CustomerPortal = () => {
     const navigate = useNavigate();
@@ -67,10 +68,10 @@ const CustomerPortal = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-50 flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center transition-colors duration-300">
                 <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-600 font-bold">Loading Customer Portal...</p>
+                    <div className="w-16 h-16 border-4 border-[var(--border-subtle)] border-t-emerald-500 rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-[var(--text-secondary)] font-bold">Loading Customer Portal...</p>
                 </div>
             </div>
         );
@@ -81,19 +82,20 @@ const CustomerPortal = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-50">
+        <div className="min-h-screen bg-[var(--bg-main)] transition-colors duration-300">
             {/* Customer Header */}
-            <div className="bg-white border-b border-slate-200 sticky top-0 z-50">
+            <div className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] sticky top-0 z-50 shadow-sm transition-colors duration-300">
                 <div className="max-w-7xl mx-auto px-6 py-4">
                     <div className="flex items-center gap-6">
                         <BackButton to="/" label="Home" variant="dark" />
                         <div className="flex-1 flex items-center justify-between">
                             <div>
-                                <h1 className="text-2xl font-black text-slate-900">Welcome, {customerData?.name || 'Customer'}</h1>
-                                <p className="text-slate-600 font-bold">Your personal internet service dashboard</p>
+                                <h1 className="text-2xl font-black text-[var(--text-primary)]">Welcome, {customerData?.name || 'Customer'}</h1>
+                                <p className="text-[var(--text-secondary)] font-bold">Your personal internet service dashboard</p>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-600 text-xs font-black rounded-full">
+                            <div className="flex items-center gap-6">
+                                <ThemeToggle />
+                                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-600 text-[10px] font-black rounded-full uppercase tracking-widest">
                                     CUSTOMER
                                 </span>
                                 <button
@@ -115,11 +117,11 @@ const CustomerPortal = () => {
             <div className="max-w-7xl mx-auto p-8 space-y-8">
                 {/* Customer Dashboard */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="premium-card bg-white">
+                    <div className="premium-card bg-[var(--bg-surface)] border-[var(--border-subtle)]">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-xs font-black text-slate-400 uppercase mb-2">Current Plan</p>
-                                <h3 className="text-2xl font-black text-slate-900">{customerData?.currentPlan || 'Monthly Pro'}</h3>
+                                <p className="text-xs font-black text-[var(--text-muted)] uppercase mb-2">Current Plan</p>
+                                <h3 className="text-2xl font-black text-[var(--text-primary)]">{customerData?.currentPlan || 'Monthly Pro'}</h3>
                             </div>
                             <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,11 +131,11 @@ const CustomerPortal = () => {
                         </div>
                     </div>
 
-                    <div className="premium-card bg-white">
+                    <div className="premium-card bg-[var(--bg-surface)] border-[var(--border-subtle)]">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-xs font-black text-slate-400 uppercase mb-2">Account Balance</p>
-                                <h3 className="text-2xl font-black text-slate-900">KES {customerData?.balance?.toLocaleString() || '2,500'}</h3>
+                                <p className="text-xs font-black text-[var(--text-muted)] uppercase mb-2">Account Balance</p>
+                                <h3 className="text-2xl font-black text-[var(--text-primary)]">KES {customerData?.balance?.toLocaleString() || '2,500'}</h3>
                             </div>
                             <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,12 +145,12 @@ const CustomerPortal = () => {
                         </div>
                     </div>
 
-                    <div className="premium-card bg-white">
+                    <div className="premium-card bg-[var(--bg-surface)] border-[var(--border-subtle)]">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-xs font-black text-slate-400 uppercase mb-2">Data Usage</p>
-                                <h3 className="text-2xl font-black text-slate-900">{customerData?.dataUsed || 45}%</h3>
-                                <p className="text-xs text-slate-500 mt-1">of {customerData?.dataLimit || 100}GB</p>
+                                <p className="text-xs font-black text-[var(--text-muted)] uppercase mb-2">Data Usage</p>
+                                <h3 className="text-2xl font-black text-[var(--text-primary)]">{customerData?.dataUsed || 45}%</h3>
+                                <p className="text-xs text-[var(--text-secondary)] mt-1">of {customerData?.dataLimit || 100}GB</p>
                             </div>
                             <div className="p-3 rounded-2xl bg-sky-50 text-sky-600">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,11 +160,11 @@ const CustomerPortal = () => {
                         </div>
                     </div>
 
-                    <div className="premium-card bg-white">
+                    <div className="premium-card bg-[var(--bg-surface)] border-[var(--border-subtle)]">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-xs font-black text-slate-400 uppercase mb-2">Plan Expires</p>
-                                <h3 className="text-2xl font-black text-slate-900">{customerData?.expires || '12 Days'}</h3>
+                                <p className="text-xs font-black text-[var(--text-muted)] uppercase mb-2">Plan Expires</p>
+                                <h3 className="text-2xl font-black text-[var(--text-primary)]">{customerData?.expires || '12 Days'}</h3>
                             </div>
                             <div className="p-3 rounded-2xl bg-amber-50 text-amber-600">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,18 +176,18 @@ const CustomerPortal = () => {
                 </div>
 
                 {/* Data Usage Progress */}
-                <div className="premium-card bg-white">
-                    <div className="p-6 border-b border-slate-100">
-                        <h2 className="text-xl font-black text-slate-900">Data Usage Progress</h2>
-                        <p className="text-slate-600 font-bold mt-1">Monitor your data consumption</p>
+                <div className="premium-card bg-[var(--bg-surface)] border-[var(--border-subtle)]">
+                    <div className="p-6 border-b border-[var(--border-subtle)]">
+                        <h2 className="text-xl font-black text-[var(--text-primary)]">Data Usage Progress</h2>
+                        <p className="text-[var(--text-secondary)] font-bold mt-1">Monitor your data consumption</p>
                     </div>
                     <div className="p-6">
                         <div className="space-y-4">
-                            <div className="flex justify-between text-sm font-bold">
+                            <div className="flex justify-between text-sm font-bold text-[var(--text-primary)]">
                                 <span>Data Used: {customerData?.dataUsed || 45}GB</span>
                                 <span>Limit: {customerData?.dataLimit || 100}GB</span>
                             </div>
-                            <div className="w-full bg-slate-100 rounded-full h-4">
+                            <div className="w-full bg-[var(--bg-surface-elevated)] rounded-full h-4">
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${(customerData?.dataUsed || 45) / (customerData?.dataLimit || 100) * 100}%` }}
@@ -193,7 +195,7 @@ const CustomerPortal = () => {
                                     className={`h-4 rounded-full ${customerData?.dataUsed > 80 ? 'bg-rose-500' : customerData?.dataUsed > 60 ? 'bg-amber-500' : 'bg-emerald-500'}`}
                                 ></motion.div>
                             </div>
-                            <div className="flex justify-between text-xs text-slate-500">
+                            <div className="flex justify-between text-xs text-[var(--text-muted)] font-black uppercase tracking-widest">
                                 <span>Low usage</span>
                                 <span>High usage</span>
                                 <span>Limit reached</span>
@@ -203,16 +205,16 @@ const CustomerPortal = () => {
                 </div>
 
                 {/* Customer Tabs */}
-                <div className="premium-card bg-white">
-                    <div className="border-b border-slate-100">
+                <div className="premium-card bg-[var(--bg-surface)] border-[var(--border-subtle)]">
+                    <div className="border-b border-[var(--border-subtle)]">
                         <div className="flex space-x-8 px-6">
                             {['dashboard', 'billing', 'activity', 'support'].map((tab) => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={`py-4 px-2 font-black text-sm uppercase tracking-widest border-b-2 transition-colors ${activeTab === tab
-                                        ? 'border-sky-500 text-sky-600'
-                                        : 'border-transparent text-slate-400 hover:text-slate-600'
+                                        ? 'border-sky-500 text-sky-500'
+                                        : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
                                         }`}
                                 >
                                     {tab}
@@ -241,15 +243,15 @@ const CustomerPortal = () => {
 
                         {activeTab === 'billing' && (
                             <div className="space-y-6">
-                                <h3 className="text-lg font-black text-slate-900">Billing History</h3>
+                                <h3 className="text-lg font-black text-[var(--text-primary)]">Billing History</h3>
                                 <div className="space-y-4">
                                     {customerData?.recentActivity?.map((activity: any, index: number) => (
-                                        <div key={index} className="flex justify-between items-center p-4 bg-slate-50 rounded-lg">
+                                        <div key={index} className="flex justify-between items-center p-4 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl">
                                             <div>
-                                                <p className="font-bold text-slate-900">{activity.action}</p>
-                                                <p className="text-sm text-slate-500">{activity.date}</p>
+                                                <p className="font-bold text-[var(--text-primary)]">{activity.action}</p>
+                                                <p className="text-sm text-[var(--text-muted)]">{activity.date}</p>
                                             </div>
-                                            <p className={`font-black ${activity.amount.startsWith('+') ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                            <p className={`font-black ${activity.amount.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>
                                                 {activity.amount}
                                             </p>
                                         </div>
@@ -260,19 +262,19 @@ const CustomerPortal = () => {
 
                         {activeTab === 'activity' && (
                             <div className="space-y-6">
-                                <h3 className="text-lg font-black text-slate-900">Recent Activity</h3>
+                                <h3 className="text-lg font-black text-[var(--text-primary)]">Recent Activity</h3>
                                 <div className="space-y-4">
-                                    <div className="p-4 bg-slate-50 rounded-lg">
-                                        <p className="font-bold text-slate-900">Connected to WiFi Network</p>
-                                        <p className="text-sm text-slate-500">Today at 10:30 AM</p>
+                                    <div className="p-4 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl">
+                                        <p className="font-bold text-[var(--text-primary)]">Connected to WiFi Network</p>
+                                        <p className="text-sm text-[var(--text-muted)]">Today at 10:30 AM</p>
                                     </div>
-                                    <div className="p-4 bg-slate-50 rounded-lg">
-                                        <p className="font-bold text-slate-900">Data Top-up Successful</p>
-                                        <p className="text-sm text-slate-500">Yesterday at 3:15 PM</p>
+                                    <div className="p-4 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl">
+                                        <p className="font-bold text-[var(--text-primary)]">Data Top-up Successful</p>
+                                        <p className="text-sm text-[var(--text-muted)]">Yesterday at 3:15 PM</p>
                                     </div>
-                                    <div className="p-4 bg-slate-50 rounded-lg">
-                                        <p className="font-bold text-slate-900">Plan Renewal Scheduled</p>
-                                        <p className="text-sm text-slate-500">In 2 days</p>
+                                    <div className="p-4 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl">
+                                        <p className="font-bold text-[var(--text-primary)]">Plan Renewal Scheduled</p>
+                                        <p className="text-sm text-[var(--text-muted)]">In 2 days</p>
                                     </div>
                                 </div>
                             </div>
@@ -280,17 +282,17 @@ const CustomerPortal = () => {
 
                         {activeTab === 'support' && (
                             <div className="space-y-6">
-                                <h3 className="text-lg font-black text-slate-900">Customer Support</h3>
+                                <h3 className="text-lg font-black text-[var(--text-primary)]">Customer Support</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="p-6 bg-slate-50 rounded-lg">
-                                        <h4 className="font-black text-slate-900 mb-2">Live Chat</h4>
-                                        <p className="text-sm text-slate-600 mb-4">Connect with our support team instantly</p>
-                                        <button className="btn-primary py-2 px-4 text-sm">Start Chat</button>
+                                    <div className="p-6 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl">
+                                        <h4 className="font-black text-[var(--text-primary)] mb-2">Live Chat</h4>
+                                        <p className="text-sm text-[var(--text-secondary)] mb-4">Connect with our support team instantly</p>
+                                        <button className="btn-primary py-2 px-6 text-xs font-black uppercase tracking-widest">Start Chat</button>
                                     </div>
-                                    <div className="p-6 bg-slate-50 rounded-lg">
-                                        <h4 className="font-black text-slate-900 mb-2">Help Center</h4>
-                                        <p className="text-sm text-slate-600 mb-4">Find answers to common questions</p>
-                                        <button className="btn-secondary py-2 px-4 text-sm">Visit Help Center</button>
+                                    <div className="p-6 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl">
+                                        <h4 className="font-black text-[var(--text-primary)] mb-2">Help Center</h4>
+                                        <p className="text-sm text-[var(--text-secondary)] mb-4">Find answers to common questions</p>
+                                        <button className="btn-secondary py-2 px-6 text-xs font-black uppercase tracking-widest">Visit Help Center</button>
                                     </div>
                                 </div>
                             </div>

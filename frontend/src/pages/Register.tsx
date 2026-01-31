@@ -7,6 +7,7 @@ import logo from '../assets/logo.png';
 import SupportFooter from '../components/Common/SupportFooter';
 import { OFFICIAL_SUPPORT } from '../constants';
 import BackButton from '../components/Common/BackButton';
+import ThemeToggle from '../components/Common/ThemeToggle';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -41,18 +42,18 @@ const Register = () => {
 
     if (success) {
         return (
-            <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6 font-sans">
+            <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center p-6 font-sans transition-colors duration-300">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="bg-white/5 backdrop-blur-3xl border border-white/10 p-10 rounded-[3rem] text-center max-w-md w-full"
+                    className="bg-[var(--bg-surface)] backdrop-blur-3xl border border-[var(--border-subtle)] p-10 rounded-[3rem] text-center max-w-md w-full shadow-2xl"
                 >
                     <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <ArrowRight className="text-emerald-400 rotate-[-45deg]" size={32} />
+                        <ArrowRight className="text-emerald-500 rotate-[-45deg]" size={32} />
                     </div>
-                    <h2 className="text-2xl font-black text-white mb-2">Registration Successful!</h2>
-                    <p className="text-slate-400 font-medium mb-6">Your SurfBill account has been created. Redirecting to login...</p>
-                    <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                    <h2 className="text-2xl font-black text-[var(--text-primary)] mb-2">Registration Successful!</h2>
+                    <p className="text-[var(--text-secondary)] font-medium mb-6">Your SurfBill account has been created. Redirecting to login...</p>
+                    <div className="w-full bg-[var(--bg-surface-elevated)] h-1 rounded-full overflow-hidden">
                         <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: '100%' }}
@@ -66,10 +67,11 @@ const Register = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6 relative overflow-hidden font-sans">
+        <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center p-6 relative overflow-hidden font-sans transition-colors duration-300">
             {/* Nav Control */}
-            <div className="absolute top-8 left-8 z-50">
-                <BackButton to="/" label="Back to Home" variant="light" />
+            <div className="absolute top-8 left-8 right-8 z-50 flex justify-between items-center">
+                <BackButton to="/" label="Back to Home" variant="dark" />
+                <ThemeToggle />
             </div>
 
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
@@ -82,18 +84,18 @@ const Register = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full max-w-xl relative z-10"
             >
-                <div className="bg-white/5 backdrop-blur-3xl border border-white/10 p-10 rounded-[3rem] shadow-2xl">
+                <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-10 rounded-[3rem] shadow-2xl transition-colors">
                     <div className="text-center mb-10">
                         <img src={logo} alt="SurfBill" className="w-20 h-20 mx-auto mb-4" />
-                        <h1 className="text-3xl font-black text-white tracking-tight">Create Tenant Account</h1>
-                        <p className="text-slate-400 text-sm font-medium mt-2">Start your production-grade ISP/Hotspot billing</p>
+                        <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">Create Tenant Account</h1>
+                        <p className="text-[var(--text-secondary)] text-sm font-medium mt-2">Start your production-grade ISP/Hotspot billing</p>
                     </div>
 
                     <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4 md:col-span-2">
-                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest px-2">Business Details</label>
+                            <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest px-2 block mb-2">Business Details</label>
                             <div className="relative group">
-                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors">
+                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-sky-500 transition-colors">
                                     <Building size={18} />
                                 </div>
                                 <input
@@ -102,11 +104,11 @@ const Register = () => {
                                     placeholder="Business Name"
                                     value={tenantName}
                                     onChange={(e) => setTenantName(e.target.value)}
-                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl py-4 pl-12 pr-6 text-white text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-slate-900/80 transition-all"
+                                    className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
                                 />
                             </div>
                             <div className="relative group">
-                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors">
+                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-sky-500 transition-colors">
                                     <Globe size={18} />
                                 </div>
                                 <input
@@ -115,18 +117,18 @@ const Register = () => {
                                     placeholder="Preferred Subdomain (e.g. fastwifi)"
                                     value={subdomain}
                                     onChange={(e) => setSubdomain(e.target.value)}
-                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl py-4 pl-12 pr-6 text-white text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-slate-900/80 transition-all"
+                                    className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
                                 />
-                                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-600 font-bold text-xs">.surfbill.com</span>
+                                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] font-black text-[10px]">.surfbill.com</span>
                             </div>
                         </div>
 
                         <div className="space-y-4 md:col-span-2">
-                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest px-2">Admin Account</label>
+                            <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest px-2 block mb-2">Admin Account</label>
                         </div>
 
                         <div className="relative group">
-                            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors">
+                            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-sky-500 transition-colors">
                                 <Mail size={18} />
                             </div>
                             <input
@@ -135,12 +137,12 @@ const Register = () => {
                                 placeholder="Admin Email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl py-4 pl-12 pr-6 text-white text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-slate-900/80 transition-all"
+                                className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
                             />
                         </div>
 
                         <div className="relative group">
-                            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors">
+                            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-sky-500 transition-colors">
                                 <Lock size={18} />
                             </div>
                             <input
@@ -149,7 +151,7 @@ const Register = () => {
                                 placeholder="Secure Password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl py-4 pl-12 pr-6 text-white text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-slate-900/80 transition-all"
+                                className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
                             />
                         </div>
 
@@ -171,15 +173,15 @@ const Register = () => {
                         </motion.button>
                     </form>
 
-                    <p className="mt-8 text-center text-slate-400 text-xs font-bold">
+                    <p className="mt-8 text-center text-[var(--text-muted)] text-xs font-bold">
                         Already registered?{' '}
-                        <button onClick={() => navigate('/login')} className="text-sky-400 hover:text-sky-300 underline">
+                        <button onClick={() => navigate('/login')} className="text-sky-500 hover:text-sky-400 underline">
                             Sign In
                         </button>
                     </p>
 
-                    <div className="mt-8 pt-6 border-t border-white/5 text-center">
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-3">Scale with Confidence</p>
+                    <div className="mt-8 pt-6 border-t border-[var(--border-subtle)] text-center">
+                        <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest mb-3">Scale with Confidence</p>
                         <div className="flex justify-center gap-4">
                             <a href={OFFICIAL_SUPPORT.whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 text-xs font-bold flex items-center gap-1.5 transition-colors">
                                 Technical Support: {OFFICIAL_SUPPORT.whatsapp}

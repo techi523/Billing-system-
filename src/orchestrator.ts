@@ -37,8 +37,8 @@ export class SessionOrchestrator {
             username,
             password,
             macAddress,
-            pkg.dataLimitBytes ? pkg.dataLimitBytes.toString() : undefined,
-            limitTime
+            pkg.name, // Use the pre-synced profile name
+            `Fulfillment for ${paymentId || 'Voucher'}`
         );
 
         return session;
