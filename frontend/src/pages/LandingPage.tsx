@@ -7,7 +7,10 @@ import {
     ArrowRight,
     CheckCircle2,
     Cpu,
-    MessageCircle
+    MessageCircle,
+    Terminal,
+    RotateCw,
+    ShieldCheck
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import SupportFooter from '../components/Common/SupportFooter';
@@ -43,6 +46,14 @@ const LandingPage = () => {
             color: "rose"
         }
     ];
+
+    const BenefitCard = ({ icon, title, description }: { icon: any, title: string, description: string }) => (
+        <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
+            <div className="mb-6 transform group-hover:scale-110 transition-transform">{icon}</div>
+            <h3 className="text-xl font-bold mb-3">{title}</h3>
+            <p className="text-slate-400 text-sm font-medium leading-relaxed">{description}</p>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-600">
@@ -163,6 +174,52 @@ const LandingPage = () => {
                                 <div className="h-4 w-2/3 bg-white/20 rounded-full"></div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Why Connect Section */}
+            <section className="py-24 bg-slate-900 text-white overflow-hidden relative">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl md:text-5xl font-black mb-6">Why Connect Your MikroTik?</h2>
+                        <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
+                            Transform your simple router into a powerful ISP management hub.
+                            Connect to SurfBill and unlock enterprise-grade automation.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <BenefitCard
+                            icon={<Zap className="w-8 h-8 text-yellow-400" />}
+                            title="Zero Manual Config"
+                            description="Forget manual firewall rules or hotspot setups. One script does it all, perfectly every time."
+                        />
+                        <BenefitCard
+                            icon={<Cpu className="w-8 h-8 text-blue-400" />}
+                            title="Goodbye Winbox"
+                            description="Manage users, sessions, and speed limits directly from your SurfBill dashboard from anywhere."
+                        />
+                        <BenefitCard
+                            icon={<Shield className="w-8 h-8 text-green-400" />}
+                            title="Enhanced Security"
+                            description="Least-privilege API users and automated firewall hardening keep your network safe."
+                        />
+                        <BenefitCard
+                            icon={<RotateCw className="w-8 h-8 text-purple-400" />}
+                            title="Automated Sync"
+                            description="Packages and user limits are automatically pushed to your router in real-time."
+                        />
+                        <BenefitCard
+                            icon={<BarChart3 className="w-8 h-8 text-pink-400" />}
+                            title="Real-time Visibility"
+                            description="Monitor CPU, traffic, and active users with beautiful live charts and deep analytics."
+                        />
+                        <BenefitCard
+                            icon={<ArrowRight className="w-8 h-8 text-cyan-400" />}
+                            title="Remote Control"
+                            description="Reboot, monitor health, and update configurations remotely without needing VPNs."
+                        />
                     </div>
                 </div>
             </section>

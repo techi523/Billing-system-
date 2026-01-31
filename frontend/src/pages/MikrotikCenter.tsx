@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Terminal,
     Cpu,
@@ -8,197 +8,249 @@ import {
     ChevronRight,
     Wifi,
     Globe,
-    Shield
+    Shield,
+    Copy,
+    RefreshCw,
+    AlertCircle,
+    ChevronLeft,
+    Loader2
 } from 'lucide-react';
 import axios from 'axios';
 import SupportFooter from '../components/Common/SupportFooter';
 import BackButton from '../components/Common/BackButton';
 
 const MikrotikCenter: React.FC = () => {
-    const [downloading, setDownloading] = useState<string | null>(null);
+    const [step, setStep] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [routerDetails, setRouterDetails] = useState({
+        name: '',
+        host: '',
+        port: '8728',
+        version: 'v7'
+    });
+    const [generatedScript, setGeneratedScript] = useState('');
+    const [verificationStatus, setVerificationStatus] = useState<'IDLE' | 'PENDING' | 'SUCCESS' | 'FAILED'>('IDLE');
+    const [verificationError, setVerificationError] = useState('');
 
-    const downloadScript = async (type: string, version: string) => {
-        setDownloading(`${type}-${version}`);
-        try {
-            const response = await axios.get(`/api/v1/admin/mikrotik/generate-script?type=${type}&version=${version}`, {
-                responseType: 'blob'
-            });
-
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `surfbill_${type.toLowerCase()}_${version}.rsc`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        } catch (error) {
-            console.error('Download failed', error);
-            alert('Failed to generate script. Please ensure your session is active.');
-        } finally {
-            setDownloading(null);
+    const generateScript = async () => {
+        if (!routerDetails.name || !routerDetails.host) {
+            alert('Please provide router name and host/IP');
+            return;
         }
+
+        setLoading(true);
+        try {
+            const response = await axios.post('/api/v1/admin/routers/generate-setup', {
+                ...routerDetails
+            });
+            setGeneratedScript(response.data.script);
+            setStep(3);
+        } catch (error: any) {
+            console.error('Generation failed', error);
+            alert(error.response?.data?.message || 'Failed to generate script');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const verifyConnection = async () => {
+        setVerificationStatus('PENDING');
+        setVerificationError('');
+        try {
+            const response = await axios.post('/api/v1/admin/routers/verify', {
+                host: routerDetails.host
+            });
+            if (response.data.success) {
+                setVerificationStatus('SUCCESS');
+            } else {
+                setVerificationStatus('FAILED');
+                setVerificationError(response.data.message || 'Verification failed');
+            }
+        } catch (error: any) {
+            setVerificationStatus('FAILED');
+            setVerificationError(error.response?.data?.message || 'Connection timeout');
+        }
+    };
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(generatedScript);
+        alert('Script copied to clipboard!');
     };
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
-            {/* Header */}
             <header className="bg-slate-900 border-b border-white/5 text-white px-8 py-10 rounded-b-[4rem] shadow-2xl relative overflow-hidden">
-                {/* Nav Control */}
                 <div className="absolute top-8 left-8 z-50">
                     <BackButton to="/tenant" variant="light" label="Back" />
                 </div>
-
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-500/10 rounded-full blur-[100px] -mr-32 -mt-32"></div>
-                <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <Terminal className="text-sky-400 w-8 h-8" />
-                            <h1 className="text-4xl font-black tracking-tighter">MikroTik <span className="text-sky-400">Center</span></h1>
-                        </div>
-                        <p className="text-slate-400 font-bold text-lg max-w-xl">Production-ready scripts for RouterOS v6 and v7. Zero configuration, maximum efficiency.</p>
+                <div className="max-w-7xl mx-auto relative z-10">
+                    <div className="flex items-center gap-3 mb-2">
+                        <Terminal className="text-sky-400 w-8 h-8" />
+                        <h1 className="text-4xl font-black tracking-tighter">MikroTik <span className="text-sky-400">Setup Wizard</span></h1>
                     </div>
-                    <div className="flex items-center gap-4 bg-white/5 p-4 rounded-[2rem] border border-white/10">
-                        <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-2xl">
-                            <Shield className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Security Status</p>
-                            <p className="text-sm font-bold">Standard Isolation Applied</p>
-                        </div>
-                    </div>
+                    <p className="text-slate-400 font-bold text-lg">Easily connect your router to SurfBill in minutes.</p>
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-8 py-12">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                    {/* Script Selection */}
-                    <div className="lg:col-span-2 space-y-8">
-                        <div>
-                            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-6">Choose Your Architecture</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <ScriptOption
-                                    icon={<Wifi className="w-6 h-6" />}
-                                    name="Hotspot Gateway"
-                                    description="Complete captive portal setup with IP pools, NAT, and Walled Garden rules."
-                                    onClick={(v) => downloadScript('HOTSPOT', v)}
-                                    downloading={downloading?.startsWith('HOTSPOT')}
-                                />
-                                <ScriptOption
-                                    icon={<Globe className="w-6 h-6" />}
-                                    name="PPPoE Server"
-                                    description="ISP-grade secret management with RADIUS integration for fiber/fixed-wireless."
-                                    onClick={(v) => downloadScript('PPPOE', v)}
-                                    downloading={downloading?.startsWith('PPPOE')}
-                                />
-                                <ScriptOption
-                                    icon={<Cpu className="w-6 h-6" />}
-                                    name="RADIUS Base"
-                                    description="Standardized RADIUS configuration for centralized authentication."
-                                    onClick={(v) => downloadScript('RADIUS', v)}
-                                    downloading={downloading?.startsWith('RADIUS')}
-                                />
-                                <div className="p-8 rounded-[3rem] border border-dashed border-slate-300 flex flex-col items-center justify-center text-center opacity-60">
-                                    <h3 className="font-black text-slate-900 mb-1">More Coming Soon</h3>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Custom Script Engine</p>
-                                </div>
-                            </div>
+            <main className="max-w-4xl mx-auto px-8 py-12">
+                {/* Progress Bar */}
+                <div className="flex items-center justify-between mb-12 relative">
+                    <div className="absolute top-1/2 left-0 w-full h-1 bg-slate-200 -translate-y-1/2 -z-10 rounded-full"></div>
+                    <div className="absolute top-1/2 left-0 h-1 bg-sky-500 -translate-y-1/2 -z-10 rounded-full transition-all duration-500" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
+                    {[1, 2, 3, 4].map((s) => (
+                        <div key={s} className={`w-10 h-10 rounded-full flex items-center justify-center font-black ${step >= s ? 'bg-sky-500 text-white shadow-lg shadow-sky-200' : 'bg-white text-slate-400 border-2 border-slate-200'}`}>
+                            {s}
                         </div>
+                    ))}
+                </div>
 
-                        {/* Implementation Guide */}
-                        <div className="bg-white rounded-[3rem] p-10 border border-slate-200 shadow-sm">
-                            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-8">Deployment Guide</h2>
-                            <div className="space-y-6">
-                                <div className="flex gap-6">
-                                    <div className="flex-shrink-0 w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black text-xl">1</div>
-                                    <div>
-                                        <h3 className="font-black text-slate-900 mb-1">Download & Preview</h3>
-                                        <p className="text-sm text-slate-500 font-bold">Select the script version (v6/v7) matched to your RouterOS firmware.</p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-6">
-                                    <div className="flex-shrink-0 w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black text-xl">2</div>
-                                    <div>
-                                        <h3 className="font-black text-slate-900 mb-1">Winbox Terminal</h3>
-                                        <p className="text-sm text-slate-500 font-bold">Open Winbox, navigate to New Terminal, and paste the content from your downloaded .rsc file.</p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-6">
-                                    <div className="flex-shrink-0 w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black text-xl">3</div>
-                                    <div>
-                                        <h3 className="font-black text-slate-900 mb-1">Verify Connection</h3>
-                                        <p className="text-sm text-slate-500 font-bold">Check the Radius or Hotspot Status tabs to confirm your router is communicating with SurfBill.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Sidebar Stats & Info */}
-                    <div className="space-y-8">
-                        <div className="bg-sky-500 rounded-[3rem] p-8 text-white shadow-xl">
-                            <div className="flex items-center gap-3 mb-6">
-                                <Info className="w-6 h-6 text-sky-200" />
-                                <h3 className="text-xl font-black tracking-tight">Version Matters</h3>
-                            </div>
-                            <p className="text-sm font-bold text-sky-100 leading-relaxed mb-6">
-                                RouterOS v7 introduced a completely new routing stack. Ensure you select <strong>v7</strong> for hardware purchased after 2022.
+                <div className="bg-white rounded-[3rem] border border-slate-200 shadow-xl overflow-hidden">
+                    {step === 1 && (
+                        <div className="p-12">
+                            <h2 className="text-3xl font-black mb-6">Step 1: Prepare Your Router</h2>
+                            <p className="text-slate-500 font-medium mb-8 leading-relaxed">
+                                Our automated script transforms your MikroTik into a managed hotspot gateway.
+                                It handles firewall rules, API users, and scheduler jobs automatically.
                             </p>
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-white/60">
-                                    <CheckCircle className="w-4 h-4 text-white" /> IPv6 Ready
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 font-bold">
+                                    <h4 className="flex items-center gap-2 mb-2"><CheckCircle className="text-sky-500 w-5 h-5" /> ROS v6 or v7</h4>
+                                    <p className="text-xs text-slate-400">Fully compatible with all modern architectures.</p>
                                 </div>
-                                <div className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-white/60">
-                                    <CheckCircle className="w-4 h-4 text-white" /> Zero-Trust Optimized
+                                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 font-bold">
+                                    <h4 className="flex items-center gap-2 mb-2"><CheckCircle className="text-sky-500 w-5 h-5" /> Public IP or VPN</h4>
+                                    <p className="text-xs text-slate-400">The billing system must reach your router.</p>
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="bg-white rounded-[3rem] p-8 border border-slate-200 shadow-sm overflow-hidden relative">
-                            <div className="absolute -bottom-10 -right-10 opacity-5">
-                                <Settings className="w-40 h-40 animate-spin-slow" />
-                            </div>
-                            <h3 className="font-black text-slate-900 mb-4">Support & Scaling</h3>
-                            <p className="text-xs text-slate-500 font-bold mb-6">Need help with custom routing or OSPF? Our enterprise engineers can help you scale.</p>
-                            <button className="w-full py-4 bg-slate-50 text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all border border-slate-200">
-                                Contact Enterprise
+                            <button onClick={() => setStep(2)} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-slate-800 transition-all">
+                                Let's Get Started <ChevronRight />
                             </button>
                         </div>
-                    </div>
+                    )}
+
+                    {step === 2 && (
+                        <div className="p-12">
+                            <h2 className="text-3xl font-black mb-6">Step 2: Router Details</h2>
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-xs font-black uppercase text-slate-400 mb-2">Router Name</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Downtown Hotspot"
+                                        className="w-full bg-slate-50 border border-slate-200 py-4 px-6 rounded-2xl font-bold"
+                                        value={routerDetails.name}
+                                        onChange={(e) => setRouterDetails({ ...routerDetails, name: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black uppercase text-slate-400 mb-2">Host / IP / Domain</label>
+                                    <input
+                                        type="text"
+                                        placeholder="router.isp.com or 1.2.3.4"
+                                        className="w-full bg-slate-50 border border-slate-200 py-4 px-6 rounded-2xl font-bold"
+                                        value={routerDetails.host}
+                                        onChange={(e) => setRouterDetails({ ...routerDetails, host: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black uppercase text-slate-400 mb-2">RouterOS Version</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button
+                                            onClick={() => setRouterDetails({ ...routerDetails, version: 'v7' })}
+                                            className={`py-4 rounded-2xl font-bold border ${routerDetails.version === 'v7' ? 'bg-sky-500 text-white border-sky-500' : 'bg-slate-50 border-slate-200 text-slate-900 hover:border-sky-500'}`}
+                                        >
+                                            v7 (Modern)
+                                        </button>
+                                        <button
+                                            onClick={() => setRouterDetails({ ...routerDetails, version: 'v6' })}
+                                            className={`py-4 rounded-2xl font-bold border ${routerDetails.version === 'v6' ? 'bg-sky-500 text-white border-sky-500' : 'bg-slate-50 border-slate-200 text-slate-900 hover:border-sky-500'}`}
+                                        >
+                                            v6 (Legacy)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-4 mt-10">
+                                <button onClick={() => setStep(1)} className="flex-1 py-5 rounded-2xl font-black border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+                                    <ChevronLeft /> Back
+                                </button>
+                                <button onClick={generateScript} disabled={loading} className="flex-[2] bg-slate-900 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-slate-800 transition-all">
+                                    {loading ? <Loader2 className="animate-spin" /> : 'Generate Command'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 3 && (
+                        <div className="p-12">
+                            <h2 className="text-3xl font-black mb-6">Step 3: Run Command</h2>
+                            <p className="text-slate-500 font-medium mb-8">
+                                Copy the command below and paste it into your MikroTik's <strong>New Terminal</strong>.
+                            </p>
+                            <div className="relative mb-8 group">
+                                <pre className="bg-slate-900 text-sky-400 p-8 rounded-3xl overflow-x-auto max-h-[300px] text-xs font-mono leading-relaxed">
+                                    {generatedScript}
+                                </pre>
+                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={copyToClipboard} className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl backdrop-blur-md">
+                                        <Copy className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="flex gap-4">
+                                <button onClick={() => setStep(2)} className="flex-1 py-5 rounded-2xl font-black border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+                                    Edit Details
+                                </button>
+                                <button onClick={() => setStep(4)} className="flex-[2] bg-slate-900 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-slate-800 transition-all">
+                                    I've Done It <ChevronRight />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 4 && (
+                        <div className="p-12 text-center">
+                            <div className="mb-10 flex justify-center">
+                                {verificationStatus === 'IDLE' && <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-slate-400"><Wifi className="w-12 h-12" /></div>}
+                                {verificationStatus === 'PENDING' && <div className="w-24 h-24 bg-sky-50 animate-pulse rounded-full flex items-center justify-center text-sky-500"><RefreshCw className="w-12 h-12 animate-spin" /></div>}
+                                {verificationStatus === 'SUCCESS' && <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500"><CheckCircle className="w-12 h-12" /></div>}
+                                {verificationStatus === 'FAILED' && <div className="w-24 h-24 bg-rose-50 rounded-full flex items-center justify-center text-rose-500"><AlertCircle className="w-12 h-12" /></div>}
+                            </div>
+
+                            <h2 className="text-3xl font-black mb-4">
+                                {verificationStatus === 'IDLE' && 'Verify Your Router'}
+                                {verificationStatus === 'PENDING' && 'Connecting...'}
+                                {verificationStatus === 'SUCCESS' && 'Verified!'}
+                                {verificationStatus === 'FAILED' && 'Connection Failed'}
+                            </h2>
+                            <p className="text-slate-500 font-medium mb-10 max-w-sm mx-auto">
+                                {verificationStatus === 'IDLE' && 'Make sure you have pasted the script, then click the button below.'}
+                                {verificationStatus === 'PENDING' && 'We are pinging your router to confirm the API connection is active.'}
+                                {verificationStatus === 'SUCCESS' && 'Awesome! Your router is now linked. You can start managing packages and users.'}
+                                {verificationStatus === 'FAILED' && verificationError}
+                            </p>
+
+                            <div className="space-y-4">
+                                {verificationStatus !== 'SUCCESS' && (
+                                    <button onClick={verifyConnection} disabled={verificationStatus === 'PENDING'} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-slate-800 transition-all disabled:opacity-50">
+                                        Verify Connection
+                                    </button>
+                                )}
+                                {verificationStatus === 'SUCCESS' && (
+                                    <button onClick={() => window.location.href = '/tenant'} className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-emerald-700 transition-all">
+                                        Go to Dashboard
+                                    </button>
+                                )}
+                                <button onClick={() => setStep(3)} className="w-full py-4 text-slate-400 font-bold hover:text-slate-900 transition-all">
+                                    Show Command Again
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </main>
 
             <SupportFooter />
-        </div>
-    );
-};
-
-const ScriptOption: React.FC<{ icon: React.ReactNode, name: string, description: string, onClick: (v: string) => void, downloading: boolean | undefined }> = ({ icon, name, description, onClick, downloading }) => {
-    return (
-        <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm hover:border-sky-500 transition-all group">
-            <div className="p-4 bg-slate-50 text-slate-900 rounded-[1.5rem] mb-6 inline-block group-hover:bg-sky-500 group-hover:text-white transition-all">
-                {icon}
-            </div>
-            <h3 className="text-xl font-black text-slate-900 mb-2 tracking-tight">{name}</h3>
-            <p className="text-sm text-slate-500 font-bold mb-8 leading-relaxed">{description}</p>
-
-            <div className="flex flex-col gap-3">
-                <button
-                    onClick={() => onClick('v7')}
-                    disabled={downloading}
-                    className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-slate-800 transition-all disabled:opacity-50"
-                >
-                    {downloading ? 'Generating...' : 'ROS v7 Script'}
-                    {!downloading && <ChevronRight className="w-4 h-4" />}
-                </button>
-                <button
-                    onClick={() => onClick('v6')}
-                    disabled={downloading}
-                    className="w-full py-4 bg-slate-50 text-slate-900 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-slate-100 transition-all border border-slate-200 disabled:opacity-50"
-                >
-                    {downloading ? 'Please wait...' : 'ROS v6 Legacy'}
-                    {!downloading && <ChevronRight className="w-4 h-4" />}
-                </button>
-            </div>
         </div>
     );
 };

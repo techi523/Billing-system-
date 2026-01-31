@@ -279,7 +279,7 @@ const TenantPortal = () => {
                             </div>
                             <div>
                                 <h3 className="text-xl font-black mb-1 text-slate-900">MikroTik Center</h3>
-                                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Download Config Scripts (v6/v7)</p>
+                                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Connect & Manage Routers</p>
                             </div>
                         </div>
                     </div>

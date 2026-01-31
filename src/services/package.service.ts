@@ -64,6 +64,9 @@ export class PackageService {
                 price: packageRecord.price
             });
 
+            // Trigger sync to all active routers
+            await this.syncPackageToAllRouters(packageRecord);
+
             return packageRecord;
 
         } catch (error: any) {
@@ -140,6 +143,9 @@ export class PackageService {
                 tenantId,
                 updateData
             });
+
+            // Trigger sync to all active routers
+            await this.syncPackageToAllRouters(packageRecord);
 
             return packageRecord;
 
@@ -267,22 +273,34 @@ export class PackageService {
      */
     static async syncPackageToRouter(packageRecord: Package, router: Router): Promise<void> {
         try {
-            // This would integrate with MikroTikService to create hotspot profiles
-            // For now, we'll log the sync action
-            logger.info('Package sync to router', {
+            logger.info('Syncing package to router', {
                 packageId: packageRecord.id,
-                routerId: router.id,
-                action: 'sync_started'
+                routerId: router.id
             });
 
-            // TODO: Implement actual MikroTik profile creation
-            // await MikroTikService.createHotspotProfile(router, packageRecord);
+            // Map package speeds to MikroTik rate limit format (e.g., "512k/1M")
+            const upload = packageRecord.uploadSpeed || '512k';
+            const download = packageRecord.downloadSpeed || '512k';
+            const rateLimit = `${upload}/${download}`;
+
+            // Create or update the profile on the router
+            await MikroTikServiceInstance.createHotspotProfile(router, packageRecord.name, {
+                rateLimit,
+                sharedUsers: packageRecord.sharedUsers || 1
+            });
 
             logger.info('Package synced to router', {
                 packageId: packageRecord.id,
-                routerId: router.id,
-                action: 'sync_completed'
+                routerId: router.id
             });
+
+            await MikroTikServiceInstance.logRouterAction(
+                router.id,
+                router.tenantId,
+                'SYNC_PACKAGE',
+                'SUCCESS',
+                `Synced package ${packageRecord.name}`
+            );
 
         } catch (error: any) {
             logger.error('Failed to sync package to router', {
@@ -290,7 +308,44 @@ export class PackageService {
                 packageId: packageRecord.id,
                 routerId: router.id
             });
+
+            await MikroTikServiceInstance.logRouterAction(
+                router.id,
+                router.tenantId,
+                'SYNC_PACKAGE',
+                'FAILED',
+                `Failed to sync package ${packageRecord.name}: ${error.message}`
+            );
+
             throw error;
+        }
+    }
+
+    /**
+     * Sync package to all active routers for the tenant
+     */
+    private static async syncPackageToAllRouters(packageRecord: Package): Promise<void> {
+        try {
+            const routers = await Router.findAll({
+                where: {
+                    tenantId: packageRecord.tenantId,
+                    status: 'ACTIVE'
+                }
+            });
+
+            for (const router of routers) {
+                try {
+                    await this.syncPackageToRouter(packageRecord, router);
+                } catch (err) {
+                    // Log but continue with other routers
+                    logger.error('Failed to sync package to specific router', {
+                        routerId: router.id,
+                        packageId: packageRecord.id
+                    });
+                }
+            }
+        } catch (error: any) {
+            logger.error('Failed to sync package to all routers', { error: error.message });
         }
     }
 

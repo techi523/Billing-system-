@@ -12,6 +12,7 @@ import PasswordResetRequest from './pages/PasswordResetRequest';
 import PasswordResetConfirm from './pages/PasswordResetConfirm';
 import Analytics from './pages/Analytics';
 import MikrotikCenter from './pages/MikrotikCenter';
+import Packages from './pages/Packages';
 import { AuthProvider } from './context/AuthContext';
 import { SupportProvider } from './context/SupportContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -64,6 +65,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['TENANT', 'STAFF']}>
                                     <MikrotikCenter />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/tenant/packages"
+                            element={
+                                <ProtectedRoute allowedRoles={['TENANT', 'STAFF']}>
+                                    <Packages />
                                 </ProtectedRoute>
                             }
                         />
