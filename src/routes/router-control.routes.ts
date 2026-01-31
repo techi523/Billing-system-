@@ -10,7 +10,7 @@ const router = Router();
  * GET /api/v1/routers/:id/users
  * List all hotspot users on a router
  */
-router.get('/:id/users', authenticateToken, async (req, res) => {
+router.get('/:id/users', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const tenantId = (req as any).user.tenantId;
@@ -40,7 +40,7 @@ router.get('/:id/users', authenticateToken, async (req, res) => {
  * POST /api/v1/routers/:id/users
  * Create a hotspot user on the router
  */
-router.post('/:id/users', authenticateToken, async (req, res) => {
+router.post('/:id/users', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const { username, password, macAddress, ipAddress, limitBytes, limitTime } = req.body;
@@ -114,7 +114,7 @@ router.post('/:id/users', authenticateToken, async (req, res) => {
  * PUT /api/v1/routers/:id/users/:username
  * Update hotspot user (enable/disable)
  */
-router.put('/:id/users/:username', authenticateToken, async (req, res) => {
+router.put('/:id/users/:username', authMiddleware, async (req, res) => {
     try {
         const { id, username } = req.params;
         const { enabled } = req.body;
@@ -145,7 +145,7 @@ router.put('/:id/users/:username', authenticateToken, async (req, res) => {
  * DELETE /api/v1/routers/:id/users/:username
  * Delete hotspot user
  */
-router.delete('/:id/users/:username', authenticateToken, async (req, res) => {
+router.delete('/:id/users/:username', authMiddleware, async (req, res) => {
     try {
         const { id, username } = req.params;
         const { ipAddress } = req.query;
@@ -192,7 +192,7 @@ router.delete('/:id/users/:username', authenticateToken, async (req, res) => {
  * POST /api/v1/routers/:id/users/:username/disconnect
  * Disconnect active user session
  */
-router.post('/:id/users/:username/disconnect', authenticateToken, async (req, res) => {
+router.post('/:id/users/:username/disconnect', authMiddleware, async (req, res) => {
     try {
         const { id, username } = req.params;
         const { ipAddress } = req.body;
@@ -238,7 +238,7 @@ router.post('/:id/users/:username/disconnect', authenticateToken, async (req, re
  * GET /api/v1/routers/:id/sessions
  * Get active hotspot sessions
  */
-router.get('/:id/sessions', authenticateToken, async (req, res) => {
+router.get('/:id/sessions', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const tenantId = (req as any).user.tenantId;
@@ -272,7 +272,7 @@ router.get('/:id/sessions', authenticateToken, async (req, res) => {
  * POST /api/v1/routers/:id/sessions/:sessionId/disconnect
  * Disconnect specific session
  */
-router.post('/:id/sessions/:sessionId/disconnect', authenticateToken, async (req, res) => {
+router.post('/:id/sessions/:sessionId/disconnect', authMiddleware, async (req, res) => {
     try {
         const { id, sessionId } = req.params;
         const tenantId = (req as any).user.tenantId;
@@ -301,7 +301,7 @@ router.post('/:id/sessions/:sessionId/disconnect', authenticateToken, async (req
  * POST /api/v1/routers/:id/users/:username/speed
  * Apply speed limit to user
  */
-router.post('/:id/users/:username/speed', authenticateToken, async (req, res) => {
+router.post('/:id/users/:username/speed', authMiddleware, async (req, res) => {
     try {
         const { id, username } = req.params;
         const { uploadSpeed, downloadSpeed } = req.body;
@@ -341,7 +341,7 @@ router.post('/:id/users/:username/speed', authenticateToken, async (req, res) =>
  * GET /api/v1/routers/:id/queues
  * List queue trees
  */
-router.get('/:id/queues', authenticateToken, async (req, res) => {
+router.get('/:id/queues', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const tenantId = (req as any).user.tenantId;
@@ -370,7 +370,7 @@ router.get('/:id/queues', authenticateToken, async (req, res) => {
  * GET /api/v1/routers/:id/stats
  * Get router statistics (CPU, memory, uptime)
  */
-router.get('/:id/stats', authenticateToken, async (req, res) => {
+router.get('/:id/stats', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const tenantId = (req as any).user.tenantId;
@@ -406,7 +406,7 @@ router.get('/:id/stats', authenticateToken, async (req, res) => {
  * GET /api/v1/routers/:id/interfaces
  * Get interface status
  */
-router.get('/:id/interfaces', authenticateToken, async (req, res) => {
+router.get('/:id/interfaces', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const tenantId = (req as any).user.tenantId;
@@ -435,7 +435,7 @@ router.get('/:id/interfaces', authenticateToken, async (req, res) => {
  * GET /api/v1/routers/:id/resources
  * Get system resources (CPU, memory, disk)
  */
-router.get('/:id/resources', authenticateToken, async (req, res) => {
+router.get('/:id/resources', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const tenantId = (req as any).user.tenantId;
