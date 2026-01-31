@@ -14,6 +14,8 @@ import webhookRoutes from './routes/webhook';
 import walletRoutes from './routes/wallet.routes';
 import paymentCallbackRoutes from './routes/payment-callback.routes';
 import aggregatorCallbackRoutes from './routes/aggregator-callback.routes';
+import routerRoutes from './routes/router.routes';
+import routerControlRoutes from './routes/router-control.routes';
 import { IspService } from './services/isp.service';
 import { SettlementEngine } from './services/settlement-engine';
 import { TrafficMonitorService } from './services/traffic-monitor.service';
@@ -73,6 +75,8 @@ app.use('/api/v1/webhooks', webhookRoutes);
 app.use('/api/v1/wallet', walletRoutes);
 app.use('/api/v1/aggregator', aggregatorCallbackRoutes);
 app.use('/api/v1/payments/callback', paymentCallbackRoutes);
+app.use('/api/v1/routers', routerRoutes);
+app.use('/api/v1/routers', routerControlRoutes);
 
 // Security headers for sensitive routes
 app.use('/api/v1/superadmin', (req, res, next) => {

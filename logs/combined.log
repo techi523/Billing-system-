@@ -730,3 +730,42 @@
 {"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:21:31.963Z"}
 {"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-30T18:21:48.825Z"}
 {"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-30T18:23:09.893Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-30T18:28:29.136Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced.","service":"billing-system","timestamp":"2026-01-30T18:28:29.186Z"}
+{"intervalMs":300000,"level":"info","message":"Traffic Monitor Service Started","service":"billing-system","timestamp":"2026-01-30T18:28:29.187Z"}
+{"level":"info","message":"Socket.io service initialized","service":"billing-system","timestamp":"2026-01-30T18:28:29.193Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3010","service":"billing-system","timestamp":"2026-01-30T18:28:29.199Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-30T18:29:24.778Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-30T18:29:42.324Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-30T18:30:15.933Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:31:17.858Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:31:17.886Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:31:17.925Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/portal/public/settings","service":"billing-system","timestamp":"2026-01-30T18:31:17.934Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-30T18:31:50.794Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-30T18:32:00.991Z"}
+{"level":"info","message":"Running automated billing/suspension checks...","service":"billing-system","timestamp":"2026-01-30T19:28:29.234Z"}
+{"level":"info","message":"Database connection established successfully.","service":"billing-system","timestamp":"2026-01-31T08:12:28.114Z"}
+{"level":"info","message":"DEVELOPMENT MODE: Database schema synced.","service":"billing-system","timestamp":"2026-01-31T08:12:28.183Z"}
+{"intervalMs":300000,"level":"info","message":"Traffic Monitor Service Started","service":"billing-system","timestamp":"2026-01-31T08:12:28.184Z"}
+{"level":"info","message":"Socket.io service initialized","service":"billing-system","timestamp":"2026-01-31T08:12:28.199Z"}
+{"level":"info","message":"Production SaaS Billing System running on port 3010","service":"billing-system","timestamp":"2026-01-31T08:12:28.207Z"}
+{"ip":"::1","level":"info","message":"GET /api/health","service":"billing-system","timestamp":"2026-01-31T08:17:06.742Z"}
+{"ip":"::1","level":"info","message":"POST /api/superadmin/login","service":"billing-system","timestamp":"2026-01-31T08:17:06.974Z"}
+{"ip":"::1","level":"info","message":"POST /api/auth/register","service":"billing-system","timestamp":"2026-01-31T08:17:06.981Z"}
+{"ip":"::1","level":"info","message":"POST /api/auth/login","service":"billing-system","timestamp":"2026-01-31T08:17:06.985Z"}
+{"ip":"::1","level":"info","message":"GET /api/health/db","service":"billing-system","timestamp":"2026-01-31T08:17:06.998Z"}
+{"ip":"::1","level":"info","message":"GET /health","service":"billing-system","timestamp":"2026-01-31T08:18:45.370Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/superadmin/login","service":"billing-system","timestamp":"2026-01-31T08:18:45.392Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-31T08:18:45.397Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-31T08:18:45.423Z"}
+{"ip":"::1","level":"info","message":"GET /health","service":"billing-system","timestamp":"2026-01-31T08:18:45.445Z"}
+{"ip":"::1","level":"info","message":"GET /health","service":"billing-system","timestamp":"2026-01-31T08:20:12.052Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/superadmin/login","service":"billing-system","timestamp":"2026-01-31T08:20:12.068Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/superadmin/tenants","service":"billing-system","timestamp":"2026-01-31T08:20:12.817Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"billing-system","timestamp":"2026-01-31T08:20:12.836Z"}
+{"action":"WALLET_INITIALIZED","level":"info","message":"Audit Log Created","service":"billing-system","tenantId":"1ef38173-e695-42a3-9b7d-c17ede59fcae","timestamp":"2026-01-31T08:20:13.239Z"}
+{"action":"TENANT_BOOTSTRAPPED","level":"info","message":"Audit Log Created","service":"billing-system","tenantId":"1ef38173-e695-42a3-9b7d-c17ede59fcae","timestamp":"2026-01-31T08:20:13.247Z","userId":"7e98add8-f576-404a-9ec0-4c0a144b41e1"}
+{"level":"info","message":"Tenant bootstrap completed for 1ef38173-e695-42a3-9b7d-c17ede59fcae. Manual configuration required.","service":"billing-system","tenantId":"1ef38173-e695-42a3-9b7d-c17ede59fcae","timestamp":"2026-01-31T08:20:13.247Z","walletInitialized":true}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"billing-system","timestamp":"2026-01-31T08:20:13.250Z"}
+{"ip":"::1","level":"info","message":"GET /health","service":"billing-system","timestamp":"2026-01-31T08:20:13.266Z"}

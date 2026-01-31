@@ -148,6 +148,16 @@ export class Router extends Model {
   public lastSeen!: Date | null;
   public identity!: string | null;
   public validationStatus!: 'PENDING' | 'VALIDATED' | 'FAILED';
+  // Auto-configuration fields
+  public apiUser!: string | null;
+  public apiPassword!: string | null;
+  public autoConfigStatus!: 'PENDING' | 'CONFIGURED' | 'FAILED';
+  public autoConfigScript!: string | null;
+  public autoConfigError!: string | null;
+  public capabilities!: string | null; // JSON: {hotspot: true, pppoe: true, radius: true}
+  public version!: string | null; // RouterOS version
+  public model!: string | null; // Hardware model
+  public architecture!: string | null; // arm, mipsbe, x86, etc.
 }
 Router.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -162,6 +172,16 @@ Router.init({
   lastSeen: { type: DataTypes.DATE },
   identity: { type: DataTypes.STRING },
   validationStatus: { type: DataTypes.ENUM('PENDING', 'VALIDATED', 'FAILED'), defaultValue: 'PENDING' },
+  // Auto-configuration fields
+  apiUser: { type: DataTypes.STRING },
+  apiPassword: { type: DataTypes.STRING },
+  autoConfigStatus: { type: DataTypes.ENUM('PENDING', 'CONFIGURED', 'FAILED'), defaultValue: 'PENDING' },
+  autoConfigScript: { type: DataTypes.TEXT },
+  autoConfigError: { type: DataTypes.TEXT },
+  capabilities: { type: DataTypes.TEXT }, // JSON string
+  version: { type: DataTypes.STRING },
+  model: { type: DataTypes.STRING },
+  architecture: { type: DataTypes.STRING },
 }, { sequelize, modelName: 'router' });
 
 export class Package extends Model {
@@ -174,6 +194,23 @@ export class Package extends Model {
   public isEnabled!: boolean;
   public tenantId!: string;
   public type!: 'HOTSPOT' | 'ISP';
+  // Enhanced MikroTik fields
+  public description!: string | null;
+  public validity!: number | null; // Days until expiry
+  public uploadSpeed!: string | null; // e.g., "10M"
+  public downloadSpeed!: string | null; // e.g., "20M"
+  public burstUpload!: string | null; // e.g., "15M"
+  public burstDownload!: string | null; // e.g., "30M"
+  public burstThreshold!: string | null; // e.g., "8M/16M"
+  public burstTime!: string | null; // e.g., "8s/8s"
+  public priority!: number; // Queue priority 1-8
+  public sharedUsers!: number; // Max concurrent connections
+  public expiryAction!: 'SUSPEND' | 'DELETE' | 'NOTIFY';
+  public isVisible!: boolean; // Show on captive portal
+  public category!: string | null; // e.g., 'Daily', 'Weekly', 'Monthly'
+  public mikrotikProfile!: string | null; // Custom profile name
+  public limitAtTime!: string | null; // Time-based limits
+  public parentQueue!: string | null; // Parent queue for hierarchical QoS
 }
 Package.init({
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
@@ -185,6 +222,23 @@ Package.init({
   isEnabled: { type: DataTypes.BOOLEAN, defaultValue: true },
   tenantId: { type: DataTypes.UUID, allowNull: false },
   type: { type: DataTypes.ENUM('HOTSPOT', 'ISP'), defaultValue: 'HOTSPOT' },
+  // Enhanced MikroTik fields
+  description: { type: DataTypes.TEXT },
+  validity: { type: DataTypes.INTEGER }, // Days
+  uploadSpeed: { type: DataTypes.STRING },
+  downloadSpeed: { type: DataTypes.STRING },
+  burstUpload: { type: DataTypes.STRING },
+  burstDownload: { type: DataTypes.STRING },
+  burstThreshold: { type: DataTypes.STRING },
+  burstTime: { type: DataTypes.STRING },
+  priority: { type: DataTypes.INTEGER, defaultValue: 8 },
+  sharedUsers: { type: DataTypes.INTEGER, defaultValue: 1 },
+  expiryAction: { type: DataTypes.ENUM('SUSPEND', 'DELETE', 'NOTIFY'), defaultValue: 'SUSPEND' },
+  isVisible: { type: DataTypes.BOOLEAN, defaultValue: true },
+  category: { type: DataTypes.STRING },
+  mikrotikProfile: { type: DataTypes.STRING },
+  limitAtTime: { type: DataTypes.STRING },
+  parentQueue: { type: DataTypes.STRING },
 }, { sequelize, modelName: 'package' });
 
 export class Subscriber extends Model {
@@ -676,6 +730,31 @@ PasswordResetToken.init({
   used: { type: DataTypes.BOOLEAN, defaultValue: false },
 }, { sequelize, modelName: 'passwordResetToken' });
 
+export class RouterConnectionLog extends Model {
+  public id!: string;
+  public routerId!: string;
+  public tenantId!: string;
+  public action!: 'CONNECT' | 'VERIFY' | 'DISCONNECT' | 'TEST' | 'SYNC' | 'ERROR';
+  public status!: 'SUCCESS' | 'FAILED' | 'PENDING';
+  public details!: string | null;
+  public errorMessage!: string | null;
+  public ipAddress!: string | null;
+  public userId!: string | null;
+  public metadata!: string | null; // JSON for additional data
+}
+RouterConnectionLog.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  routerId: { type: DataTypes.UUID, allowNull: false },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  action: { type: DataTypes.ENUM('CONNECT', 'VERIFY', 'DISCONNECT', 'TEST', 'SYNC', 'ERROR'), allowNull: false },
+  status: { type: DataTypes.ENUM('SUCCESS', 'FAILED', 'PENDING'), defaultValue: 'PENDING' },
+  details: { type: DataTypes.TEXT },
+  errorMessage: { type: DataTypes.TEXT },
+  ipAddress: { type: DataTypes.STRING },
+  userId: { type: DataTypes.UUID },
+  metadata: { type: DataTypes.TEXT }, // JSON string
+}, { sequelize, modelName: 'routerConnectionLog' });
+
 // Add relationships for new models
 AdminUser.hasMany(PasswordResetToken, { foreignKey: 'userId' });
 PasswordResetToken.belongsTo(AdminUser, { foreignKey: 'userId' });
@@ -691,5 +770,15 @@ WalletTransaction.hasOne(Settlement, { foreignKey: 'walletTransactionId' });
 
 PlatformFee.hasMany(TieredFee, { foreignKey: 'platformFeeId', as: 'tieredFees' });
 TieredFee.belongsTo(PlatformFee, { foreignKey: 'platformFeeId', as: 'platformFee' });
+
+// Router Connection Log relationships
+Router.hasMany(RouterConnectionLog, { foreignKey: 'routerId' });
+RouterConnectionLog.belongsTo(Router, { foreignKey: 'routerId' });
+
+Tenant.hasMany(RouterConnectionLog, { foreignKey: 'tenantId' });
+RouterConnectionLog.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+AdminUser.hasMany(RouterConnectionLog, { foreignKey: 'userId' });
+RouterConnectionLog.belongsTo(AdminUser, { foreignKey: 'userId' });
 
 export { sequelize };
