@@ -1,4 +1,7 @@
 import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import { createServer } from 'http';
 import bodyParser from 'body-parser';
@@ -147,8 +150,6 @@ async function startServer() {
         if (!process.env.SUPER_ADMIN_EMAIL || !process.env.SUPER_ADMIN_PASSWORD) {
             console.error('[System Init] CRITICAL: Super Admin Credentials: [INCOMPLETE]');
         }
-
-        TrafficMonitorService.start(5 * 60 * 1000); // Poll routers every 5 minutes
 
         TrafficMonitorService.start(5 * 60 * 1000); // Poll routers every 5 minutes
 
