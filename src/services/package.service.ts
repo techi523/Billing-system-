@@ -41,7 +41,11 @@ export class PackageService {
     /**
      * Get package with compatibility info
      */
-    static async getPackageWithCompatibility(id: string, tenantId: string) {
+    static async getPackageWithCompatibility(id: string, tenantId: string): Promise<{
+        package: any;
+        compatibleRouters: any[];
+        incompatibleRouters: any[];
+    }> {
         const pkg = await Package.findOne({ where: { id, tenantId } });
         if (!pkg) throw new Error('Package not found');
 
@@ -52,7 +56,7 @@ export class PackageService {
         return {
             package: pkg,
             compatibleRouters: routers,
-            incompatibleRouters: []
+            incompatibleRouters: [] as any[]
         };
     }
 

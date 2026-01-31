@@ -178,8 +178,13 @@ router.post('/superadmin/login', async (req, res) => {
         // 3. User is valid! Now Auto-Heal / Sync DB to ensure session validity
         console.log('[SuperAdmin Login] Credentials valid. Synchronizing database record...');
 
+        console.log('[SuperAdmin Login] Step 3.1: Querying database for existing Super Admin user...');
         let user = await AdminUser.findOne({ where: { email, role: 'SUPER_ADMIN' } });
+        console.log('[SuperAdmin Login] Step 3.2: User found:', user ? 'YES' : 'NO');
+
+        console.log('[SuperAdmin Login] Step 3.3: Hashing password...');
         const hashedPassword = await bcrypt.hash(envPass, 12);
+        console.log('[SuperAdmin Login] Step 3.4: Password hashed successfully');
 
         if (!user) {
             // Emergency Create
@@ -200,12 +205,16 @@ router.post('/superadmin/login', async (req, res) => {
         }
 
         // 4. Session & Token Issuance
+        console.log('[SuperAdmin Login] Step 4.1: Validating user object...');
         if (!user) throw new Error('User creation failed unexpectedly');
+        console.log('[SuperAdmin Login] Step 4.2: User validated, ID:', user.id);
 
+        console.log('[SuperAdmin Login] Step 4.3: Revoking old sessions...');
         await AdminSession.update(
             { status: 'REVOKED' },
             { where: { userId: user.id, status: 'ACTIVE' } }
         );
+        console.log('[SuperAdmin Login] Step 4.4: Old sessions revoked');
 
         // USE THE SPECIFIC SUPER ADMIN SECRET
         const secret = process.env.SUPER_ADMIN_JWT_SECRET;
@@ -244,7 +253,9 @@ router.post('/superadmin/login', async (req, res) => {
 
     } catch (error: any) {
         console.error('[SuperAdmin Login] System Error:', error);
-        res.status(500).json({ error: 'Authentication system error' });
+        console.error('[SuperAdmin Login] Error Stack:', error.stack);
+        console.error('[SuperAdmin Login] Error Message:', error.message);
+        res.status(500).json({ error: 'Authentication system error', details: error.message });
     }
 });
 
