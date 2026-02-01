@@ -158,10 +158,10 @@ const SuperAdminDashboard = () => {
                         routerStats?.criticalOffline.map((r: any) => (
                             <div key={r.id} className="min-w-[200px] p-4 bg-rose-500/5 border border-rose-500/20 rounded-xl flex flex-col gap-1">
                                 <div className="text-xs font-black text-rose-500 uppercase">Offline Alert</div>
-                                <div className="font-bold text-[var(--text-primary)]">{r.name}</div>
-                                <div className="text-[10px] text-[var(--text-muted)]">{r.host}</div>
+                                <div className="font-bold text-[var(--text-primary)]">{r.name || 'Unnamed Router'}</div>
+                                <div className="text-[10px] text-[var(--text-muted)]">{r.host || 'No IP'}</div>
                                 <div className="mt-2 text-[10px] font-mono bg-black/20 p-1 rounded text-center">
-                                    Last seen: {new Date(r.lastSeen).toLocaleDateString()}
+                                    Last seen: {r.lastSeen ? new Date(r.lastSeen).toLocaleDateString() : 'Never'}
                                 </div>
                             </div>
                         ))
@@ -197,15 +197,15 @@ const SuperAdminDashboard = () => {
                                 </div>
                                 <div className="flex-1">
                                     <p className="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">
-                                        <span className="text-sky-400 font-bold mr-2">[{log.action}]</span>
-                                        {log.details}
+                                        <span className="text-sky-400 font-bold mr-2">[{log.action || 'EVENT'}]</span>
+                                        {log.details || 'No details available'}
                                     </p>
                                     <div className="flex items-center gap-3 mt-1">
-                                        <span className="text-[10px] uppercase font-bold text-slate-500 bg-black/30 px-2 py-0.5 rounded">
-                                            {log.ipAddress || '192.168.1.1'}
+                                        <span className="text-[10px] uppercase font-bold text-slate-300 bg-white/10 px-2 py-0.5 rounded border border-white/5">
+                                            {log.ipAddress || '0.0.0.0'}
                                         </span>
                                         <span className="text-[10px] text-slate-500">
-                                            {new Date(log.createdAt).toLocaleTimeString()}
+                                            {log.createdAt ? new Date(log.createdAt).toLocaleTimeString() : 'N/A'}
                                         </span>
                                     </div>
                                 </div>
@@ -228,12 +228,12 @@ const SuperAdminDashboard = () => {
                             <div key={t.id} className="group p-5 rounded-2xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] shadow-sm hover:shadow-md transition-all">
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-indigo-200">
-                                        {t.name.substring(0, 1)}
+                                        {(t.name || 'T').substring(0, 1)}
                                     </div>
                                     <div className={`w-2 h-2 rounded-full ${t.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></div>
                                 </div>
-                                <h4 className="font-bold text-[var(--text-primary)] leading-tight mb-1">{t.name}</h4>
-                                <p className="text-xs text-[var(--text-muted)] font-medium mb-4">@{t.subdomain}.surfbill.app</p>
+                                <h4 className="font-bold text-[var(--text-primary)] leading-tight mb-1">{t.name || 'Unnamed Tenant'}</h4>
+                                <p className="text-xs text-[var(--text-muted)] font-medium mb-4">@{t.subdomain || 'unknown'}.surfbill.app</p>
 
                                 <button
                                     onClick={() => toggleTenantStatus(t.id, t.status)}

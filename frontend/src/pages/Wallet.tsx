@@ -112,6 +112,26 @@ const WalletPage = () => {
         }
     };
 
+    const handleExport = () => {
+        const headers = ['Timestamp', 'Type', 'Description', 'Amount (KES)', 'Balance After (KES)', 'ID'];
+        const rows = transactions.map((tx: any) => [
+            new Date(tx.createdAt).toLocaleString(),
+            tx.transactionType,
+            tx.description,
+            (tx.amount / 100).toFixed(2),
+            (tx.balanceAfter / 100).toFixed(2),
+            tx.id
+        ]);
+
+        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+    };
+
     return (
         <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] transition-colors duration-300">
             {/* Header */}
@@ -212,13 +232,22 @@ const WalletPage = () => {
                         <h2 className="text-xl font-black flex items-center gap-2">
                             <History className="w-5 h-5 text-sky-500" /> Transaction Ledger
                         </h2>
-                        <div className="relative">
-                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="Search reference..."
-                                className="pl-9 pr-4 py-2 bg-white border border-slate-100 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500 outline-none shadow-sm"
-                            />
+                        <div className="flex items-center gap-4">
+                            <div className="relative">
+                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search reference..."
+                                    className="pl-9 pr-4 py-2 bg-white border border-slate-100 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500 outline-none shadow-sm"
+                                />
+                            </div>
+                            <button
+                                onClick={handleExport}
+                                className="p-2 bg-white border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors shadow-sm text-slate-600"
+                                title="Export CSV"
+                            >
+                                <Download className="w-4 h-4" />
+                            </button>
                         </div>
                     </div>
 
@@ -247,8 +276,8 @@ const WalletPage = () => {
                                             </td>
                                             <td className="px-8 py-5">
                                                 <div className={`w-fit px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 ${tx.transactionType === 'CREDIT' ? 'bg-emerald-100 text-emerald-700' :
-                                                        tx.transactionType === 'DEBIT' ? 'bg-rose-100 text-rose-700' :
-                                                            'bg-slate-100 text-slate-700'
+                                                    tx.transactionType === 'DEBIT' ? 'bg-rose-100 text-rose-700' :
+                                                        'bg-slate-100 text-slate-700'
                                                     }`}>
                                                     {tx.transactionType === 'CREDIT' ? <ArrowDownLeft className="w-3 h-3" /> : <ArrowUpRight className="w-3 h-3" />}
                                                     {tx.transactionType}

@@ -30,8 +30,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    // FIX: Explicitly allow SUPER_ADMIN if they are in the allowed roles
-    if (user.role === 'SUPER_ADMIN' && allowedRoles?.includes('SUPER_ADMIN')) {
+    // FIX: Hard separation for Super Admin
+    if (user.role === 'SUPER_ADMIN') {
+        const isSuperAdminRoute = location.pathname.startsWith('/superadmin');
+        if (!isSuperAdminRoute && allowedRoles && !allowedRoles.includes('SUPER_ADMIN')) {
+            console.log(`[ProtectedRoute] Super Admin accessing restricted route ${location.pathname}. Redirecting to /superadmin.`);
+            return <Navigate to="/superadmin" replace />;
+        }
         return <>{children}</>;
     }
 
@@ -39,7 +44,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     const isTenantRoute = location.pathname.startsWith('/tenant') || location.pathname.startsWith('/admin');
     const isSetupRoute = location.pathname === '/tenant/setup';
 
-    if (user.role !== 'SUPER_ADMIN' && !user.tenantId && !isSetupRoute && isTenantRoute) {
+    if (!user.tenantId && !isSetupRoute && isTenantRoute) {
         console.warn(`[ProtectedRoute] User ${user.id} (${user.role}) has no workspace. Redirecting to setup.`);
         return <Navigate to="/tenant/setup" replace />;
     }
@@ -49,10 +54,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
 
         // FIX: Precise Redirection Logic
         let redirectPath = '/login';
-
-        if (user.role === 'SUPER_ADMIN') {
-            redirectPath = '/superadmin';
-        } else if (user.role === 'TENANT') {
+        if (user.role === 'TENANT') {
             redirectPath = user.tenantId ? '/tenant' : '/tenant/setup';
         } else if (user.role === 'STAFF' || user.role === 'AGENT') {
             redirectPath = '/admin'; // Legacy/Standard Admin Portal

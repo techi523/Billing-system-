@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import SuperAdminDashboard from '../components/SuperAdmin/SuperAdminDashboard';
+import PlatformSettings from '../components/SuperAdmin/PlatformSettings';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/Common/BackButton';
 import ThemeToggle from '../components/Common/ThemeToggle';
+import { LayoutDashboard, Settings as SettingsIcon } from 'lucide-react';
 
 const SuperAdminPortal = () => {
     const { logout, loading: authLoading } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('dashboard');
 
     useEffect(() => {
         if (!authLoading) {
@@ -33,13 +36,31 @@ const SuperAdminPortal = () => {
                     <div className="flex items-center gap-6">
                         <BackButton to="/" label="Home" variant="dark" />
                         <div className="flex-1 flex items-center justify-between">
-                            <div>
-                                <h1 className="text-2xl font-black text-[var(--text-primary)]">Super Admin Dashboard</h1>
-                                <p className="text-[var(--text-secondary)] font-bold">Platform-wide Governance & Control</p>
+                            <div className="flex items-center gap-2 bg-[var(--bg-surface-elevated)] p-1 rounded-xl border border-[var(--border-subtle)]">
+                                <button
+                                    onClick={() => setActiveTab('dashboard')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'dashboard'
+                                        ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                                        }`}
+                                >
+                                    <LayoutDashboard size={16} />
+                                    Dashboard
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('settings')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'settings'
+                                        ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                                        }`}
+                                >
+                                    <SettingsIcon size={16} />
+                                    Settings
+                                </button>
                             </div>
                             <div className="flex items-center gap-6">
                                 <ThemeToggle />
-                                <span className="px-3 py-1 bg-sky-500/20 text-sky-600 text-[10px] font-black rounded-full uppercase tracking-widest">
+                                <span className="px-3 py-1 bg-sky-500 text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-sky-500/20">
                                     SUPER ADMIN
                                 </span>
                                 <button
@@ -55,7 +76,7 @@ const SuperAdminPortal = () => {
             </div>
 
             <div className="max-w-7xl mx-auto p-8 space-y-8">
-                <SuperAdminDashboard />
+                {activeTab === 'dashboard' ? <SuperAdminDashboard /> : <PlatformSettings />}
             </div>
         </div>
     );

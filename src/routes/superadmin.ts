@@ -1,11 +1,13 @@
 import { Router } from 'express';
-import { authMiddleware, AuthRequest, authorize } from '../middleware/auth';
+import { authMiddleware, authorize } from '../middleware/auth';
 import { AnalyticsService } from '../services/analytics.service';
 import { AuditService } from '../services/audit.service';
 import { SettlementService } from '../services/settlement.service';
 import { WalletService } from '../services/wallet.service';
 import { AggregatorService } from '../services/aggregator.service';
-import { PlatformSetting, Tenant, Wallet, PlatformFee, TieredFee, sequelize, Router as RouterModel } from '../models';
+import { PlatformSetting, Tenant, Wallet, PlatformFee, TieredFee, sequelize, Router as RouterModel, AdminUser } from '../models';
+import { sendEmail } from '../services/emailService';
+import { SMSService } from '../services/sms.service';
 
 const router = Router();
 router.use(authMiddleware);
@@ -244,6 +246,48 @@ router.put('/settings/:key', async (req: any, res) => {
 
         await AuditService.log('PLATFORM_SETTING_UPDATED', `Setting ${req.params.key} updated`, undefined, req.user?.id);
         res.json(setting);
+    } catch (e: any) {
+        res.status(400).json({ error: e.message });
+    }
+});
+
+// 10. Test Communication Channels
+router.post('/test-email', async (req: any, res) => {
+    try {
+        const user = await AdminUser.findByPk(req.user.id);
+        if (!user) throw new Error('Super Admin not found');
+
+        await sendEmail({
+            to: user.email,
+            subject: 'SurfBill SMTP Test',
+            html: `<h1>System Test</h1><p>Relay successful from ${process.env.SMTP_HOST}</p>`,
+            action: 'TEST_EMAIL',
+            userId: user.id
+        });
+
+        res.json({ message: 'Test email sent successfully' });
+    } catch (e: any) {
+        res.status(400).json({ error: e.message });
+    }
+});
+
+router.post('/test-sms', async (req: any, res) => {
+    try {
+        const user = await AdminUser.findByPk(req.user.id);
+        if (!user) throw new Error('Super Admin not found');
+
+        // Note: For SMS test, we use a dummy phone if none provided
+        const phone = req.body.phone || '254700000000';
+
+        await SMSService.sendSMS({
+            to: phone,
+            message: 'SurfBill SMS System Test: SUCCESS',
+            tenantId: 'PLATFORM', // Internal log
+            userId: user.id,
+            action: 'TEST_SMS'
+        });
+
+        res.json({ message: 'Test SMS triggered' });
     } catch (e: any) {
         res.status(400).json({ error: e.message });
     }
