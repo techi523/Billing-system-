@@ -8,9 +8,7 @@ import {
     CheckCircle2,
     Cpu,
     MessageCircle,
-    Terminal,
-    RotateCw,
-    ShieldCheck
+    RotateCw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import SupportFooter from '../components/Common/SupportFooter';

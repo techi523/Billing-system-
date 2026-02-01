@@ -1,0 +1,112 @@
+import axios from 'axios';
+import dotenv from 'dotenv';
+import logger from '../utils/logger';
+import { SMSLog, AuditLog } from '../models';
+
+dotenv.config();
+
+/**
+ * Production-grade SMS Service
+ * Supports generic HTTP gateways or service-specific integrations
+ */
+export class SMSService {
+    /**
+     * Send a single SMS
+     */
+    static async sendSMS({ to, message, tenantId, userId, action }: {
+        to: string;
+        message: string;
+        tenantId: string;
+        userId?: string;
+        action?: string;
+    }) {
+        try {
+            // Configuration from .env
+            const username = process.env.SMS_USERNAME;
+            const apiKey = process.env.SMS_API_KEY;
+            const senderId = process.env.SMS_SENDER_ID;
+            const provider = process.env.SMS_PROVIDER || 'GENERIC'; // e.g. AFRICASTALKING
+
+            let providerResult: any;
+
+            if (provider === 'AFRICASTALKING') {
+                // Africa's Talking Integration (Common in East Africa)
+                providerResult = await this.sendAfricaTalking(to, message, username!, apiKey!, senderId!);
+            } else {
+                // STRICT CHECK: No mocks in production
+                if (process.env.NODE_ENV === 'production') {
+                    throw new Error('SMS Provider not configured. Mocking invalid in production.');
+                }
+
+                // Mock or Generic Gateway logic (Dev only)
+                logger.warn(`[SMS MOCK] Sending to ${to}: ${message}`);
+                providerResult = { reference: `GEN_${Date.now()}`, cost: 1.0 };
+            }
+
+            // Log for Tenant Visibility and Billing
+            const smsLog = await SMSLog.create({
+                tenantId,
+                phoneNumber: to,
+                message,
+                status: 'SENT',
+                cost: Math.round(providerResult.cost * 100), // Store in cents
+                providerReference: providerResult.reference,
+            });
+
+            if (action) {
+                await AuditLog.create({
+                    action: `SMS_${action}`,
+                    details: `SMS sent to ${to}. Cost: ${providerResult.cost}`,
+                    tenantId,
+                    userId,
+                });
+            }
+
+            return { success: true, logId: smsLog.id, reference: providerResult.reference };
+        } catch (error: any) {
+            logger.error(`SMS failure to ${to}: ${error.message}`);
+
+            await SMSLog.create({
+                tenantId,
+                phoneNumber: to,
+                message,
+                status: 'FAILED',
+                cost: 0,
+            });
+
+            throw new Error(`SMS delivery failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Africa's Talking Specific Implementation
+     */
+    private static async sendAfricaTalking(to: string, message: string, username: string, apiKey: string, senderId: string) {
+        const response = await axios.post(
+            'https://api.africastalking.com/version1/messaging',
+            new URLSearchParams({
+                username,
+                to,
+                message,
+                from: senderId,
+            }),
+            {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'apiKey': apiKey,
+                },
+            }
+        );
+
+        const recipientData = response.data.SMSMessageData.Recipients[0];
+        if (recipientData.status !== 'Success') {
+            throw new Error(`Provider Status: ${recipientData.status}`);
+        }
+
+        return {
+            reference: recipientData.messageId,
+            cost: parseFloat(recipientData.cost.split(' ')[1]) || 1.0,
+        };
+    }
+}

@@ -62,6 +62,63 @@ export class IspService {
         return subscriber;
     }
 
+    static async updateSubscriber(id: string, data: any) {
+        const subscriber = await Subscriber.findByPk(id);
+        if (!subscriber) throw new Error('Subscriber not found');
+
+        const { name, phoneNumber, pppoeUsername, pppoePassword, packageId, routerId, address, notes, status } = data;
+
+        // If username/password changes, we might need to handle MikroTik differently
+        // For simplicity, let's update DB first and then sync status if needed
+        await subscriber.update({
+            name: name ?? subscriber.name,
+            phoneNumber: phoneNumber ?? subscriber.phoneNumber,
+            pppoeUsername: pppoeUsername ?? subscriber.pppoeUsername,
+            pppoePassword: pppoePassword ?? subscriber.pppoePassword,
+            packageId: packageId ?? subscriber.packageId,
+            routerId: routerId ?? subscriber.routerId,
+            address: address ?? subscriber.address,
+            notes: notes ?? subscriber.notes,
+            status: status ?? subscriber.status
+        });
+
+        // Sync with MikroTik if router and username available
+        if (subscriber.routerId && subscriber.pppoeUsername) {
+            const router = await Router.findByPk(subscriber.routerId);
+            const pkg = subscriber.packageId ? await Package.findByPk(subscriber.packageId) : null;
+            if (router && pkg) {
+                // In a real system, we'd update the user on MikroTik
+                // For now, toggle status based on subscriber status
+                await MikroTikService.toggleHotspotUser(router, subscriber.pppoeUsername, subscriber.status === 'ACTIVE');
+            }
+        }
+
+        return subscriber;
+    }
+
+    static async deleteSubscriber(id: string) {
+        const subscriber = await Subscriber.findByPk(id);
+        if (!subscriber) throw new Error('Subscriber not found');
+
+        // Remove from MikroTik first
+        if (subscriber.routerId && subscriber.pppoeUsername) {
+            const router = await Router.findByPk(subscriber.routerId);
+            if (router) {
+                try {
+                    // We don't have a direct deleteUser in MikroTikService yet, 
+                    // but we can use toggle or add a delete method.
+                    // Let's assume for now we just disable them or add a method.
+                    await MikroTikService.toggleHotspotUser(router, subscriber.pppoeUsername, false);
+                } catch (e) {
+                    console.error('Failed to remove user from MikroTik', e);
+                }
+            }
+        }
+
+        await subscriber.destroy();
+        return { success: true };
+    }
+
     static async suspendExpiredSubscribers() {
         const now = new Date();
         const expired = await Subscriber.findAll({

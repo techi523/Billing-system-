@@ -68,7 +68,13 @@ router.post('/callback', async (req, res) => {
                 await WalletService.processPayment(processedPayment);
 
                 // 2. Trigger Network Fulfillment
+                logger.info('Initiating network fulfillment', {
+                    paymentId: processedPayment.id,
+                    mac: processedPayment.macAddress,
+                    routerId: processedPayment.routerId
+                });
                 await fulfillAccess(processedPayment);
+                logger.info('Network fulfillment completed', { paymentId: processedPayment.id });
 
                 logger.info('Aggregator payment fully processed and SPLIT', {
                     paymentId: processedPayment.id,

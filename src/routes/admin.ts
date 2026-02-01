@@ -4,6 +4,7 @@ import { authMiddleware, authorize } from '../middleware/auth';
 import { TenantBootstrapService } from '../services/tenant-bootstrap.service';
 import logger from '../utils/logger';
 import { TenantResolver } from '../middleware/tenant-resolver';
+import { IspService } from '../services/isp.service';
 
 const router = Router();
 
@@ -142,6 +143,39 @@ router.get('/subscribers', async (req: any, res) => {
     }
 });
 
+// Create Subscriber
+router.post('/subscribers', async (req: any, res) => {
+    try {
+        const subscriber = await IspService.registerSubscriber({
+            ...req.body,
+            tenantId: req.user.tenantId
+        });
+        res.status(201).json(subscriber);
+    } catch (error: any) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Update Subscriber
+router.put('/subscribers/:id', async (req: any, res) => {
+    try {
+        const subscriber = await IspService.updateSubscriber(req.params.id, req.body);
+        res.json(subscriber);
+    } catch (error: any) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Delete Subscriber
+router.delete('/subscribers/:id', async (req: any, res) => {
+    try {
+        const result = await IspService.deleteSubscriber(req.params.id);
+        res.json(result);
+    } catch (error: any) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
 // Initialize tenant data (bootstrap)
 router.post('/initialize', async (req: any, res) => {
     try {
@@ -226,6 +260,17 @@ router.get('/analytics/sms', async (req: any, res) => {
         res.json(stats);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch SMS metrics' });
+    }
+});
+
+router.get('/analytics/context', async (req: any, res) => {
+    try {
+        const { AnalyticsService } = require('../services/analytics.service');
+        const context = await AnalyticsService.getTrafficContext(req.user.tenantId);
+        res.json(context);
+    } catch (error) {
+        logger.error('Failed to fetch traffic context', { error });
+        res.status(500).json({ error: 'Failed to fetch traffic context' });
     }
 });
 
@@ -487,5 +532,8 @@ router.post('/production/go-live', async (req: any, res) => {
         res.status(400).json({ error: error.message });
     }
 });
+
+
+
 
 export default router;

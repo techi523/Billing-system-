@@ -20,11 +20,13 @@ import paymentCallbackRoutes from './routes/payment-callback.routes';
 import aggregatorCallbackRoutes from './routes/aggregator-callback.routes';
 import routerRoutes from './routes/router.routes';
 import routerControlRoutes from './routes/router-control.routes';
+import campaignRoutes from './routes/campaigns';
 import { IspService } from './services/isp.service';
 import { SettlementEngine } from './services/settlement-engine';
 import { TrafficMonitorService } from './services/traffic-monitor.service';
 import { ProductionService } from './services/production.service';
 import { SocketService } from './services/socket.service';
+import { TemplateSeeder } from './services/template-seeder';
 import logger from './utils/logger';
 import { TenantResolver } from './middleware/tenant-resolver';
 import { ErrorHandler } from './middleware/error-handler';
@@ -33,8 +35,16 @@ const app = express();
 
 // SECURITY HARDENING
 app.use(helmet());
+
+// Enforce strict CORS in production
+const corsOrigin = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : (process.env.NODE_ENV === 'production' ? [] : '*');
+
+if (process.env.NODE_ENV === 'production' && corsOrigin.length === 0) {
+    logger.warn('SECURITY WARNING: CORS_ORIGIN not set in production. APIs may be blocking requests.');
+}
+
 app.use(cors({
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
+    origin: corsOrigin,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id']
 }));
@@ -70,19 +80,26 @@ app.use((req, res, next) => {
     next();
 });
 
+import { authMiddleware } from './middleware/auth';
+
 // ROUTES
 app.use('/api/v1/auth', strictLimiter, authRoutes);
-app.use('/api/v1/portal', TenantResolver.resolveTenant, portalRoutes);
-app.use('/api/v1/portal/:tenantId/pay', strictLimiter, TenantResolver.resolveTenant);
-app.use('/api/v1/admin', TenantResolver.resolveTenant, adminRoutes);
-app.use('/api/v1/agent', TenantResolver.resolveTenant, agentRoutes);
-app.use('/api/v1/superadmin', superAdminLimiter, superadminRoutes);
+
+app.use('/api/v1/portal', portalRoutes); // Public portal handle its own resolution
+app.use('/api/v1/portal/:tenantId/pay', strictLimiter, portalRoutes);
+
+// Authenticated Routes with Tenant Resolution
+app.use('/api/v1/admin', authMiddleware, TenantResolver.resolveTenant, adminRoutes);
+app.use('/api/v1/agent', authMiddleware, TenantResolver.resolveTenant, agentRoutes);
+app.use('/api/v1/wallet', authMiddleware, TenantResolver.resolveTenant, walletRoutes);
+app.use('/api/v1/campaigns', authMiddleware, TenantResolver.resolveTenant, campaignRoutes);
+
+app.use('/api/v1/superadmin', authMiddleware, superAdminLimiter, superadminRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
-app.use('/api/v1/wallet', walletRoutes);
 app.use('/api/v1/aggregator', aggregatorCallbackRoutes);
 app.use('/api/v1/payments/callback', paymentCallbackRoutes);
-app.use('/api/v1/routers', routerRoutes);
-app.use('/api/v1/routers', routerControlRoutes);
+app.use('/api/v1/routers', authMiddleware, routerRoutes);
+app.use('/api/v1/routers', authMiddleware, routerControlRoutes);
 
 // Security headers for sensitive routes
 app.use('/api/v1/superadmin', (req, res, next) => {
@@ -131,27 +148,37 @@ async function startServer() {
             logger.info('DEVELOPMENT MODE: Database schema synced.');
         }
 
+        // Auto-seed templates on startup
+        await TemplateSeeder.seedDefaults();
+
         // Start Background Monitoring Services
         // Start Background Monitoring Services
-        console.log('[System Init] Checking Environment Configuration...');
+        // Start Background Monitoring Services
+        console.log('[System Init] Validating Environment Configuration...');
 
-        const checkEnv = (key: string) => {
-            if (process.env[key]) {
-                console.log(`[System Init] ENV CHECK: ${key} -> [EXISTS]`);
-            } else {
-                console.error(`[System Init] ENV CHECK: ${key} -> [MISSING] ❌`);
-            }
-        };
+        const requiredEnvVars = [
+            'SUPER_ADMIN_EMAIL',
+            'SUPER_ADMIN_PASSWORD',
+            'SUPER_ADMIN_JWT_SECRET',
+            'JWT_SECRET',
+            'DB_NAME',
+            'DB_USER',
+            'DB_PASS',
+            'DB_HOST'
+        ];
 
-        checkEnv('SUPER_ADMIN_EMAIL');
-        checkEnv('SUPER_ADMIN_PASSWORD');
-        checkEnv('SUPER_ADMIN_JWT_SECRET');
+        const missing = requiredEnvVars.filter(key => !process.env[key]);
 
-        if (!process.env.SUPER_ADMIN_EMAIL || !process.env.SUPER_ADMIN_PASSWORD) {
-            console.error('[System Init] CRITICAL: Super Admin Credentials: [INCOMPLETE]');
+        if (missing.length > 0) {
+            console.error('[System Init] CRITICAL ERROR: Missing required environment variables:');
+            missing.forEach(key => console.error(` - ${key}`));
+            console.error('Server cannot start without these variables. Exiting...');
+            process.exit(1);
         }
 
-        TrafficMonitorService.start(5 * 60 * 1000); // Poll routers every 5 minutes
+        console.log('[System Init] Environment Configuration: [OK]');
+
+        TrafficMonitorService.start(30 * 1000); // Poll routers every 30 seconds
 
         // Schedule Production Purge (Every 24 hours)
         setInterval(() => {

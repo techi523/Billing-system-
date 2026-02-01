@@ -222,4 +222,70 @@ export class AnalyticsService {
             activeUsersCount
         };
     }
+
+    /**
+     * Traffic Context & Peak Hours
+     */
+    static async getTrafficContext(tenantId: string) {
+        // 1. Calculate Peak Hours (Last 30 days)
+        const last30Days = new Date();
+        last30Days.setDate(last30Days.getDate() - 30);
+
+        // Group sessions by hour of day (0-23)
+        const isMySQL = process.env.DB_TYPE === 'mysql';
+        const hourFunc = isMySQL ? 'HOUR' : 'strftime'; // SQLite: strftime('%H', startTime)
+        const hourCol = isMySQL ? sequelize.fn('HOUR', sequelize.col('startTime')) : sequelize.literal("cast(strftime('%H', startTime) as integer)") as any;
+
+        const sessionsByHour = await Session.findAll({
+            attributes: [
+                [hourCol, 'hour'],
+                [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+            ],
+            where: {
+                tenantId,
+                startTime: { [Op.gte]: last30Days }
+            },
+            group: [hourCol],
+            raw: true
+        });
+
+        // Find the 3-hour window with max sessions
+        const hoursMap = new Array(24).fill(0);
+        sessionsByHour.forEach((r: any) => {
+            hoursMap[parseInt(r.hour)] = parseInt(r.count);
+        });
+
+        let maxVolume = 0;
+        let peakStart = 19; // Default 7 PM
+
+        for (let i = 0; i < 24; i++) {
+            const vol = hoursMap[i] + hoursMap[(i + 1) % 24] + hoursMap[(i + 2) % 24];
+            if (vol > maxVolume) {
+                maxVolume = vol;
+                peakStart = i;
+            }
+        }
+
+        const peakEnd = (peakStart + 3) % 24;
+        const formatTime = (h: number) => {
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const hr = h % 12 || 12;
+            return `${hr.toString().padStart(2, '0')}:00 ${ampm}`;
+        };
+        const peakHours = `${formatTime(peakStart)} - ${formatTime(peakEnd)}`;
+
+        // 2. Calculate Net Efficiency (Success Rate of Payments/Auth)
+        // Proxy: Successful Payments / Total Payments (Since sessions are essentially successful grants)
+        const [success, total] = await Promise.all([
+            Payment.count({ where: { tenantId, status: 'SUCCESS' } }),
+            Payment.count({ where: { tenantId } }) // All attempts
+        ]);
+
+        const efficiency = total > 0 ? (success / total) * 100 : 100;
+
+        return {
+            peakHours,
+            netEfficiency: efficiency.toFixed(1) + '%'
+        };
+    }
 }

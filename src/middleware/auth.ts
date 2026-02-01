@@ -86,14 +86,18 @@ export const tenantGuard = (req: AuthRequest, res: Response, next: NextFunction)
         return res.status(401).json({ error: 'Authentication required' });
     }
 
-    // Super admins cannot access tenant-specific routes
+    // Super admins bypass tenant checks
     if (req.user.role === 'SUPER_ADMIN') {
-        return res.status(403).json({ error: 'Super admin cannot access tenant routes' });
+        return next();
     }
 
-    // Tenant admins must have a tenantId
+    // All other roles MUST have a tenantId
     if (!req.user.tenantId) {
-        return res.status(403).json({ error: 'Invalid tenant access' });
+        return res.status(403).json({
+            error: 'No tenant assigned to your account',
+            code: 'TENANT_REQUIRED',
+            action: 'NAVIGATE_TO_SETUP'
+        });
     }
 
     next();

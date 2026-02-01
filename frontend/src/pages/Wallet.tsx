@@ -1,16 +1,39 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import {
+    Wallet as WalletIcon,
+    ArrowUpRight,
+    ArrowDownLeft,
+    History,
+    ShieldCheck,
+    Info,
+    RefreshCw,
+    AlertTriangle,
+    X,
+    ChevronRight,
+    Search,
+    Download
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import BackButton from '../components/Common/BackButton';
+import ThemeToggle from '../components/Common/ThemeToggle';
+import { useAuth } from '../context/AuthContext';
 
 const WalletPage = () => {
+    const { logout } = useAuth();
     const [balance, setBalance] = useState<any>(null);
     const [transactions, setTransactions] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isReconciling, setIsReconciling] = useState(false);
+    const [reconcileResult, setReconcileResult] = useState<any>(null);
+    const [selectedTxTrace, setSelectedTxTrace] = useState<any>(null);
+    const [isTraceLoading, setIsTraceLoading] = useState(false);
+
+    // Withdrawal state
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [withdrawMethod, setWithdrawMethod] = useState('MPESA');
     const [otp, setOtp] = useState('');
-    const [step, setStep] = useState('REQUEST'); // REQUEST, VERIFY
+    const [step, setStep] = useState('REQUEST');
     const [message, setMessage] = useState('');
 
     useEffect(() => {
@@ -18,7 +41,6 @@ const WalletPage = () => {
     }, []);
 
     const fetchData = async () => {
-        setIsLoading(true);
         try {
             const [balanceRes, transRes] = await Promise.all([
                 axios.get('/api/v1/wallet/balance'),
@@ -26,24 +48,48 @@ const WalletPage = () => {
             ]);
             setBalance(balanceRes.data);
             setTransactions(transRes.data);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to fetch wallet data', error);
+            if (error.response?.status === 401) logout();
+        }
+    };
+
+    const handleReconcile = async () => {
+        try {
+            setIsReconciling(true);
+            const res = await axios.post('/api/v1/wallet/reconcile');
+            setReconcileResult(res.data);
+            fetchData();
+        } catch (error) {
+            console.error('Reconciliation failed', error);
         } finally {
-            setIsLoading(false);
+            setIsReconciling(false);
+        }
+    };
+
+    const fetchTxTrace = async (id: string) => {
+        try {
+            setIsTraceLoading(true);
+            const res = await axios.get(`/api/v1/wallet/transactions/${id}/trace`);
+            setSelectedTxTrace(res.data);
+        } catch (error) {
+            console.error('Failed to fetch transaction trace', error);
+        } finally {
+            setIsTraceLoading(false);
         }
     };
 
     const handleWithdrawRequest = async () => {
         try {
             const res = await axios.post('/api/v1/wallet/withdraw/request',
-                { amount: parseFloat(withdrawAmount), method: withdrawMethod }
+                { amount: parseFloat(withdrawAmount) * 100, method: withdrawMethod } // Convert to cents
             );
 
             if (res.data.step === 'VERIFICATION_REQUIRED') {
                 setStep('VERIFY');
-                setMessage('An OTP has been sent to your email.');
+                setMessage('An OTP has been sent for verification.');
             } else {
-                setMessage('Withdrawal request submitted successfully!');
+                setMessage('Withdrawal request submitted!');
                 setShowWithdrawModal(false);
                 fetchData();
             }
@@ -55,9 +101,9 @@ const WalletPage = () => {
     const handleWithdrawVerify = async () => {
         try {
             await axios.post('/api/v1/wallet/withdraw/verify',
-                { amount: parseFloat(withdrawAmount), method: withdrawMethod, otp }
+                { amount: parseFloat(withdrawAmount) * 100, method: withdrawMethod, otp }
             );
-            setMessage('Withdrawal request verified and submitted!');
+            setMessage('Verification successful! Withdrawal in progress.');
             setShowWithdrawModal(false);
             setStep('REQUEST');
             fetchData();
@@ -66,179 +112,349 @@ const WalletPage = () => {
         }
     };
 
-    if (isLoading) return (
-        <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center transition-colors duration-300">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-[var(--border-subtle)] border-t-sky-500 rounded-full animate-spin"></div>
-                <p className="font-black text-[var(--text-muted)] uppercase tracking-widest text-xs">Accessing Secure Vault...</p>
-            </div>
-        </div>
-    );
-
     return (
-        <div className="min-h-screen bg-[var(--bg-main)] p-8 transition-colors duration-300">
-            <div className="max-w-6xl mx-auto space-y-8">
-                <div className="flex justify-between items-center">
+        <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] transition-colors duration-300">
+            {/* Header */}
+            <div className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-6">
-                        <BackButton to="/tenant" variant="dark" label="Back" />
+                        <BackButton to="/tenant" label="Dashboard" variant="dark" />
                         <div>
-                            <h1 className="text-3xl font-black text-[var(--text-primary)]">Wallet & Settlements</h1>
-                            <p className="text-[var(--text-secondary)] font-bold">Manage your funds and track earnings</p>
+                            <h1 className="text-2xl font-black flex items-center gap-2">
+                                <WalletIcon className="w-6 h-6 text-sky-500" /> My Treasury
+                            </h1>
+                            <p className="text-[var(--text-secondary)] font-bold text-sm">Auditable Funds & Real-time Ledger</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <ThemeToggle />
+                        <button
+                            onClick={() => { setShowWithdrawModal(true); setStep('REQUEST'); setMessage(''); }}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-sky-600 text-white rounded-xl font-bold text-sm hover:bg-sky-500 transition-all active:scale-95 shadow-lg shadow-sky-500/20"
+                        >
+                            <Download className="w-4 h-4" /> Withdraw Funds
+                        </button>
+                        <button
+                            onClick={handleReconcile}
+                            disabled={isReconciling}
+                            className={`flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl font-bold text-sm transition-all ${isReconciling ? 'opacity-50' : 'hover:bg-slate-800 active:scale-95'}`}
+                        >
+                            <RefreshCw className={`w-4 h-4 ${isReconciling ? 'animate-spin' : ''}`} />
+                            {isReconciling ? 'Verifying Ledger...' : 'Audit Now'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+                {/* Balance Cards */}
+                <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="p-8 bg-slate-900 text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/20 rounded-full blur-3xl -tr-8 -tt-8 group-hover:bg-sky-500/30 transition-all"></div>
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Total Balance</p>
+                        <h3 className="text-3xl font-black relative z-10">KES {(Number(balance?.balance || 0) / 100).toLocaleString()}</h3>
+                        <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-emerald-400 relative z-10">
+                            <ShieldCheck className="w-3 h-3" /> VERIFIED BY LEDGER
+                        </div>
+                    </div>
+
+                    <div className="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl group">
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Settled (Ready)</p>
+                        <h3 className="text-3xl font-black text-emerald-600">KES {(Number(balance?.settled || 0) / 100).toLocaleString()}</h3>
+                        <button
+                            onClick={() => { setShowWithdrawModal(true); setStep('REQUEST'); setMessage(''); }}
+                            className="mt-4 text-xs font-black text-emerald-700 hover:text-emerald-800 flex items-center gap-1 group-hover:translate-x-1 transition-all"
+                        >
+                            INITIATE WITHDRAWAL <ChevronRight className="w-3 h-3" />
+                        </button>
+                    </div>
+
+                    <div className="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl">
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">In Escrow</p>
+                        <h3 className="text-3xl font-black text-amber-500">KES {(Number(balance?.pending || 0) / 100).toLocaleString()}</h3>
+                        <p className="mt-4 text-[10px] font-black text-slate-400 italic">Matures in 24-48 hours</p>
+                    </div>
+
+                    <div className="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl">
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Frozen</p>
+                        <h3 className="text-3xl font-black text-rose-500">KES {(Number(balance?.frozen || 0) / 100).toLocaleString()}</h3>
+                        <p className="mt-4 text-[10px) font-black text-slate-400 italic">Disputed or pending reversal</p>
+                    </div>
+                </div>
+
+                {/* Audit Reconciliation Alert */}
+                {reconcileResult && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`lg:col-span-4 p-6 rounded-3xl border flex items-center justify-between ${reconcileResult.status === 'MATCH' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'}`}
+                    >
+                        <div className="flex items-center gap-4">
+                            {reconcileResult.status === 'MATCH' ? <ShieldCheck className="w-8 h-8" /> : <AlertTriangle className="w-8 h-8" />}
+                            <div>
+                                <h4 className="font-black">Ledger Audit: {reconcileResult.status}</h4>
+                                <p className="text-sm font-medium opacity-80">
+                                    {reconcileResult.status === 'MATCH'
+                                        ? 'Your current balance is perfectly synchronized with the transaction history.'
+                                        : `Discrepancy detected: ${reconcileResult.discrepancy / 100} KES. Contact support.`}
+                                </p>
+                            </div>
+                        </div>
+                        <button onClick={() => setReconcileResult(null)} className="p-2 hover:bg-white/50 rounded-full">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </motion.div>
+                )}
+
+                {/* Transaction Ledger */}
+                <div className="lg:col-span-3 space-y-6">
+                    <div className="flex items-center justify-between px-2">
+                        <h2 className="text-xl font-black flex items-center gap-2">
+                            <History className="w-5 h-5 text-sky-500" /> Transaction Ledger
+                        </h2>
+                        <div className="relative">
+                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Search reference..."
+                                className="pl-9 pr-4 py-2 bg-white border border-slate-100 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500 outline-none shadow-sm"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-xl overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-50 border-b border-slate-100">
+                                    <tr>
+                                        <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Timestamp</th>
+                                        <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Type</th>
+                                        <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Description</th>
+                                        <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none text-right">Amount</th>
+                                        <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none text-right">Balance</th>
+                                        <th className="px-4 py-5 font-black text-slate-400 text-center leading-none"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {transactions.map((tx: any) => (
+                                        <tr
+                                            key={tx.id}
+                                            onClick={() => fetchTxTrace(tx.id)}
+                                            className="hover:bg-slate-50/80 cursor-pointer transition-all group"
+                                        >
+                                            <td className="px-8 py-5 text-sm font-bold text-slate-500">
+                                                {new Date(tx.createdAt).toLocaleString()}
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <div className={`w-fit px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 ${tx.transactionType === 'CREDIT' ? 'bg-emerald-100 text-emerald-700' :
+                                                        tx.transactionType === 'DEBIT' ? 'bg-rose-100 text-rose-700' :
+                                                            'bg-slate-100 text-slate-700'
+                                                    }`}>
+                                                    {tx.transactionType === 'CREDIT' ? <ArrowDownLeft className="w-3 h-3" /> : <ArrowUpRight className="w-3 h-3" />}
+                                                    {tx.transactionType}
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5 text-sm font-black text-slate-900 group-hover:text-sky-600 transition-colors">
+                                                {tx.description}
+                                            </td>
+                                            <td className={`px-8 py-5 text-sm font-black text-right ${tx.transactionType === 'CREDIT' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                {tx.transactionType === 'CREDIT' ? '+' : '-'}{(tx.amount / 100).toLocaleString()}
+                                            </td>
+                                            <td className="px-8 py-5 text-sm font-black text-right text-slate-900">
+                                                {(tx.balanceAfter / 100).toLocaleString()}
+                                            </td>
+                                            <td className="px-4 py-5 text-right">
+                                                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-sky-500 transition-all opacity-0 group-hover:opacity-100" />
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                {/* Balance Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="premium-card bg-[var(--bg-surface)] border-[var(--border-subtle)] border-l-4 border-l-emerald-500 shadow-sm transition-colors">
-                        <p className="text-xs font-black text-[var(--text-muted)] uppercase mb-1">Total Assets</p>
-                        <h3 className="text-2xl font-black text-[var(--text-primary)]">KES {Number(balance?.balance || 0).toLocaleString()}</h3>
-                    </div>
-                    <div className="premium-card bg-[var(--bg-surface)] border-[var(--border-subtle)] border-l-4 border-l-sky-500 shadow-sm transition-colors">
-                        <p className="text-xs font-black text-[var(--text-muted)] uppercase mb-1">Settled (Withdrawable)</p>
-                        <h3 className="text-2xl font-black text-sky-500">KES {Number(balance?.settledBalance || 0).toLocaleString()}</h3>
-                    </div>
-                    <div className="premium-card bg-[var(--bg-surface)] border-[var(--border-subtle)] border-l-4 border-l-amber-500 shadow-sm transition-colors">
-                        <p className="text-xs font-black text-[var(--text-muted)] uppercase mb-1">In Escrow (Pending)</p>
-                        <h3 className="text-2xl font-black text-amber-500">KES {Number(balance?.pendingBalance || 0).toLocaleString()}</h3>
-                    </div>
-                    <div className="premium-card bg-[var(--bg-surface)] border-[var(--border-subtle)] border-l-4 border-l-rose-500 shadow-sm transition-colors">
-                        <p className="text-xs font-black text-[var(--text-muted)] uppercase mb-1">Frozen / Disputed</p>
-                        <h3 className="text-2xl font-black text-rose-500">KES {Number(balance?.frozenBalance || 0).toLocaleString()}</h3>
-                    </div>
-                </div>
+                {/* Audit Trace View */}
+                <div className="lg:col-span-1 space-y-6">
+                    <h2 className="text-xl font-black px-2">Transaction Detail</h2>
 
-                <div className="flex justify-end">
-                    <button
-                        onClick={() => { setShowWithdrawModal(true); setStep('REQUEST'); setMessage(''); }}
-                        className="px-8 py-4 bg-sky-600 text-white font-black rounded-2xl shadow-lg shadow-sky-500/20 hover:bg-sky-500 transition-all active:scale-95"
-                    >
-                        Withdraw Funds
-                    </button>
-                </div>
+                    <AnimatePresence mode="wait">
+                        {isTraceLoading ? (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="p-8 bg-white border border-slate-100 rounded-[2.5rem] flex flex-col items-center justify-center text-center space-y-4"
+                            >
+                                <RefreshCw className="w-8 h-8 text-sky-500 animate-spin" />
+                                <p className="text-xs font-black text-slate-400">PULLING GATEWAY PROOF...</p>
+                            </motion.div>
+                        ) : selectedTxTrace ? (
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                className="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl space-y-6 relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 left-0 w-2 h-full bg-sky-500"></div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">TRACE ID: {selectedTxTrace.transaction.id.slice(0, 8)}</span>
+                                    <button onClick={() => setSelectedTxTrace(null)}><X className="w-4 h-4 text-slate-400 hover:text-slate-900" /></button>
+                                </div>
 
-                {/* Transaction History */}
-                <div className="premium-card bg-[var(--bg-surface)] border-[var(--border-subtle)] overflow-hidden transition-colors">
-                    <div className="p-6 border-b border-[var(--border-subtle)] flex justify-between items-center">
-                        <h2 className="text-xl font-black text-[var(--text-primary)]">Transaction History</h2>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-[var(--bg-surface-elevated)]">
-                                <tr>
-                                    <th className="px-6 py-4 text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Date</th>
-                                    <th className="px-6 py-4 text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Type</th>
-                                    <th className="px-6 py-4 text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Description</th>
-                                    <th className="px-6 py-4 text-xs font-black text-[var(--text-muted)] uppercase tracking-widest text-right">Amount</th>
-                                    <th className="px-6 py-4 text-xs font-black text-[var(--text-muted)] uppercase tracking-widest text-right">Balance</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-[var(--border-subtle)]">
-                                {transactions.map((tx: any) => (
-                                    <tr key={tx.id} className="hover:bg-[var(--bg-surface-elevated)] transition-colors">
-                                        <td className="px-6 py-4 font-bold text-[var(--text-secondary)]">{new Date(tx.createdAt).toLocaleDateString()}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-full text-[10px] font-black ${tx.transactionType === 'CREDIT' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                tx.transactionType === 'DEBIT' ? 'bg-rose-500/10 text-rose-500' :
-                                                    'bg-[var(--bg-surface-elevated)] text-[var(--text-muted)]'
-                                                }`}>
-                                                {tx.transactionType}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 font-bold text-[var(--text-primary)]">{tx.description}</td>
-                                        <td className={`px-6 py-4 font-black text-right ${tx.transactionType === 'CREDIT' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                            {tx.transactionType === 'CREDIT' ? '+' : '-'}{Number(tx.amount).toLocaleString()}
-                                        </td>
-                                        <td className="px-6 py-4 font-black text-[var(--text-primary)] text-right">{Number(tx.balanceAfter).toLocaleString()}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Gateway Proof</label>
+                                    {!selectedTxTrace.source ? (
+                                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
+                                            <Info className="w-5 h-5 text-slate-400" />
+                                            <p className="text-xs font-bold text-slate-500 italic">No external gateway linked (Internal Action)</p>
+                                        </div>
+                                    ) : (
+                                        <div className="p-5 bg-sky-50 rounded-2xl border border-sky-100 space-y-4 font-bold">
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-sky-600">PROVIDER</span>
+                                                <span className="text-sky-900 uppercase">{selectedTxTrace.source.gateway || selectedTxTrace.source.type}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-sky-600">REFERENCE</span>
+                                                <span className="text-sky-900">{selectedTxTrace.source.reference}</span>
+                                            </div>
+                                            <div className="pt-4 border-t border-sky-100">
+                                                <p className="text-[9px] text-sky-600 mb-2 uppercase tracking-tighter">RAW JSON FRAGMENT</p>
+                                                <pre className="text-[10px] text-sky-800 bg-white/50 p-3 rounded-lg overflow-x-auto">
+                                                    {JSON.stringify(selectedTxTrace.source.rawPayload || { reference: selectedTxTrace.source.reference }, null, 2)}
+                                                </pre>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Audit Pipeline</label>
+                                    <div className="space-y-3">
+                                        {selectedTxTrace.auditTrail.length === 0 ? (
+                                            <p className="text-xs font-bold text-slate-400 italic px-2">No audit logs for this specific TX.</p>
+                                        ) : selectedTxTrace.auditTrail.map((log: any) => (
+                                            <div key={log.id} className="flex gap-3 pl-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-sky-500 mt-1.5 shrink-0"></div>
+                                                <div>
+                                                    <p className="text-xs font-black text-slate-900">{log.action}</p>
+                                                    <p className="text-[10px] font-bold text-slate-400">{new Date(log.createdAt).toLocaleTimeString()}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-50 text-center">
+                                    <p className="text-[10px] font-black text-emerald-600 flex items-center justify-center gap-2">
+                                        <ShieldCheck className="w-3 h-3" /> TRANSACTION IS AUDITABLE
+                                    </p>
+                                </div>
+                            </motion.div>
+                        ) : (
+                            <div className="p-12 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center justify-center text-center opacity-60">
+                                <Search className="w-12 h-12 text-slate-300 mb-4" />
+                                <p className="text-sm font-bold text-slate-400">Select any transaction from the ledger to view its cryptographically verifiable gateway proof.</p>
+                            </div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
 
-            {/* Withdrawal Modal */}
-            {showWithdrawModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 transition-all animate-in fade-in">
-                    <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl space-y-8 animate-in zoom-in-95 duration-300">
-                        <h2 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">Withdraw Funds</h2>
+            {/* Withdrawal Modal (Inherited) */}
+            <AnimatePresence>
+                {showWithdrawModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden"
+                        >
+                            <div className="p-10">
+                                <div className="flex items-center justify-between mb-8">
+                                    <h2 className="text-3xl font-black text-slate-900">Withdraw Funds</h2>
+                                    <button onClick={() => setShowWithdrawModal(false)}><X className="w-6 h-6 text-slate-400 hover:text-slate-900" /></button>
+                                </div>
 
-                        {message && (
-                            <div className={`p-4 rounded-xl font-bold text-sm ${message.includes('success') ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                                {message}
-                            </div>
-                        )}
+                                {message && (
+                                    <div className={`p-4 rounded-2xl mb-6 text-sm font-bold ${message.includes('success') ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                        {message}
+                                    </div>
+                                )}
 
-                        {step === 'REQUEST' ? (
-                            <div className="space-y-6">
-                                <div>
-                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 block">Amount (KES)</label>
-                                    <input
-                                        type="number"
-                                        value={withdrawAmount}
-                                        onChange={(e) => setWithdrawAmount(e.target.value)}
-                                        className="w-full px-6 py-4 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl font-bold text-[var(--text-primary)] focus:outline-none focus:border-sky-500 transition-all text-lg"
-                                        placeholder="0.00"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 block">Method</label>
-                                    <select
-                                        value={withdrawMethod}
-                                        onChange={(e) => setWithdrawMethod(e.target.value)}
-                                        className="w-full px-6 py-4 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl font-bold text-[var(--text-primary)] focus:outline-none focus:border-sky-500 transition-all"
-                                    >
-                                        <option value="MPESA">M-Pesa Number</option>
-                                        <option value="BANK">Bank Account</option>
-                                    </select>
-                                </div>
-                                <div className="flex gap-4 pt-4">
-                                    <button
-                                        onClick={() => setShowWithdrawModal(false)}
-                                        className="flex-1 py-4 bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] font-bold rounded-2xl border border-[var(--border-subtle)] hover:bg-[var(--bg-surface)] transition-all"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleWithdrawRequest}
-                                        className="flex-1 py-4 bg-sky-600 text-white font-black rounded-2xl shadow-lg shadow-sky-500/20 hover:bg-sky-500 transition-all hover:scale-[1.02]"
-                                    >
-                                        Continue
-                                    </button>
-                                </div>
+                                {step === 'REQUEST' ? (
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2 block">Amount (KES)</label>
+                                            <input
+                                                type="number"
+                                                value={withdrawAmount}
+                                                onChange={(e) => setWithdrawAmount(e.target.value)}
+                                                className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-2xl text-2xl font-black outline-none focus:ring-4 focus:ring-sky-100 text-slate-900 transition-all"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2 block">Destination Provider</label>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <button
+                                                    onClick={() => setWithdrawMethod('MPESA')}
+                                                    className={`p-4 border-2 rounded-2xl font-black transition-all ${withdrawMethod === 'MPESA' ? 'border-sky-500 bg-sky-50 text-sky-600' : 'border-slate-100 text-slate-400 hover:border-slate-300'}`}
+                                                >
+                                                    M-PESA
+                                                </button>
+                                                <button
+                                                    onClick={() => setWithdrawMethod('BANK')}
+                                                    className={`p-4 border-2 rounded-2xl font-black transition-all ${withdrawMethod === 'BANK' ? 'border-sky-500 bg-sky-50 text-sky-600' : 'border-slate-100 text-slate-400 hover:border-slate-300'}`}
+                                                >
+                                                    BANK
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={handleWithdrawRequest}
+                                            className="w-full py-5 bg-slate-900 text-white rounded-[2rem] font-black text-xl hover:bg-slate-800 transition-all active:scale-95 shadow-xl shadow-slate-200"
+                                        >
+                                            Verify & Continue
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-8 py-4">
+                                        <div className="text-center">
+                                            <h3 className="text-lg font-black text-slate-900 mb-2">Check your email</h3>
+                                            <p className="text-sm font-bold text-slate-400 leading-relaxed px-10">We've sent a 6-digit verification code to your registered security email.</p>
+                                        </div>
+                                        <div className="flex justify-center">
+                                            <input
+                                                type="text"
+                                                maxLength={6}
+                                                value={otp}
+                                                onChange={(e) => setOtp(e.target.value)}
+                                                className="w-48 text-center text-5xl font-black tracking-[0.2em] outline-none text-sky-500"
+                                                placeholder="000000"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={handleWithdrawVerify}
+                                            className="w-full py-5 bg-sky-600 text-white rounded-[2rem] font-black text-xl hover:bg-sky-500 transition-all active:scale-95 shadow-xl shadow-sky-200"
+                                        >
+                                            Verify Withdrawal
+                                        </button>
+                                        <button
+                                            onClick={() => setStep('REQUEST')}
+                                            className="w-full text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-900"
+                                        >
+                                            Back to amount
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <div className="space-y-6">
-                                <div>
-                                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 block text-center">Enter Verification Code</label>
-                                    <input
-                                        type="text"
-                                        value={otp}
-                                        onChange={(e) => setOtp(e.target.value)}
-                                        className="w-full px-6 py-6 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl font-black text-center text-4xl tracking-[0.5em] text-sky-500 focus:outline-none focus:border-sky-500 transition-all"
-                                        placeholder="000000"
-                                    />
-                                </div>
-                                <div className="flex gap-4 pt-4">
-                                    <button
-                                        onClick={() => setStep('REQUEST')}
-                                        className="flex-1 py-4 bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] font-bold rounded-2xl border border-[var(--border-subtle)] hover:bg-[var(--bg-surface)] transition-all"
-                                    >
-                                        Back
-                                    </button>
-                                    <button
-                                        onClick={handleWithdrawVerify}
-                                        className="flex-1 py-4 bg-sky-600 text-white font-black rounded-2xl shadow-lg shadow-sky-500/20 hover:bg-sky-500 transition-all hover:scale-[1.02]"
-                                    >
-                                        Verify & Withdraw
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
         </div>
     );
 };

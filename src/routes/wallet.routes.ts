@@ -36,6 +36,11 @@ router.post('/withdraw/request', authMiddleware, async (req: any, res) => {
         const tenantId = req.user.tenantId;
         const userId = req.user.id;
 
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ error: 'Amount must be greater than 0' });
+        }
+
+
         const tenant = await Tenant.findByPk(tenantId);
         if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
 
@@ -60,11 +65,39 @@ router.post('/withdraw/verify', authMiddleware, async (req: any, res) => {
         const userId = req.user.id;
         const target = req.user.email;
 
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ error: 'Amount must be greater than 0' });
+        }
+
+
         const verified = await VerificationService.verifyOTP(target, otp, userId);
         if (!verified) return res.status(400).json({ error: 'Invalid or expired OTP' });
 
         const settlement = await WalletService.createSettlement(tenantId, amount, method, userId);
         res.json({ message: 'Withdrawal request verified and created', settlement });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Reconcile wallet balance
+router.post('/reconcile', authMiddleware, async (req: any, res) => {
+    try {
+        const tenantId = req.user.tenantId;
+        const result = await WalletService.reconcileWallet(tenantId);
+        res.json(result);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get transaction trace
+router.get('/transactions/:id/trace', authMiddleware, async (req: any, res) => {
+    try {
+        const tenantId = req.user.tenantId;
+        const transactionId = req.params.id;
+        const trace = await WalletService.getTransactionTrace(transactionId, tenantId);
+        res.json(trace);
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }

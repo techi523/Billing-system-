@@ -192,7 +192,7 @@ const TenantOverview = () => {
                             Implement Strategy
                         </button>
                     </div>
-                </motion.div>
+                </div>
 
                 {/* Quick Config Card */}
                 <motion.div
@@ -222,7 +222,6 @@ const TenantOverview = () => {
                 </motion.div>
             </div>
         </div>
-        </div >
     );
 };
 

@@ -1,4 +1,4 @@
-import { Voucher, Package } from '../models';
+import { Voucher, Package, Router } from '../models';
 import { SessionOrchestrator } from '../orchestrator';
 
 export class VoucherService {
@@ -25,6 +25,14 @@ export class VoucherService {
         });
 
         if (!voucher) throw new Error('Invalid or already used voucher');
+
+        // Security: Ensure router belongs to the same tenant as voucher
+        const router = await Router.findByPk(routerId);
+        if (!router) throw new Error('Invalid router');
+
+        if (router.tenantId !== voucher.tenantId) {
+            throw new Error('This voucher cannot be used on this hotspot network');
+        }
 
         // 1. Mark as used
         voucher.status = 'USED';

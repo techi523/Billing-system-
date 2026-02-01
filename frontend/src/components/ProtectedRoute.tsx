@@ -35,9 +35,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
         return <>{children}</>;
     }
 
-    // MANDATORY TENANT RESOLUTION: Redirect TENANT users without a workspace to setup
-    if (user.role === 'TENANT' && !user.tenantId && location.pathname !== '/tenant/setup') {
-        console.warn(`[ProtectedRoute] User ${user.id} has no workspace. Redirecting to setup.`);
+    // MANDATORY TENANT RESOLUTION: Redirect non-superadmin users without a workspace to setup
+    const isTenantRoute = location.pathname.startsWith('/tenant') || location.pathname.startsWith('/admin');
+    const isSetupRoute = location.pathname === '/tenant/setup';
+
+    if (user.role !== 'SUPER_ADMIN' && !user.tenantId && !isSetupRoute && isTenantRoute) {
+        console.warn(`[ProtectedRoute] User ${user.id} (${user.role}) has no workspace. Redirecting to setup.`);
         return <Navigate to="/tenant/setup" replace />;
     }
 

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Payment, Package, Tenant, Subscriber, sequelize } from '../models';
+import { Payment, Package, Tenant, Subscriber, CampaignLog, sequelize } from '../models';
 import { SessionOrchestrator } from '../orchestrator';
 import { AuditService } from '../services/audit.service';
 import { IntaSendService } from '../services/intasend.service';
@@ -63,6 +63,31 @@ async function processFulfillment(fulfillmentData: any) {
         }
     }
 }
+
+// WHATSAPP STATUS WEBHOOK
+router.post('/whatsapp-status', async (req, res) => {
+    const { MessageSid, MessageStatus, ErrorCode } = req.body;
+    logger.info('WhatsApp status callback received', { MessageSid, MessageStatus });
+
+    try {
+        const log = await CampaignLog.findOne({ where: { providerReference: MessageSid } });
+        if (log) {
+            let status: any = 'SENT';
+            if (MessageStatus === 'delivered') status = 'DELIVERED';
+            if (MessageStatus === 'read') status = 'READ';
+            if (MessageStatus === 'failed') status = 'FAILED';
+
+            await log.update({
+                status,
+                error: ErrorCode ? `Twilio Error: ${ErrorCode}` : null
+            });
+        }
+        res.status(200).send('OK');
+    } catch (err: any) {
+        logger.error('WhatsApp Status Webhook Error', { error: err.message });
+        res.status(500).send('Error');
+    }
+});
 
 // M-PESA WEBHOOK
 router.post('/mpesa', async (req, res) => {

@@ -49,6 +49,12 @@ router.post('/:tenantId/pay', async (req, res) => {
     const { phone, packageId, mac, ip, routerId, subscriberId } = req.body;
     const tenantId = req.params.tenantId;
 
+    // Validate phone format (Basic Kenya/Intl format)
+    const phoneRegex = /^(?:254|\+254|0)?(7(?:(?:[0-9][0-9])|(?:[0-9][0-9]))[0-9]{6})$/;
+    if (!phone || !phoneRegex.test(phone.toString().replace(/\s/g, ''))) {
+        return res.status(400).json({ error: 'Invalid phone number format' });
+    }
+
     // Rate limiting: Prevent spam attacks (5 requests per minute per phone)
     const rateLimitKey = `rate_limit:${phone}`;
     const now = Date.now();

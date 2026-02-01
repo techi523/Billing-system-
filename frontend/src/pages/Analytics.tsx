@@ -20,6 +20,7 @@ const Analytics: React.FC = () => {
     const [revenue, setRevenue] = useState<any>(null);
     const [bandwidth, setBandwidth] = useState<any>(null);
     const [performance, setPerformance] = useState<any>(null);
+    const [trafficContext, setTrafficContext] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -34,6 +35,9 @@ const Analytics: React.FC = () => {
             setRevenue(revRes.data);
             setBandwidth(bandRes.data);
             setPerformance(perfRes.data);
+
+            // Fetch traffic context separately to not block main stats
+            axios.get('/api/v1/admin/analytics/context').then(res => setTrafficContext(res.data)).catch(console.error);
         } catch (error) {
             console.error('Failed to fetch analytics', error);
         } finally {
@@ -192,7 +196,7 @@ const Analytics: React.FC = () => {
                                     </div>
                                     <span className="font-bold text-sm tracking-tight text-white/80">Peak Hours</span>
                                 </div>
-                                <p className="text-2xl font-black text-white mb-1">07:00 PM - 10:00 PM</p>
+                                <p className="text-2xl font-black text-white mb-1">{trafficContext?.peakHours || 'Analyzing...'}</p>
                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest leading-relaxed">System-wide historical peak based on session initiation</p>
                             </div>
 
@@ -203,7 +207,7 @@ const Analytics: React.FC = () => {
                                     </div>
                                     <span className="font-bold text-sm tracking-tight text-white/80">Net Efficiency</span>
                                 </div>
-                                <p className="text-2xl font-black text-white mb-1">98.4%</p>
+                                <p className="text-2xl font-black text-white mb-1">{trafficContext?.netEfficiency || 'Calculating...'}</p>
                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest leading-relaxed">Successful auth requests vs total system handshakes</p>
                             </div>
                         </div>

@@ -312,33 +312,80 @@ router.post('/theme', async (req: any, res) => {
 
 // Password reset request endpoint
 router.post('/password-reset/request', async (req, res) => {
-    const { email } = req.body;
-    const user = await AdminUser.findOne({ where: { email } });
-    // Always respond with success to avoid email enumeration
-    if (user) {
-        const token = crypto.randomBytes(32).toString('hex');
-        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-        await PasswordResetToken.create({ userId: user.id, token, expiresAt, used: false });
-        await sendPasswordResetEmail(email, token);
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: 'Email is required' });
+
+        const user = await AdminUser.findOne({ where: { email } });
+
+        // Always respond with success to avoid email enumeration
+        if (user) {
+            const token = crypto.randomBytes(32).toString('hex');
+            const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+            await PasswordResetToken.create({
+                userId: user.id,
+                token,
+                expiresAt,
+                used: false
+            });
+
+            await sendPasswordResetEmail(email, token);
+
+            await AuditLog.create({
+                action: 'PASSWORD_RESET_REQUESTED',
+                details: `Password reset requested for ${email}`,
+                userId: user.id,
+                tenantId: user.tenantId,
+                ipAddress: req.ip
+            });
+        }
+
+        res.json({ message: 'If the email exists, a password reset link has been sent.' });
+    } catch (error: any) {
+        console.error('Password reset request error:', error);
+        res.status(500).json({ error: 'Failed to process request' });
     }
-    res.json({ message: 'If the email exists, a password reset link has been sent.' });
 });
 
 // Password reset confirmation endpoint
 router.post('/password-reset/confirm', async (req, res) => {
-    const { token, newPassword } = req.body;
-    const resetRecord = await PasswordResetToken.findOne({ where: { token, used: false } });
-    if (!resetRecord || resetRecord.expiresAt < new Date()) {
-        return res.status(400).json({ error: 'Invalid or expired token' });
+    try {
+        const { token, newPassword } = req.body;
+        if (!token || !newPassword) {
+            return res.status(400).json({ error: 'Token and new password are required' });
+        }
+
+        const resetRecord = await PasswordResetToken.findOne({
+            where: { token, used: false }
+        });
+
+        if (!resetRecord || resetRecord.expiresAt < new Date()) {
+            return res.status(400).json({ error: 'Invalid or expired token' });
+        }
+
+        const user = await AdminUser.findByPk(resetRecord.userId);
+        if (!user) {
+            return res.status(400).json({ error: 'User not found' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 12);
+        await user.update({ password: hashedPassword });
+        await resetRecord.update({ used: true });
+
+        await AuditLog.create({
+            action: 'PASSWORD_RESET_SUCCESS',
+            details: `Password reset successful for ${user.email}`,
+            userId: user.id,
+            tenantId: user.tenantId,
+            ipAddress: req.ip
+        });
+
+        res.json({ message: 'Password has been reset successfully' });
+    } catch (error: any) {
+        console.error('Password reset confirm error:', error);
+        res.status(500).json({ error: 'Failed to reset password' });
     }
-    const user = await AdminUser.findByPk(resetRecord.userId);
-    if (!user) {
-        return res.status(400).json({ error: 'User not found' });
-    }
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-    await user.update({ password: hashedPassword });
-    await resetRecord.update({ used: true });
-    res.json({ message: 'Password has been reset successfully' });
 });
 
 export default router;

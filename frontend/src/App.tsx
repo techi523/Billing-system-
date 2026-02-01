@@ -27,6 +27,7 @@ import Packages from './pages/Packages';
 import Analytics from './pages/Analytics';
 import MikrotikCenter from './pages/MikrotikCenter';
 import Wallet from './pages/Wallet';
+import Campaigns from './pages/Campaigns';
 import CustomerPortal from './pages/CustomerPortal';
 
 function App() {
@@ -90,6 +91,12 @@ function App() {
                             <Route path="/tenant/wallet" element={
                                 <ProtectedRoute allowedRoles={['TENANT']}>
                                     <Wallet />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/tenant/campaigns" element={
+                                <ProtectedRoute allowedRoles={['TENANT', 'STAFF']}>
+                                    <Campaigns />
                                 </ProtectedRoute>
                             } />
 

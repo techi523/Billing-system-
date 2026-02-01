@@ -13,6 +13,7 @@ import { Button } from '../Common/Button';
 import { Input } from '../Common/Input';
 import { Badge } from '../Common/Badge';
 import { Card } from '../Common/Card';
+import { Modal } from '../Common/Modal';
 
 interface Subscriber {
     id: string;
@@ -34,32 +35,122 @@ const SubscriberTable = () => {
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [currentSubscriber, setCurrentSubscriber] = useState<any>(null);
+    const [packages, setPackages] = useState<any[]>([]);
+    const [routers, setRouters] = useState<any[]>([]);
+    const [formData, setFormData] = useState({
+        name: '',
+        phoneNumber: '',
+        pppoeUsername: '',
+        pppoePassword: '',
+        packageId: '',
+        routerId: '',
+        address: '',
+        notes: ''
+    });
+
+    const fetchSubscribers = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get('/api/v1/admin/subscribers');
+            const mapped = response.data.map((s: any) => ({
+                id: s.id,
+                name: s.name || 'Anonymous',
+                phone: s.phoneNumber,
+                plan: s.package?.name || 'No Plan',
+                status: s.displayStatus,
+                usage: s.usagePercent,
+                expires: s.expiresIn,
+                lastSeen: s.activeSession ? 'Online' : (s.lastPaymentDate ? 'Last seen ' + new Date(s.lastPaymentDate).toLocaleDateString() : 'Never'),
+                ipAddress: s.activeSession?.ipAddress || '',
+                deviceType: 'Smartphone',
+                raw: s
+            }));
+            setSubscribers(mapped);
+        } catch (error) {
+            console.error('Failed to fetch subscribers', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchMetadata = async () => {
+        try {
+            const [pkgsRes, routersRes] = await Promise.all([
+                axios.get('/api/v1/admin/packages'),
+                axios.get('/api/v1/admin/routers')
+            ]);
+            setPackages(pkgsRes.data);
+            setRouters(routersRes.data);
+        } catch (error) {
+            console.error('Failed to fetch metadata', error);
+        }
+    };
 
     useEffect(() => {
-        const fetchSubscribers = async () => {
-            try {
-                const response = await axios.get('/api/v1/admin/subscribers');
-                const mapped = response.data.map((s: any) => ({
-                    id: s.id,
-                    name: s.name || 'Anonymous',
-                    phone: s.phoneNumber,
-                    plan: s.package?.name || 'No Plan',
-                    status: s.displayStatus,
-                    usage: s.usagePercent,
-                    expires: s.expiresIn,
-                    lastSeen: s.activeSession ? 'Online' : (s.lastPaymentDate ? 'Last seen ' + new Date(s.lastPaymentDate).toLocaleDateString() : 'Never'),
-                    ipAddress: s.activeSession?.ipAddress || '',
-                    deviceType: 'Smartphone'
-                }));
-                setSubscribers(mapped);
-            } catch (error) {
-                console.error('Failed to fetch subscribers', error);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchSubscribers();
+        fetchMetadata();
     }, []);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            if (isEditing && currentSubscriber) {
+                await axios.put(`/api/v1/admin/subscribers/${currentSubscriber.id}`, formData);
+            } else {
+                await axios.post('/api/v1/admin/subscribers', formData);
+            }
+            setIsModalOpen(false);
+            fetchSubscribers();
+        } catch (error) {
+            console.error('Failed to save subscriber', error);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (window.confirm('Are you sure you want to delete this subscriber?')) {
+            try {
+                await axios.delete(`/api/v1/admin/subscribers/${id}`);
+                fetchSubscribers();
+            } catch (error) {
+                console.error('Failed to delete subscriber', error);
+            }
+        }
+    };
+
+    const openEditModal = (subscriber: any) => {
+        const s = subscriber.raw;
+        setFormData({
+            name: s.name || '',
+            phoneNumber: s.phoneNumber || '',
+            pppoeUsername: s.pppoeUsername || '',
+            pppoePassword: s.pppoePassword || '',
+            packageId: s.packageId || '',
+            routerId: s.routerId || '',
+            address: s.address || '',
+            notes: s.notes || ''
+        });
+        setCurrentSubscriber(s);
+        setIsEditing(true);
+        setIsModalOpen(true);
+    };
+
+    const openAddModal = () => {
+        setFormData({
+            name: '',
+            phoneNumber: '',
+            pppoeUsername: '',
+            pppoePassword: '',
+            packageId: '',
+            routerId: '',
+            address: '',
+            notes: ''
+        });
+        setIsEditing(false);
+        setIsModalOpen(true);
+    };
 
     const filteredAndSortedSubscribers = useMemo(() => {
         let filtered = subscribers.filter(subscriber => {
@@ -143,7 +234,7 @@ const SubscriberTable = () => {
                             <Download className="mr-2 h-4 w-4" />
                             Export
                         </Button>
-                        <Button variant="default" size="sm">
+                        <Button variant="default" size="sm" onClick={openAddModal}>
                             <Plus className="mr-2 h-4 w-4" />
                             Add User
                         </Button>
@@ -283,9 +374,14 @@ const SubscriberTable = () => {
                                         </div>
                                     </td>
                                     <td className="p-4 text-right">
-                                        <Button variant="ghost" size="sm">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="ghost" size="sm" onClick={() => openEditModal(subscriber)}>
+                                                Edit
+                                            </Button>
+                                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(subscriber.id)}>
+                                                Delete
+                                            </Button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))
@@ -304,6 +400,112 @@ const SubscriberTable = () => {
                     <Button variant="outline" size="sm">Next</Button>
                 </div>
             </div>
+
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={isEditing ? 'Edit Subscriber' : 'Add New Subscriber'}
+            >
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Full Name</label>
+                            <Input
+                                placeholder="John Doe"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Phone Number</label>
+                            <Input
+                                placeholder="254700000000"
+                                value={formData.phoneNumber}
+                                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Username (PPPoE/Hotspot)</label>
+                            <Input
+                                placeholder="customer001"
+                                value={formData.pppoeUsername}
+                                onChange={(e) => setFormData({ ...formData, pppoeUsername: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Password</label>
+                            <Input
+                                type="password"
+                                value={formData.pppoePassword}
+                                onChange={(e) => setFormData({ ...formData, pppoePassword: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Package</label>
+                            <select
+                                className="w-full p-2 border rounded-md"
+                                value={formData.packageId}
+                                onChange={(e) => setFormData({ ...formData, packageId: e.target.value })}
+                                required
+                            >
+                                <option value="">Select Package</option>
+                                {packages.map((pkg) => (
+                                    <option key={pkg.id} value={pkg.id}>{pkg.name} - KES {pkg.price}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Router</label>
+                            <select
+                                className="w-full p-2 border rounded-md"
+                                value={formData.routerId}
+                                onChange={(e) => setFormData({ ...formData, routerId: e.target.value })}
+                                required
+                            >
+                                <option value="">Select Router</option>
+                                {routers.map((r) => (
+                                    <option key={r.id} value={r.id}>{r.name} ({r.host})</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Physical Address</label>
+                        <Input
+                            placeholder="Apartment, Street Name"
+                            value={formData.address}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Notes</label>
+                        <textarea
+                            className="w-full p-2 border rounded-md"
+                            rows={3}
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-4">
+                        <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="default" type="submit">
+                            {isEditing ? 'Save Changes' : 'Create Subscriber'}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </Card>
     );
 };

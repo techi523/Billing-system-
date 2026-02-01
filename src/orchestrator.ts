@@ -36,7 +36,7 @@ export class SessionOrchestrator {
             router,
             username,
             password,
-            macAddress,
+            macAddress, // Explicitly bind MAC for production security
             pkg.name, // Use the pre-synced profile name
             `Fulfillment for ${paymentId || 'Voucher'}`
         );
@@ -111,10 +111,15 @@ export class SessionOrchestrator {
                 }
             });
 
+            if (sessions.length === 0) return;
+
+            // OPTIMIZATION: Fetch once from MikroTik (O(1) vs O(N))
+            const activeHotspotSessions = await MikroTikService.getActiveHotspotSessions(router);
+            const sessionMap = new Map(activeHotspotSessions.map(s => [s.username, s]));
+
             for (const session of sessions) {
                 try {
-                    const stats = await MikroTikService.getActiveHotspotSessions(router);
-                    const sessionStats = stats.find(s => s.username === session.mikrotikUsername);
+                    const sessionStats = sessionMap.get(session.mikrotikUsername);
 
                     if (sessionStats) {
                         await session.update({

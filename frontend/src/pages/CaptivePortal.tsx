@@ -11,7 +11,6 @@ const CaptivePortal = () => {
     const [selectedPackage, setSelectedPackage] = useState<any>(null);
     const [phoneNumber, setPhoneNumber] = useState('');
     const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'waiting_pin' | 'success' | 'failed'>('idle');
-    const [paymentId, setPaymentId] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [tenantConfig, setTenantConfig] = useState<any>(null);
 
@@ -77,10 +76,13 @@ const CaptivePortal = () => {
                 packageId: selectedPackage.id,
                 mac,
                 ip,
-                routerId
+                routerId,
+                // Persist MikroTik redirect context through the payment flow
+                linkLogin: urlParams.get('link-login'),
+                linkOrig: urlParams.get('link-orig') || urlParams.get('dst')
             });
 
-            setPaymentId(response.data.paymentId);
+
             setPaymentStatus('waiting_pin');
             pollPaymentStatus(response.data.paymentId);
 
@@ -107,10 +109,22 @@ const CaptivePortal = () => {
 
                     // Allow time for animation before redirect
                     setTimeout(() => {
-                        // Redirect to success URL or Internet Check
                         const urlParams = new URLSearchParams(window.location.search);
-                        const redirectUrl = urlParams.get('dst') || urlParams.get('link-login-only') || 'https://www.google.com';
-                        window.location.href = redirectUrl;
+                        const linkLogin = urlParams.get('link-login');
+                        const linkOrig = urlParams.get('link-orig') || urlParams.get('dst') || 'https://www.google.com';
+                        const username = `HS-${(urlParams.get('mac') || '00:00:00:00:00:00').replace(/[: -]/g, '').toUpperCase()}`;
+
+                        if (linkLogin) {
+                            // Production MikroTik Hotspot Login Flow
+                            const loginUrl = new URL(linkLogin);
+                            loginUrl.searchParams.set('username', username);
+                            loginUrl.searchParams.set('password', 'guest'); // Legacy compatibility if needed
+                            loginUrl.searchParams.set('dst', linkOrig);
+                            window.location.href = loginUrl.toString();
+                        } else {
+                            // Fallback to direct redirect
+                            window.location.href = linkOrig;
+                        }
                     }, 3000);
                 } else if (status === 'FAILED') {
                     clearInterval(pollInterval);
@@ -130,7 +144,7 @@ const CaptivePortal = () => {
 
     const resetPayment = () => {
         setPaymentStatus('idle');
-        setPaymentId(null);
+
         setErrorMessage('');
     };
 

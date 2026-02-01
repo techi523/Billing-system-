@@ -147,20 +147,16 @@ AdminUser.init({
   sequelize,
   modelName: 'admin_user',
   hooks: {
-    beforeCreate: async (user: AdminUser) => {
-      if (user.role !== 'SUPER_ADMIN' && !user.tenantId) {
-        throw new Error('TENANT_ID_REQUIRED: A workspace is required for all non-superadmin accounts.');
-      }
-    },
-    beforeUpdate: async (user: AdminUser) => {
-      if (user.role !== 'SUPER_ADMIN' && !user.tenantId) {
-        throw new Error('TENANT_ID_REQUIRED: Cannot remove workspace from a non-superadmin account.');
-      }
-    },
     beforeValidate: (user: AdminUser) => {
-      // Ensure super-admins always have null tenantId to prevent logic mix
+      // Logic for Super Admin
       if (user.role === 'SUPER_ADMIN') {
-        user.tenantId = null;
+        user.tenantId = null; // Super admin never belongs to a tenant
+        return;
+      }
+
+      // Logic for Tenant/Staff/Agent
+      if (!user.tenantId) {
+        throw new Error('TENANT_RESOLUTION_REQUIRED: All non-superadmin users must be associated with a workspace.');
       }
     }
   }
@@ -286,6 +282,7 @@ export class Subscriber extends Model {
   public packageId!: number | null;
   public expiryDate!: Date | null;
   public lastPaymentDate!: Date | null;
+  public email!: string | null;
   public notes!: string | null;
 }
 Subscriber.init({
@@ -302,6 +299,7 @@ Subscriber.init({
   packageId: { type: DataTypes.INTEGER, allowNull: true },
   expiryDate: { type: DataTypes.DATE },
   lastPaymentDate: { type: DataTypes.DATE },
+  email: { type: DataTypes.STRING, allowNull: true },
   notes: { type: DataTypes.TEXT },
 }, { sequelize, modelName: 'subscriber' });
 
@@ -761,6 +759,75 @@ PasswordResetToken.init({
   used: { type: DataTypes.BOOLEAN, defaultValue: false },
 }, { sequelize, modelName: 'passwordResetToken' });
 
+export class Campaign extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public name!: string;
+  public type!: 'EMAIL' | 'SMS' | 'WHATSAPP' | 'BOTH';
+  public content!: string;
+  public subject!: string | null;
+  public templateId!: string | null;
+  public filterCriteria!: string | null; // JSON string
+  public status!: 'DRAFT' | 'SENDING' | 'COMPLETED' | 'FAILED';
+  public scheduledAt!: Date | null;
+  public sentCount!: number;
+  public failedCount!: number;
+  public totalRecipients!: number;
+}
+Campaign.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  name: { type: DataTypes.STRING, allowNull: false },
+  type: { type: DataTypes.ENUM('EMAIL', 'SMS', 'WHATSAPP', 'BOTH'), allowNull: false },
+  content: { type: DataTypes.TEXT, allowNull: false },
+  subject: { type: DataTypes.STRING },
+  templateId: { type: DataTypes.UUID, allowNull: true },
+  filterCriteria: { type: DataTypes.TEXT },
+  status: { type: DataTypes.ENUM('DRAFT', 'SENDING', 'COMPLETED', 'FAILED'), defaultValue: 'DRAFT' },
+  scheduledAt: { type: DataTypes.DATE },
+  sentCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  failedCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  totalRecipients: { type: DataTypes.INTEGER, defaultValue: 0 },
+}, { sequelize, modelName: 'campaign' });
+
+export class MessageTemplate extends Model {
+  public id!: string;
+  public name!: string;
+  public content!: string;
+  public channel!: 'EMAIL' | 'SMS' | 'WHATSAPP';
+  public externalId!: string | null;
+  public status!: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  public tenantId!: string;
+}
+MessageTemplate.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  name: { type: DataTypes.STRING, allowNull: false },
+  content: { type: DataTypes.TEXT, allowNull: false },
+  channel: { type: DataTypes.ENUM('EMAIL', 'SMS', 'WHATSAPP'), allowNull: false },
+  externalId: { type: DataTypes.STRING },
+  status: { type: DataTypes.ENUM('DRAFT', 'PENDING', 'APPROVED', 'REJECTED'), defaultValue: 'DRAFT' },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+}, { sequelize, modelName: 'messageTemplate' });
+
+export class CampaignLog extends Model {
+  public id!: string;
+  public campaignId!: string;
+  public subscriberId!: string;
+  public status!: 'PENDING' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED';
+  public providerReference!: string | null;
+  public error!: string | null;
+  public sentAt!: Date | null;
+}
+CampaignLog.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  campaignId: { type: DataTypes.UUID, allowNull: false },
+  subscriberId: { type: DataTypes.UUID, allowNull: false },
+  status: { type: DataTypes.ENUM('PENDING', 'SENT', 'DELIVERED', 'READ', 'FAILED'), defaultValue: 'PENDING' },
+  providerReference: { type: DataTypes.STRING },
+  error: { type: DataTypes.TEXT },
+  sentAt: { type: DataTypes.DATE },
+}, { sequelize, modelName: 'campaignLog' });
+
 export class RouterConnectionLog extends Model {
   public id!: string;
   public routerId!: string;
@@ -811,5 +878,11 @@ RouterConnectionLog.belongsTo(Tenant, { foreignKey: 'tenantId' });
 
 AdminUser.hasMany(RouterConnectionLog, { foreignKey: 'userId' });
 RouterConnectionLog.belongsTo(AdminUser, { foreignKey: 'userId' });
+
+Tenant.hasMany(MessageTemplate, { foreignKey: 'tenantId' });
+MessageTemplate.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Campaign.belongsTo(MessageTemplate, { foreignKey: 'templateId' });
+MessageTemplate.hasMany(Campaign, { foreignKey: 'templateId' });
 
 export { sequelize };

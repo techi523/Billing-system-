@@ -15,18 +15,21 @@ export interface TenantResolverRequest extends Request {
 export class TenantResolver {
     static async resolveTenant(req: TenantResolverRequest, res: Response, next: NextFunction) {
         try {
-            // Check if user is authenticated
+            // If not authenticated, we can't resolve an admin/tenant context
+            // Just move to the next middleware (which might be authMiddleware or a public route)
             if (!req.user) {
-                return res.status(401).json({ error: 'Authentication required' });
+                return next();
             }
 
-            // Super admin bypass
+            // Super admin bypass - NO tenant required
             if (req.user.role === 'SUPER_ADMIN') {
                 return next();
             }
 
             // Bypass for setup route to allow creating the first workspace
-            if (req.path === '/tenants/setup' || req.path === '/api/v1/admin/tenants/setup') {
+            // Also bypass for onboarding or other initialization routes if needed
+            const openRoutes = ['/tenants/setup', '/api/v1/admin/tenants/setup', '/onboarding'];
+            if (openRoutes.some(route => req.path.includes(route))) {
                 return next();
             }
 
@@ -35,17 +38,18 @@ export class TenantResolver {
                 // Log the issue
                 await AuditLog.create({
                     action: 'TENANT_RESOLUTION_FAILURE',
-                    details: `User ${req.user!.id} has no tenant assigned`,
+                    details: `User ${req.user!.id} (${req.user!.role}) has no tenant assigned`,
                     userId: req.user!.id,
                     ipAddress: req.ip
                 });
 
-                // Redirect to tenant setup
+                // Fail fast with clear redirection payload
                 return res.status(403).json({
-                    error: 'You don\'t have a workspace yet',
+                    error: 'No tenant assigned to your account',
+                    code: 'TENANT_REQUIRED',
                     action: 'NAVIGATE_TO_SETUP',
                     path: '/tenant/setup',
-                    message: 'Please create a workspace to continue'
+                    message: 'You don\'t have a workspace yet. Please create one to continue.'
                 });
             }
 
@@ -61,33 +65,26 @@ export class TenantResolver {
                     ipAddress: req.ip
                 });
 
-                // Redirect to tenant setup
                 return res.status(403).json({
                     error: 'Your workspace is not available',
+                    code: 'TENANT_ORPHANED',
                     action: 'NAVIGATE_TO_SETUP',
                     path: '/tenant/setup',
-                    message: 'Please create a workspace to continue'
+                    message: 'Your assigned workspace could not be found. Please contact support or setup a new one.'
                 });
             }
 
             // Check tenant status
             if (tenant.status !== 'ACTIVE') {
-                // Log the issue
-                await AuditLog.create({
-                    action: 'TENANT_SUSPENDED',
-                    details: `Tenant ${tenant.id} is suspended for user ${req.user!.id}`,
-                    userId: req.user!.id,
-                    ipAddress: req.ip
-                });
-
                 return res.status(403).json({
                     error: 'Your workspace is suspended',
+                    code: 'TENANT_SUSPENDED',
                     action: 'CONTACT_SUPPORT',
-                    message: 'Please contact support for assistance'
+                    message: 'Please contact support for assistance.'
                 });
             }
 
-            // Attach tenant to request
+            // Attach tenant to request for downstream use
             req.tenant = tenant;
             next();
 
@@ -108,38 +105,19 @@ export class TenantResolver {
     }
 
     static async requireTenant(req: TenantResolverRequest, res: Response, next: NextFunction) {
-        if (!req.tenant) {
-            return res.status(403).json({
-                error: 'Workspace access required',
-                action: 'SELECT_WORKSPACE',
-                message: 'Please select or create a workspace to continue'
-            });
-        }
-        next();
-    }
-
-    static async validateTenantAccess(req: TenantResolverRequest, res: Response, next: NextFunction) {
-        if (req.user!.role === 'SUPER_ADMIN') {
+        // This is a strict check for routes that MUST have a resolved tenant
+        if (req.user?.role === 'SUPER_ADMIN') {
             return next();
         }
 
         if (!req.tenant) {
             return res.status(403).json({
                 error: 'Workspace access required',
+                code: 'TENANT_MISSING',
                 action: 'SELECT_WORKSPACE',
                 message: 'Please select or create a workspace to continue'
             });
         }
-
-        // Verify user has access to this tenant
-        if (req.user!.tenantId !== req.tenant.id) {
-            return res.status(403).json({
-                error: 'Access denied to this workspace',
-                action: 'SELECT_WORKSPACE',
-                message: 'You don\'t have access to this workspace'
-            });
-        }
-
         next();
     }
 }

@@ -143,8 +143,12 @@ export class WalletService {
             const platformFeeAmount = commissionAmount + transactionFee;
             const netAmount = transactionAmount - platformFeeAmount;
 
-            // Get tenant wallet
-            const wallet = await Wallet.findOne({ where: { ownerId: payment.tenantId, ownerType: 'TENANT' } });
+            // Get tenant wallet with LOCK
+            const wallet = await Wallet.findOne({
+                where: { ownerId: payment.tenantId, ownerType: 'TENANT' },
+                transaction,
+                lock: transaction.LOCK.UPDATE
+            });
             if (!wallet) throw new Error('Tenant wallet not found');
 
             // Credit Tenant Wallet
@@ -311,8 +315,12 @@ export class WalletService {
         const transaction = await sequelize.transaction();
 
         try {
-            // Get tenant wallet
-            const wallet = await Wallet.findOne({ where: { ownerId: tenantId, ownerType: 'TENANT' } });
+            // Get tenant wallet with LOCK
+            const wallet = await Wallet.findOne({
+                where: { ownerId: tenantId, ownerType: 'TENANT' },
+                transaction,
+                lock: transaction.LOCK.UPDATE
+            });
             if (!wallet) throw new Error('Tenant wallet not found');
 
             // Check available balance
@@ -401,7 +409,11 @@ export class WalletService {
             const tenant = await Tenant.findByPk(settlement.tenantId);
             if (!tenant) throw new Error('Tenant not found');
 
-            const wallet = await Wallet.findOne({ where: { ownerId: settlement.tenantId, ownerType: 'TENANT' } });
+            const wallet = await Wallet.findOne({
+                where: { ownerId: settlement.tenantId, ownerType: 'TENANT' },
+                transaction,
+                lock: transaction.LOCK.UPDATE
+            });
             if (!wallet) throw new Error('Tenant wallet not found');
 
             // Simulate payment processing (in real system, this would call payment gateway)
@@ -757,6 +769,101 @@ export class WalletService {
             balance: Number(platformWallet.balance),
             pending: Number(platformWallet.pendingBalance),
             currency: (platformWallet as any).currency
+        };
+    }
+
+    /**
+     * Reconcile wallet balance against transaction ledger
+     */
+    static async reconcileWallet(tenantId: string): Promise<{
+        actualBalance: number;
+        ledgerBalance: number;
+        discrepancy: number;
+        status: 'MATCH' | 'MISMATCH';
+    }> {
+        const wallet = await Wallet.findOne({ where: { ownerId: tenantId, ownerType: 'TENANT' } });
+        if (!wallet) throw new Error('Wallet not found');
+
+        // Include both COMPLETED and PENDING settlements since they affect balance immediately
+        const transactions = await WalletTransaction.findAll({
+            where: {
+                walletId: wallet.id,
+                [Op.or]: [
+                    { status: 'COMPLETED' },
+                    { transactionType: 'SETTLEMENT', status: 'PENDING' }
+                ]
+            }
+        });
+
+        let ledgerBalance = 0n;
+        for (const tx of transactions) {
+            const amount = BigInt(tx.amount);
+            if (['CREDIT', 'REVERSAL'].includes(tx.transactionType)) {
+                ledgerBalance += amount;
+            } else {
+                ledgerBalance -= amount;
+            }
+        }
+
+        const actualBalance = BigInt(wallet.balance || 0);
+        const discrepancy = actualBalance - ledgerBalance;
+
+        return {
+            actualBalance: Number(actualBalance),
+            ledgerBalance: Number(ledgerBalance),
+            discrepancy: Number(discrepancy),
+            status: discrepancy === 0n ? 'MATCH' : 'MISMATCH'
+        };
+    }
+
+    /**
+     * Fetch full auditable trace for a transaction
+     */
+    static async getTransactionTrace(transactionId: string, tenantId: string): Promise<any> {
+        const tx = await WalletTransaction.findOne({
+            where: { id: transactionId, tenantId }
+        });
+
+        if (!tx) throw new Error('Transaction not found or unauthorized');
+
+        let sourceData: any = null;
+
+        if (tx.referenceType === 'PAYMENT' && tx.referenceId) {
+            const payment = await Payment.findByPk(tx.referenceId);
+            if (payment) {
+                sourceData = {
+                    type: 'GATEWAY_PAYMENT',
+                    gateway: payment.paymentChannel,
+                    reference: payment.mpesaReceiptNumber || payment.intasendTrackingId,
+                    rawPayload: payment.rawCallback ? JSON.parse(payment.rawCallback) : null,
+                    completedAt: payment.completedAt
+                };
+            }
+        } else if (tx.referenceType === 'SETTLEMENT' && tx.referenceId) {
+            const settlement = await Settlement.findByPk(tx.referenceId);
+            if (settlement) {
+                sourceData = {
+                    type: 'SETTLEMENT',
+                    method: settlement.method,
+                    reference: settlement.referenceNumber,
+                    status: settlement.status,
+                    paidAt: settlement.paidAt
+                };
+            }
+        }
+
+        const auditLogs = await AuditLog.findAll({
+            where: {
+                tenantId,
+                details: { [Op.like]: `%${transactionId}%` }
+            },
+            order: [['createdAt', 'DESC']]
+        });
+
+        return {
+            transaction: tx,
+            source: sourceData,
+            auditTrail: auditLogs
         };
     }
 }

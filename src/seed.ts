@@ -1,4 +1,4 @@
-import { sequelize, AdminUser, Tenant, Package, Router, Voucher, Wallet, PlatformWallet, PlatformFee } from './models';
+import { sequelize, AdminUser, Tenant, Package, Router, Voucher, Wallet, PlatformWallet, PlatformFee, MessageTemplate } from './models';
 import bcrypt from 'bcryptjs';
 
 async function seed() {
@@ -101,7 +101,32 @@ async function seed() {
         description: 'Standard transaction fee'
     });
 
-    console.log('SaaS Database seeded with Super Admin, Demo Tenant, Agent, Vouchers, and Wallet System!');
+    // 10. Default WhatsApp Templates
+    await MessageTemplate.bulkCreate([
+        {
+            name: 'Welcome Message',
+            content: 'Hello {name}, welcome to Hotspot! We hope you enjoy our services.',
+            channel: 'WHATSAPP',
+            status: 'APPROVED',
+            tenantId: demoTenant.id
+        },
+        {
+            name: 'Payment Reminder',
+            content: 'Hi {name}, your hotspot subscription is about to expire. Top up now to stay connected!',
+            channel: 'WHATSAPP',
+            status: 'APPROVED',
+            tenantId: demoTenant.id
+        },
+        {
+            name: 'Promotion Alert',
+            content: 'Special Weekend Offer! Get 24 Hours for only KES 40. Buy now at the dashboard.',
+            channel: 'WHATSAPP',
+            status: 'APPROVED',
+            tenantId: demoTenant.id
+        }
+    ]);
+
+    console.log('SaaS Database seeded with Super Admin, Demo Tenant, Agent, Vouchers, Wallet System, and WhatsApp Templates!');
     process.exit(0);
 }
 

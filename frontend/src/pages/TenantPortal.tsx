@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/Common/BackButton';
 import SupportFooter from '../components/Common/SupportFooter';
 import SupportSection from '../components/Common/SupportSection';
-import { Shield, Zap } from 'lucide-react';
+import { Shield, Zap, ArrowRight } from 'lucide-react';
 import ThemeToggle from '../components/Common/ThemeToggle';
 
 const TenantPortal = () => {
@@ -18,13 +18,8 @@ const TenantPortal = () => {
 
     useEffect(() => {
         const fetchDashboardData = async () => {
-            if (!user?.tenantId) {
-                setError('No tenant assigned to your account');
-                setIsLoading(false);
-                return;
-            }
-
             try {
+                setIsLoading(true);
                 // Check if tenant needs initialization
                 const initStatusRes = await axios.get('/api/v1/admin/initialize/status');
                 const isBootstrapped = initStatusRes.data.isBootstrapped;
@@ -53,6 +48,11 @@ const TenantPortal = () => {
                 });
             } catch (err: any) {
                 console.error('Failed to fetch tenant data', err);
+                if (err.response?.status === 401) {
+                    // Session expired or invalid
+                    logout();
+                    return;
+                }
                 if (err.response?.status === 404) {
                     setError('Tenant not found. Please contact support.');
                 } else if (err.response?.status === 403) {
@@ -83,33 +83,38 @@ const TenantPortal = () => {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-50 flex items-center justify-center">
                 <div className="text-center max-w-md p-8 bg-white rounded-3xl shadow-xl border border-slate-100">
-                    <div className="w-16 h-16 border-4 border-red-200 border-t-red-500 rounded-full animate-spin mx-auto mb-4"></div>
-                    <h2 className="text-2xl font-black text-slate-900 mb-2">Portal Access Error</h2>
-                    <p className="text-slate-600 font-medium mb-2">{error}</p>
-                    {user?.role === 'SUPER_ADMIN' && !user?.tenantId && (
-                        <div className="mb-4 text-sm text-indigo-600 font-bold bg-indigo-50 p-3 rounded-xl border border-indigo-100">
-                            You are logged in as Super Admin. <br />
-                            You should be on the Command Center.
-                        </div>
-                    )}
+                    <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Shield className="w-10 h-10 text-rose-500" />
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 mb-2">Workspace Access Issue</h2>
+                    <p className="text-slate-600 font-medium mb-6 leading-relaxed">
+                        {error === 'No tenant assigned to your account'
+                            ? "You don't have an active workspace yet. Let's get you set up."
+                            : error}
+                    </p>
+
                     <div className="space-y-3">
+                        {(!user?.tenantId || error === 'No tenant assigned to your account') && (
+                            <button
+                                onClick={() => navigate('/tenant/setup')}
+                                className="w-full px-6 py-4 bg-sky-500 text-white font-black rounded-2xl hover:bg-sky-600 transition-all shadow-lg shadow-sky-200 flex items-center justify-center gap-2 group"
+                            >
+                                Setup Your Workspace <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        )}
+
                         {user?.role === 'SUPER_ADMIN' && (
                             <button
                                 onClick={() => navigate('/superadmin')}
-                                className="w-full px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                                className="w-full px-6 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all"
                             >
-                                Go to Super Admin Dashboard
+                                Go to Command Center
                             </button>
                         )}
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="w-full px-6 py-3 bg-sky-500 text-white font-bold rounded-xl hover:bg-sky-600 transition-colors"
-                        >
-                            Retry Connection
-                        </button>
+
                         <button
                             onClick={logout}
-                            className="w-full px-6 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                            className="w-full px-6 py-4 bg-slate-100 text-slate-700 font-black rounded-2xl hover:bg-slate-200 transition-all"
                         >
                             Logout & Switch Account
                         </button>
@@ -160,6 +165,12 @@ const TenantPortal = () => {
                                         className={`px-4 py-2 font-bold rounded-lg transition-colors ${window.location.pathname === '/tenant/mikrotik' ? 'bg-sky-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
                                     >
                                         Routers
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/tenant/campaigns')}
+                                        className={`px-4 py-2 font-bold rounded-lg transition-colors ${window.location.pathname === '/tenant/campaigns' ? 'bg-sky-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                                    >
+                                        Campaigns
                                     </button>
                                     <div className="w-px h-6 bg-slate-200 mx-2"></div>
                                     <button
