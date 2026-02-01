@@ -28,12 +28,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const storedUser = localStorage.getItem('user');
 
         if (storedToken && storedUser) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
-            // Set global axios header
-            axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+            // CRITICAL FIX: Verify token with backend to ensure fresh tenant data
+            // This prevents stale localStorage from causing "new tenant" behavior
+            axios.get('/api/v1/auth/verify', {
+                headers: { Authorization: `Bearer ${storedToken}` }
+            })
+                .then(response => {
+                    const freshUser = response.data.user;
+                    setToken(storedToken);
+                    setUser(freshUser); // Use fresh data from backend
+                    localStorage.setItem('user', JSON.stringify(freshUser)); // Update localStorage
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+                })
+                .catch((error) => {
+                    console.error('[AuthContext] Token verification failed:', error);
+                    // Token invalid or expired, clear state
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    delete axios.defaults.headers.common['Authorization'];
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        } else {
+            setLoading(false);
         }
-        setLoading(false);
     }, []);
 
     const login = (newToken: string, newUser: User) => {
