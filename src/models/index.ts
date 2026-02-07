@@ -1,17 +1,15 @@
 import { Sequelize, DataTypes, Model } from 'sequelize';
-import dotenv from 'dotenv';
+import { config } from '../config/env';
 
-dotenv.config();
-
-const useMySQL = process.env.DB_TYPE === 'mysql';
+const useMySQL = config.db.type === 'mysql';
 
 const sequelize = useMySQL
   ? new Sequelize(
-    process.env.DB_NAME || 'hotspot_db',
-    process.env.DB_USER || 'root',
-    process.env.DB_PASS || '',
+    config.db.name,
+    config.db.user,
+    config.db.pass,
     {
-      host: process.env.DB_HOST || 'localhost',
+      host: config.db.host,
       dialect: 'mysql',
       logging: false,
     }

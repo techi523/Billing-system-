@@ -128,8 +128,8 @@ export class WalletService {
     /**
      * Process payment with automated split logic (90/10 or tenant-specific)
      */
-    static async processPayment(payment: Payment): Promise<WalletTransaction> {
-        const transaction = await sequelize.transaction();
+    static async processPayment(payment: Payment, externalTransaction?: any): Promise<WalletTransaction> {
+        const transaction = externalTransaction || await sequelize.transaction();
 
         try {
             const tenant = await Tenant.findByPk(payment.tenantId);
@@ -218,13 +218,13 @@ export class WalletService {
                 }, { transaction });
             }
 
-            await transaction.commit();
+            if (!externalTransaction) await transaction.commit();
 
             await AuditService.log('PAYMENT_AGGREGATOR_SPLIT', `Split processed for ${payment.id}: Tenant(${netAmount}) Platform(${platformFeeAmount})`, payment.tenantId, payment.subscriberId || undefined);
 
             return walletTransaction;
         } catch (error) {
-            await transaction.rollback();
+            if (!externalTransaction) await transaction.rollback();
             logger.error('Aggregator split processing failed', { error: error instanceof Error ? error.message : String(error), paymentId: payment.id });
             throw new Error('Split processing failed');
         }

@@ -6,6 +6,7 @@ import { IntaSendService } from '../services/intasend.service';
 import { WalletService } from '../services/wallet.service';
 import { SocketService } from '../services/socket.service';
 import logger from '../utils/logger';
+import { config } from '../config/env';
 
 const router = Router();
 
@@ -199,7 +200,7 @@ router.post('/mpesa', async (req, res) => {
                 });
 
                 // Process Revenue Split
-                await WalletService.processPayment(payment);
+                await WalletService.processPayment(payment, t);
 
                 fulfillmentData = {
                     paymentId: payment.id,
@@ -229,11 +230,13 @@ router.post('/mpesa', async (req, res) => {
 // INTASEND WEBHOOK
 router.post('/intasend', async (req, res) => {
     const signature = req.headers['intasend-signature'] as string;
-    const bodyString = JSON.stringify(req.body);
-    const token = process.env.INTASEND_WEBHOOK_TOKEN;
+    const rawBody = (req as any).rawBody;
 
-    if (process.env.INTASEND_MOCK !== 'true' && token) {
-        if (!signature || !IntaSendService.verifySignature(bodyString, signature, token)) {
+    // Use rawBody for signature verification if available, otherwise fall back to stringified body
+    const bodyForVerification = rawBody || JSON.stringify(req.body);
+
+    if (!config.payments.intasend.isMock) {
+        if (!signature || !IntaSendService.verifySignature(bodyForVerification, signature)) {
             logger.warn('Invalid IntaSend Signature', { signature });
             return res.status(403).send('Invalid Signature');
         }
@@ -264,7 +267,7 @@ router.post('/intasend', async (req, res) => {
 
             payment.intasendTrackingId = tracking_id;
             payment.intasendState = state;
-            payment.rawCallback = bodyString;
+            payment.rawCallback = bodyForVerification.toString();
 
             if (state === 'COMPLETE') {
                 payment.status = 'SUCCESS';
@@ -303,7 +306,7 @@ router.post('/intasend', async (req, res) => {
                 });
 
                 // Process Revenue Split
-                await WalletService.processPayment(payment);
+                await WalletService.processPayment(payment, t);
 
                 fulfillmentData = {
                     paymentId: payment.id,

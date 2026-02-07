@@ -6,10 +6,18 @@ import { AdminUser, Tenant, AdminSession, AuditLog, PasswordResetToken } from '.
 import { TenantBootstrapService } from '../services/tenant-bootstrap.service';
 import { sendPasswordResetEmail } from '../services/emailService';
 import { TenantResolver } from '../middleware/tenant-resolver';
+import { config } from '../config/env';
+import { validators, handleValidationErrors } from '../middleware/validation';
 
 const router = Router();
 
-router.post('/register', async (req, res) => {
+router.post('/register', [
+    validators.email,
+    validators.password,
+    validators.subdomain,
+    validators.sanitizeString('tenantName'),
+    handleValidationErrors
+], async (req, res) => {
     const { email, password, tenantName, subdomain } = req.body;
     try {
         // 0. Pre-validation
@@ -42,7 +50,7 @@ router.post('/register', async (req, res) => {
         // Create session
         const token = jwt.sign(
             { id: user.id, role: user.role, tenantId: user.tenantId },
-            process.env.JWT_SECRET || 'secret_key',
+            config.auth.jwtSecret,
             { expiresIn: '1d' }
         );
 
@@ -77,7 +85,11 @@ router.post('/register', async (req, res) => {
     }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', [
+    validators.email,
+    validators.password,
+    handleValidationErrors
+], async (req, res) => {
     const { email, password } = req.body;
     try {
         const user = await AdminUser.findOne({ where: { email } });
@@ -100,7 +112,7 @@ router.post('/login', async (req, res) => {
 
         const token = jwt.sign(
             { id: user.id, role: user.role, tenantId: user.tenantId },
-            process.env.JWT_SECRET || 'secret_key',
+            config.auth.jwtSecret,
             { expiresIn: '1d' }
         );
 
@@ -149,24 +161,19 @@ router.post('/superadmin/login', async (req, res) => {
             return res.status(403).json({ error: 'Access denied from this location' });
         }
 
-        // --- PRODUCTION HARDENING: .env Source of Truth ---
-        const envEmail = process.env.SUPER_ADMIN_EMAIL;
-        const envPass = process.env.SUPER_ADMIN_PASSWORD;
+        // --- PRODUCTION HARDENING: Config Source of Truth ---
+        const envEmail = config.auth.superAdminEmail;
+        const envPass = config.auth.superAdminPassword;
 
-        if (!envEmail || !envPass) {
-            console.error('[SuperAdmin Login] CRITICAL: Super Admin credentials missing in .env');
-            return res.status(500).json({ error: 'System configuration error' });
-        }
-
-        // 1. Validate against Environment Variables (Master Record)
+        // 1. Validate against Config (Master Record)
         if (email !== envEmail) {
-            console.warn(`[SuperAdmin Login] Email mismatch with .env`);
+            console.warn(`[SuperAdmin Login] Email mismatch with config`);
             return res.status(401).json({ error: 'Invalid super admin credentials' });
         }
 
-        // 2. Validate Password (Case-sensitive comparison against .env first)
+        // 2. Validate Password (Case-sensitive comparison against config first)
         if (password !== envPass) {
-            console.warn(`[SuperAdmin Login] Password verification failed against .env`);
+            console.warn(`[SuperAdmin Login] Password verification failed against config`);
             await AuditLog.create({
                 action: 'FAILED_SUPER_ADMIN_LOGIN',
                 details: `Failed super admin login attempt for email: ${email} (Password Mismatch)`,
@@ -182,8 +189,13 @@ router.post('/superadmin/login', async (req, res) => {
         const hashedPassword = await bcrypt.hash(envPass, 12);
 
         if (!user) {
-            // Emergency Create
-            console.log('[SuperAdmin Login] Creating missing Super Admin user in DB');
+            // PRODUCTION HARDENING: Auto-creation disabled
+            console.error('[SuperAdmin Login] CRITICAL: Super Admin user not found in DB but exists in config.');
+            console.error('Run the seeding script to create the initial Super Admin user.');
+            return res.status(401).json({ error: 'System setup required. Contact support.' });
+
+            /* 
+            // Legacy Auto-Heal (Disabled for Production Safety)
             user = await AdminUser.create({
                 email,
                 password: hashedPassword,
@@ -192,6 +204,7 @@ router.post('/superadmin/login', async (req, res) => {
                 commissionRate: 0,
                 themePreference: 'light'
             }) as any;
+            */
         } else {
             // Update hash if mismatched (Rotation support)
             const dbMatch = await bcrypt.compare(envPass, user.password);
@@ -214,11 +227,7 @@ router.post('/superadmin/login', async (req, res) => {
         console.log('[SuperAdmin Login] Step 4.4: Old sessions revoked');
 
         // USE THE SPECIFIC SUPER ADMIN SECRET
-        const secret = process.env.SUPER_ADMIN_JWT_SECRET;
-        if (!secret) {
-            console.error('[SuperAdmin Login] CRITICAL: SUPER_ADMIN_JWT_SECRET is missing!');
-            return res.status(500).json({ error: 'System configuration error' });
-        }
+        const secret = config.auth.superAdminJwtSecret;
 
         const token = jwt.sign(
             { id: user.id, role: user.role, scope: 'SUPER_ADMIN', tenantId: null },
@@ -266,9 +275,9 @@ router.get('/verify', async (req: any, res) => {
     try {
         let decoded: any;
         try {
-            decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev_secret_key_12345') as any;
+            decoded = jwt.verify(token, config.auth.jwtSecret) as any;
         } catch {
-            decoded = jwt.verify(token, process.env.SUPER_ADMIN_JWT_SECRET || process.env.JWT_SECRET || 'super_secret_platform_key_999') as any;
+            decoded = jwt.verify(token, config.auth.superAdminJwtSecret) as any;
         }
 
         const user = await AdminUser.findByPk(decoded.id);
@@ -290,9 +299,9 @@ router.post('/theme', async (req: any, res) => {
     try {
         let decoded: any;
         try {
-            decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev_secret_key_12345') as any;
+            decoded = jwt.verify(token, config.auth.jwtSecret) as any;
         } catch {
-            decoded = jwt.verify(token, process.env.SUPER_ADMIN_JWT_SECRET || process.env.JWT_SECRET || 'super_secret_platform_key_999') as any;
+            decoded = jwt.verify(token, config.auth.superAdminJwtSecret) as any;
         }
 
         const { theme } = req.body;

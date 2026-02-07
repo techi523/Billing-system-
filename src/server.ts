@@ -1,7 +1,4 @@
-import 'dotenv/config';
-import dotenv from 'dotenv';
-dotenv.config();
-
+import { config } from './config/env';
 import express from 'express';
 import { createServer } from 'http';
 import bodyParser from 'body-parser';
@@ -34,12 +31,32 @@ import { ErrorHandler } from './middleware/error-handler';
 const app = express();
 
 // SECURITY HARDENING
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"], // Consider removing unsafe-inline in production
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'"],
+            fontSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            frameSrc: ["'none'"],
+        },
+    },
+    hsts: {
+        maxAge: 31536000, // 1 year
+        includeSubDomains: true,
+        preload: true
+    },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+}));
 
 // Enforce strict CORS in production
-const corsOrigin = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : (process.env.NODE_ENV === 'production' ? [] : '*');
+const corsOrigin = config.security.corsOrigin;
 
-if (process.env.NODE_ENV === 'production' && corsOrigin.length === 0) {
+if (process.env.NODE_ENV === 'production' && (Array.isArray(corsOrigin) && corsOrigin.length === 0)) {
     logger.warn('SECURITY WARNING: CORS_ORIGIN not set in production. APIs may be blocking requests.');
 }
 
@@ -71,7 +88,12 @@ const superAdminLimiter = rateLimit({
     message: 'Super Admin access restricted. Please contact platform support.',
 });
 
-app.use(bodyParser.json({ limit: '10kb' }));
+app.use(bodyParser.json({
+    limit: '10kb',
+    verify: (req: any, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
 app.use(express.static('public'));
 
 // REQUEST LOGGING
@@ -95,7 +117,14 @@ app.use('/api/v1/wallet', authMiddleware, TenantResolver.resolveTenant, walletRo
 app.use('/api/v1/campaigns', authMiddleware, TenantResolver.resolveTenant, campaignRoutes);
 
 app.use('/api/v1/superadmin', authMiddleware, superAdminLimiter, superadminRoutes);
-app.use('/api/v1/webhooks', webhookRoutes);
+
+// WEBHOOK RATE LIMITING (Prevent webhook flooding)
+const webhookLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 100, // Max 100 webhook calls per minute per IP
+    message: 'Webhook rate limit exceeded',
+});
+app.use('/api/v1/webhooks', webhookLimiter, webhookRoutes);
 app.use('/api/v1/aggregator', aggregatorCallbackRoutes);
 app.use('/api/v1/payments/callback', paymentCallbackRoutes);
 app.use('/api/v1/routers', authMiddleware, routerRoutes);
@@ -154,28 +183,7 @@ async function startServer() {
         // Start Background Monitoring Services
         // Start Background Monitoring Services
         // Start Background Monitoring Services
-        console.log('[System Init] Validating Environment Configuration...');
-
-        const requiredEnvVars = [
-            'SUPER_ADMIN_EMAIL',
-            'SUPER_ADMIN_PASSWORD',
-            'SUPER_ADMIN_JWT_SECRET',
-            'JWT_SECRET',
-            'DB_NAME',
-            'DB_USER',
-            'DB_PASS',
-            'DB_HOST'
-        ];
-
-        const missing = requiredEnvVars.filter(key => !process.env[key]);
-
-        if (missing.length > 0) {
-            console.error('[System Init] CRITICAL ERROR: Missing required environment variables:');
-            missing.forEach(key => console.error(` - ${key}`));
-            console.error('Server cannot start without these variables. Exiting...');
-            process.exit(1);
-        }
-
+        // Start Background Monitoring Services
         console.log('[System Init] Environment Configuration: [OK]');
 
         TrafficMonitorService.start(30 * 1000); // Poll routers every 30 seconds

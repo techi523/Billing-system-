@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import logger from '../utils/logger';
 import { AdminUser, AdminSession, AuditLog } from '../models';
+import { config } from '../config/env';
 
 export interface AuthRequest extends Request {
     user?: {
@@ -23,16 +24,23 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
     try {
-        // Determine which secret to use
-        let secret = process.env.JWT_SECRET || 'secret_key';
         let decoded: any;
+        let tokenType: 'TENANT' | 'SUPER_ADMIN' = 'TENANT';
 
         try {
-            decoded = jwt.verify(token, secret) as any;
-        } catch {
-            // Try super admin secret
-            secret = process.env.SUPER_ADMIN_JWT_SECRET || process.env.JWT_SECRET || 'super_secret_key';
-            decoded = jwt.verify(token, secret) as any;
+            decoded = jwt.verify(token, config.auth.jwtSecret) as any;
+        } catch (err) {
+            try {
+                decoded = jwt.verify(token, config.auth.superAdminJwtSecret) as any;
+                tokenType = 'SUPER_ADMIN';
+            } catch (e) {
+                throw new Error('Invalid token signature');
+            }
+        }
+
+        // Strict Role Check based on Secret used
+        if (tokenType === 'SUPER_ADMIN' && decoded.role !== 'SUPER_ADMIN') {
+            throw new Error('Role mismatch for token type');
         }
 
         // Check session validity
