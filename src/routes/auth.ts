@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -17,7 +17,7 @@ router.post('/register', [
     validators.subdomain,
     validators.sanitizeString('tenantName'),
     handleValidationErrors
-], async (req, res) => {
+], async (req: Request, res: Response) => {
     const { email, password, tenantName, subdomain } = req.body;
     try {
         // 0. Pre-validation
@@ -89,7 +89,7 @@ router.post('/login', [
     validators.email,
     validators.password,
     handleValidationErrors
-], async (req, res) => {
+], async (req: Request, res: Response) => {
     const { email, password } = req.body;
     try {
         const user = await AdminUser.findOne({ where: { email } });
@@ -144,7 +144,7 @@ router.post('/login', [
 });
 
 // Separate Super Admin login with additional security
-router.post('/superadmin/login', async (req, res) => {
+router.post('/superadmin/login', async (req: Request, res: Response) => {
     const { email, password, ip } = req.body;
     try {
         console.log(`[SuperAdmin Login] Attempt for email: ${email}`);
@@ -265,7 +265,7 @@ router.post('/superadmin/login', async (req, res) => {
     }
 });
 
-router.get('/verify', async (req: any, res) => {
+router.get('/verify', async (req: Request, res: Response) => {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Missing token' });
@@ -289,7 +289,7 @@ router.get('/verify', async (req: any, res) => {
     }
 });
 
-router.post('/theme', async (req: any, res) => {
+router.post('/theme', async (req: Request, res: Response) => {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Missing token' });
@@ -320,7 +320,7 @@ router.post('/theme', async (req: any, res) => {
 });
 
 // Password reset request endpoint
-router.post('/password-reset/request', async (req, res) => {
+router.post('/password-reset/request', async (req: Request, res: Response) => {
     try {
         const { email } = req.body;
         if (!email) return res.status(400).json({ error: 'Email is required' });
@@ -358,7 +358,7 @@ router.post('/password-reset/request', async (req, res) => {
 });
 
 // Password reset confirmation endpoint
-router.post('/password-reset/confirm', async (req, res) => {
+router.post('/password-reset/confirm', async (req: Request, res: Response) => {
     try {
         const { token, newPassword } = req.body;
         if (!token || !newPassword) {
