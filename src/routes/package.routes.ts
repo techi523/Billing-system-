@@ -7,6 +7,16 @@ import logger from '../utils/logger';
 const router = Router();
 
 /**
+ * Utility to ensure a value from req.params or req.query is a string
+ */
+const ensureString = (value: any): string => {
+    if (Array.isArray(value)) {
+        return value[0] as string;
+    }
+    return value as string;
+};
+
+/**
  * POST /api/v1/packages
  * Create a new package
  */
@@ -122,7 +132,7 @@ router.get('/', authMiddleware, async (req, res) => {
  */
 router.get('/:id', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
 
         const result = await PackageService.getPackageWithCompatibility(id, tenantId);
@@ -174,7 +184,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
  */
 router.put('/:id', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = ensureString(req.params.id);
         const { name, description, price, validityHours, validityDays, dataLimitMB, uploadSpeed, downloadSpeed, sharedUsers, isActive } = req.body;
         const tenantId = (req as any).user.tenantId;
         const userId = (req as any).user.id;
@@ -227,7 +237,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
  */
 router.delete('/:id', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
         const userId = (req as any).user.id;
 
@@ -254,7 +264,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
  */
 router.get('/:id/stats', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
 
         const stats = await PackageService.getPackageStats(id, tenantId);
@@ -290,7 +300,7 @@ router.get('/:id/stats', authMiddleware, async (req, res) => {
  */
 router.get('/public/:tenantId', async (req, res) => {
     try {
-        const { tenantId } = req.params;
+        const tenantId = ensureString(req.params.tenantId);
 
         const packages = await PackageService.getPublicPackages(tenantId);
 
@@ -326,7 +336,7 @@ router.get('/public/:tenantId', async (req, res) => {
  */
 router.post('/:id/sync', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
 
         const result = await PackageService.getPackageWithCompatibility(id, tenantId);

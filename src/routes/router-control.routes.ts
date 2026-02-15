@@ -7,12 +7,22 @@ import logger from '../utils/logger';
 const router = Router();
 
 /**
+ * Utility to ensure a value from req.params or req.query is a string
+ */
+const ensureString = (value: any): string => {
+    if (Array.isArray(value)) {
+        return value[0] as string;
+    }
+    return value as string;
+};
+
+/**
  * GET /api/v1/routers/:id/users
  * List all hotspot users on a router
  */
 router.get('/:id/users', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
 
         const routerRecord = await RouterModel.findOne({
@@ -42,7 +52,7 @@ router.get('/:id/users', authMiddleware, async (req, res) => {
  */
 router.post('/:id/users', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = ensureString(req.params.id);
         const { username, password, macAddress, ipAddress, limitBytes, limitTime } = req.body;
         const tenantId = (req as any).user.tenantId;
         const userId = (req as any).user.id;
@@ -113,7 +123,8 @@ router.post('/:id/users', authMiddleware, async (req, res) => {
  */
 router.put('/:id/users/:username', authMiddleware, async (req, res) => {
     try {
-        const { id, username } = req.params;
+        const id = ensureString(req.params.id);
+        const username = ensureString(req.params.username);
         const { enabled } = req.body;
         const tenantId = (req as any).user.tenantId;
 
@@ -144,8 +155,9 @@ router.put('/:id/users/:username', authMiddleware, async (req, res) => {
  */
 router.delete('/:id/users/:username', authMiddleware, async (req, res) => {
     try {
-        const { id, username } = req.params;
-        const { ipAddress } = req.query;
+        const id = ensureString(req.params.id);
+        const username = ensureString(req.params.username);
+        const ipAddress = req.query.ipAddress ? ensureString(req.query.ipAddress) : undefined;
         const tenantId = (req as any).user.tenantId;
         const userId = (req as any).user.id;
 
@@ -190,7 +202,8 @@ router.delete('/:id/users/:username', authMiddleware, async (req, res) => {
  */
 router.post('/:id/users/:username/disconnect', authMiddleware, async (req, res) => {
     try {
-        const { id, username } = req.params;
+        const id = ensureString(req.params.id);
+        const username = ensureString(req.params.username);
         const { ipAddress } = req.body;
         const tenantId = (req as any).user.tenantId;
         const userId = (req as any).user.id;
@@ -235,7 +248,7 @@ router.post('/:id/users/:username/disconnect', authMiddleware, async (req, res) 
  */
 router.get('/:id/sessions', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
 
         const routerRecord = await RouterModel.findOne({
@@ -269,7 +282,8 @@ router.get('/:id/sessions', authMiddleware, async (req, res) => {
  */
 router.post('/:id/sessions/:sessionId/disconnect', authMiddleware, async (req, res) => {
     try {
-        const { id, sessionId } = req.params;
+        const id = ensureString(req.params.id);
+        const sessionId = ensureString(req.params.sessionId);
         const tenantId = (req as any).user.tenantId;
 
         const routerRecord = await RouterModel.findOne({
@@ -298,7 +312,8 @@ router.post('/:id/sessions/:sessionId/disconnect', authMiddleware, async (req, r
  */
 router.post('/:id/users/:username/speed', authMiddleware, async (req, res) => {
     try {
-        const { id, username } = req.params;
+        const id = ensureString(req.params.id);
+        const username = ensureString(req.params.username);
         const { uploadSpeed, downloadSpeed } = req.body;
         const tenantId = (req as any).user.tenantId;
 
@@ -338,7 +353,7 @@ router.post('/:id/users/:username/speed', authMiddleware, async (req, res) => {
  */
 router.get('/:id/queues', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
 
         const routerRecord = await RouterModel.findOne({
@@ -367,7 +382,7 @@ router.get('/:id/queues', authMiddleware, async (req, res) => {
  */
 router.get('/:id/stats', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
 
         const routerRecord = await RouterModel.findOne({
@@ -403,7 +418,7 @@ router.get('/:id/stats', authMiddleware, async (req, res) => {
  */
 router.get('/:id/interfaces', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
 
         const routerRecord = await RouterModel.findOne({
@@ -432,7 +447,7 @@ router.get('/:id/interfaces', authMiddleware, async (req, res) => {
  */
 router.get('/:id/resources', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
 
         const routerRecord = await RouterModel.findOne({
