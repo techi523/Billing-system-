@@ -283,7 +283,7 @@ router.get('/:id/sessions', authMiddleware, async (req, res) => {
 router.post('/:id/sessions/:sessionId/disconnect', authMiddleware, async (req, res) => {
     try {
         const id = ensureString(req.params.id);
-        const sessionId = ensureString(req.params.sessionId);
+        ensureString(req.params.sessionId);
         const tenantId = (req as any).user.tenantId;
 
         const routerRecord = await RouterModel.findOne({
@@ -313,7 +313,7 @@ router.post('/:id/sessions/:sessionId/disconnect', authMiddleware, async (req, r
 router.post('/:id/users/:username/speed', authMiddleware, async (req, res) => {
     try {
         const id = ensureString(req.params.id);
-        const username = ensureString(req.params.username);
+        ensureString(req.params.username);
         const { uploadSpeed, downloadSpeed } = req.body;
         const tenantId = (req as any).user.tenantId;
 

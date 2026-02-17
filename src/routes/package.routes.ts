@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { PackageService } from '../services/package.service';
-import { Package } from '../models';
+
 import logger from '../utils/logger';
 
 const router = Router();

@@ -1,4 +1,4 @@
-import { Wallet, WalletTransaction, PlatformWallet, PlatformFee, Tenant, Payment, Settlement, TieredFee, PlatformTransaction, SMSLog, AuditLog } from '../models';
+import { Wallet, WalletTransaction, PlatformWallet, Tenant, Payment, Settlement, PlatformTransaction, AuditLog } from '../models';
 import { sequelize } from '../models';
 import { Op } from 'sequelize';
 import logger from '../utils/logger';
@@ -287,7 +287,7 @@ export class WalletService {
     /**
      * Update platform wallet
      */
-    static async updatePlatformWallet(amount: number | bigint, transactionType: 'CREDIT' | 'DEBIT', referenceId: string | null, transaction?: any): Promise<PlatformWallet> {
+    static async updatePlatformWallet(amount: number | bigint, transactionType: 'CREDIT' | 'DEBIT', _referenceId: string | null, transaction?: any): Promise<PlatformWallet> {
         let platformWallet = await PlatformWallet.findOne();
         if (!platformWallet) {
             platformWallet = await PlatformWallet.create({ balance: 0, pendingBalance: 0, currency: 'KES' }, { transaction });

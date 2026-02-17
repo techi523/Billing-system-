@@ -90,14 +90,14 @@ const superAdminLimiter = rateLimit({
 
 app.use(bodyParser.json({
     limit: '10kb',
-    verify: (req: any, res, buf) => {
+    verify: (req: any, _res, buf) => {
         req.rawBody = buf;
     }
 }));
 app.use(express.static('public'));
 
 // REQUEST LOGGING
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
     logger.info(`${req.method} ${req.url}`, { ip: req.ip });
     next();
 });
@@ -131,7 +131,7 @@ app.use('/api/v1/routers', authMiddleware, routerRoutes);
 app.use('/api/v1/routers', authMiddleware, routerControlRoutes);
 
 // Security headers for sensitive routes
-app.use('/api/v1/superadmin', (req, res, next) => {
+app.use('/api/v1/superadmin', (_req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -140,7 +140,7 @@ app.use('/api/v1/superadmin', (req, res, next) => {
 });
 
 // HEALTH CHECK
-app.get('/health', async (req, res) => {
+app.get('/health', async (_req, res) => {
     try {
         await sequelize.authenticate();
         res.status(200).json({

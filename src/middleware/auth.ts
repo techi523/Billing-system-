@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import logger from '../utils/logger';
-import { AdminUser, AdminSession, AuditLog } from '../models';
+import { AdminSession, AuditLog } from '../models';
 import { config } from '../config/env';
 
 export interface AuthRequest extends Request {

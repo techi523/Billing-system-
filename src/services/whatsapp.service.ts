@@ -1,5 +1,5 @@
 import logger from '../utils/logger';
-import { MessageTemplate, CampaignLog, Tenant } from '../models';
+import { MessageTemplate, Tenant } from '../models';
 import axios from 'axios';
 
 export class WhatsAppService {
@@ -11,7 +11,7 @@ export class WhatsAppService {
         templateId,
         variables,
         tenantId,
-        campaignId
+        campaignId: _campaignId
     }: {
         to: string;
         templateId: string;
@@ -95,7 +95,7 @@ export class WhatsAppService {
     /**
      * Opt-in Verification (Placeholder for production compliance logic)
      */
-    static async verifyOptIn(phoneNumber: string, tenantId: string): Promise<boolean> {
+    static async verifyOptIn(_phoneNumber: string, _tenantId: string): Promise<boolean> {
         // In production, this would check a subscriber_preferences table
         // For now, assume all subscribers opted in or add a field to Subscriber
         return true;

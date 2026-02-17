@@ -33,7 +33,7 @@ export class TemplateSeeder {
                 ];
 
                 for (const t of templates) {
-                    const [temp, created] = await MessageTemplate.findOrCreate({
+                    const [_temp, created] = await MessageTemplate.findOrCreate({
                         where: { name: t.name, tenantId: t.tenantId, channel: 'WHATSAPP' },
                         defaults: t
                     });

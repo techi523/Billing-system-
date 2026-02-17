@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { WalletService } from '../services/wallet.service';
 import { VerificationService } from '../services/verification.service';
-import { AdminUser, Tenant } from '../models';
+import { Tenant } from '../models';
 import { authMiddleware } from '../middleware/auth'; // Assuming auth middleware exists
 
 const router = Router();

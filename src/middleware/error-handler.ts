@@ -29,7 +29,7 @@ export class ErrorHandler {
         next(err);
     }
 
-    static async handleGeneralError(err: any, req: Request, res: Response, next: NextFunction) {
+    static async handleGeneralError(err: any, req: Request, res: Response, _next: NextFunction) {
         logger.error('Unhandled error', { error: err.message, stack: err.stack, userId: (req as any).user?.id });
 
         res.status(500).json({

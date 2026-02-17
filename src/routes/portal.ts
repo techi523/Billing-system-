@@ -1,9 +1,7 @@
 import { Router } from 'express';
 import { Package, Payment, Tenant, Router as RouterModel, PlatformSetting } from '../models';
-import { MpesaService } from '../services/mpesa.service';
 import { AggregatorService } from '../services/aggregator.service';
 import logger from '../utils/logger';
-import { TenantResolver } from '../middleware/tenant-resolver';
 
 const router = Router();
 
@@ -56,7 +54,7 @@ router.post('/:tenantId/pay', async (req, res) => {
     }
 
     // Rate limiting: Prevent spam attacks (5 requests per minute per phone)
-    const rateLimitKey = `rate_limit:${phone}`;
+
     const now = Date.now();
     const windowStart = now - (60 * 1000); // 1 minute window
 
@@ -116,7 +114,7 @@ router.post('/:tenantId/pay', async (req, res) => {
     });
 
     try {
-        const userId = subscriberId || mac || sessionId.substring(0, 8);
+
         const aggregatorResponse = await AggregatorService.initiateStkPush({
             phoneNumber: phone,
             amount: pkg.price,
@@ -173,12 +171,12 @@ router.get('/payment-status/:id', async (req, res) => {
 });
 
 // 6. SaaS Health Check
-router.get('/health', (req, res) => {
+router.get('/health', (_req, res) => {
     res.json({ status: 'UP', service: 'SurfBill Portal', timestamp: new Date() });
 });
 
 // 7. Public Platform Settings (Contacts)
-router.get('/public/settings', async (req, res) => {
+router.get('/public/settings', async (_req, res) => {
     try {
         const settings = await PlatformSetting.findAll({
             where: {

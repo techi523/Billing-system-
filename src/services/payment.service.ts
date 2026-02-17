@@ -1,4 +1,4 @@
-import { Payment, Package, sequelize } from '../models';
+import { Payment, sequelize } from '../models';
 import { MpesaService } from './mpesa.service';
 import { IntaSendService } from './intasend.service';
 import { WalletService } from './wallet.service';

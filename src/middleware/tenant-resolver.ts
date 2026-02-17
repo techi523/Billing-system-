@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AdminUser, Tenant } from '../models';
+import { Tenant } from '../models';
 import { AuditLog } from '../models';
 
 export interface TenantResolverRequest extends Request {

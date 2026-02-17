@@ -14,7 +14,7 @@ router.use(authMiddleware);
 router.use(authorize(['SUPER_ADMIN']));
 
 // 1. List all Tenants
-router.get('/tenants', async (req, res) => {
+router.get('/tenants', async (_req, res) => {
     const tenants = await Tenant.findAll({
         attributes: ['id', 'name', 'subdomain', 'status', 'aggregatorSubAccountId', 'commissionPercentage']
     });
@@ -22,7 +22,7 @@ router.get('/tenants', async (req, res) => {
 });
 
 // 1.1 List all Routers (Stats)
-router.get('/routers', async (req, res) => {
+router.get('/routers', async (_req, res) => {
     try {
         const total = await RouterModel.count();
         const online = await RouterModel.count({ where: { isOnline: true } });
@@ -78,7 +78,7 @@ router.post('/tenants/:id/register-aggregator', async (req: any, res) => {
 });
 
 // 2. Global Platforms Stats
-router.get('/platform-stats', async (req, res) => {
+router.get('/platform-stats', async (_req, res) => {
     try {
         const stats = await AnalyticsService.getGlobalPlatformStats();
         res.json(stats);
@@ -121,7 +121,7 @@ router.put('/tenants/:id/status', async (req: any, res) => {
 });
 
 // 6. Global Wallet Monitoring
-router.get('/wallets', async (req, res) => {
+router.get('/wallets', async (_req, res) => {
     try {
         const wallets = await Wallet.findAll({
             where: { ownerType: 'TENANT' },
@@ -145,7 +145,7 @@ router.get('/wallets', async (req, res) => {
 });
 
 // 7. Platform Wallet Status
-router.get('/platform-wallet', async (req, res) => {
+router.get('/platform-wallet', async (_req, res) => {
     try {
         const balance = await WalletService.getPlatformWalletBalance();
         res.json(balance);
@@ -155,7 +155,7 @@ router.get('/platform-wallet', async (req, res) => {
 });
 
 // 8. Platform Fee Management
-router.get('/platform-fees', async (req, res) => {
+router.get('/platform-fees', async (_req, res) => {
     try {
         const fees = await PlatformFee.findAll({
             include: [{ model: TieredFee, as: 'tieredFees' }]
@@ -223,7 +223,7 @@ router.put('/platform-fees/:id', async (req: any, res) => {
 });
 
 // 9. Platform Settings Management
-router.get('/settings', async (req, res) => {
+router.get('/settings', async (_req, res) => {
     try {
         const settings = await PlatformSetting.findAll();
         res.json(settings);

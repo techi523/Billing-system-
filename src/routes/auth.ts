@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import { AdminUser, Tenant, AdminSession, AuditLog, PasswordResetToken } from '../models';
 import { TenantBootstrapService } from '../services/tenant-bootstrap.service';
 import { sendPasswordResetEmail } from '../services/emailService';
-import { TenantResolver } from '../middleware/tenant-resolver';
+
 import { config } from '../config/env';
 import { validators, handleValidationErrors } from '../middleware/validation';
 

@@ -1,4 +1,4 @@
-import { Package, Router, RouterConnectionLog, AuditLog } from '../models';
+import { Package, Router, AuditLog } from '../models';
 import { MikroTikService } from './mikrotik.service';
 import logger from '../utils/logger';
 

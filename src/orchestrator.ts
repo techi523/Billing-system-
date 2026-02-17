@@ -30,7 +30,7 @@ export class SessionOrchestrator {
             tenantId: tenantId
         });
 
-        const limitTime = pkg.durationMinutes ? `${pkg.durationMinutes}m` : undefined;
+
 
         await MikroTikService.createHotspotUser(
             router,

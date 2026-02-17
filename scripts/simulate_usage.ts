@@ -23,7 +23,7 @@ async function runSimulation() {
             subdomain: SUBDOMAIN
         });
         console.log('✅ Tenant Registered:', registerRes.data.tenant.id);
-        const { tenant, user } = registerRes.data;
+        const { tenant, user: _user } = registerRes.data;
 
         // 2. Login
         console.log('\n2. Logging in...');
@@ -73,7 +73,7 @@ async function runSimulation() {
             ip: '10.0.0.50'
         });
         console.log('✅ Payment Initiated. CheckoutID:', initRes.data.checkoutId);
-        const { checkoutId, paymentId } = initRes.data;
+        const { checkoutId, paymentId: _paymentId } = initRes.data;
 
         // 6. Simulate M-Pesa Callback
         console.log('\n6. Simulating M-Pesa Webhook Callback...');

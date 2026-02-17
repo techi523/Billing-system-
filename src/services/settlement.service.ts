@@ -1,4 +1,4 @@
-import { Settlement, Wallet, Tenant, sequelize } from '../models';
+import { Settlement, Wallet, sequelize } from '../models';
 
 export class SettlementService {
     static async requestSettlement(tenantId: string, amount: number, method: string) {

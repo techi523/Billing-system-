@@ -1,6 +1,5 @@
-import axios from 'axios';
 import logger from '../utils/logger';
-import { Tenant, Payment } from '../models';
+import { Tenant } from '../models';
 
 export interface AggregatorStkRequest {
     phoneNumber: string;
@@ -19,15 +18,8 @@ export interface AggregatorResponse {
 }
 
 export class AggregatorService {
-    private static API_BASE_URL = process.env.NODE_ENV === 'production'
-        ? (process.env.AGGREGATOR_API_URL || 'https://api.cellulant.com/v2')
-        : (process.env.AGGREGATOR_SANDBOX_URL || 'https://api-sandbox.cellulant.com/v2');
-
-    private static API_KEY = process.env.AGGREGATOR_API_KEY || 'sk_test_surfbill_88291';
-
     /**
      * Initiate STK Push via Aggregator (Production-Grade Sandbox)
-     * Directed to the single SurfBill Paybill fallback or tenant-specific sub-account
      */
     static async initiateStkPush(request: AggregatorStkRequest): Promise<AggregatorResponse> {
         try {
@@ -89,7 +81,7 @@ export class AggregatorService {
     /**
      * Reconcile/Verify transaction status
      */
-    static async verifyTransaction(checkoutRequestId: string): Promise<any> {
+    static async verifyTransaction(_checkoutRequestId: string): Promise<any> {
         try {
             // External check to aggregator
             return { status: 'SUCCESS', amount: 0, reference: '...' };

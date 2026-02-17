@@ -1,7 +1,6 @@
 import { Router } from 'express';
-import { Payment, Package, Tenant, Subscriber, CampaignLog, sequelize } from '../models';
+import { Payment, Package, Subscriber, CampaignLog, sequelize } from '../models';
 import { SessionOrchestrator } from '../orchestrator';
-import { AuditService } from '../services/audit.service';
 import { IntaSendService } from '../services/intasend.service';
 import { WalletService } from '../services/wallet.service';
 import { SocketService } from '../services/socket.service';
@@ -21,7 +20,7 @@ const SAFARICOM_IPS = [
  * Async fulfillment function with retry logic
  */
 async function processFulfillment(fulfillmentData: any) {
-    const { paymentId, subscriberId, macAddress, ipAddress, routerId } = fulfillmentData;
+    const { paymentId, subscriberId, macAddress, ipAddress: _ipAddress, routerId: _routerId } = fulfillmentData;
     const maxRetries = 3;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -31,9 +30,9 @@ async function processFulfillment(fulfillmentData: any) {
                 const { IspService } = require('../services/isp.service');
                 await IspService.renewSubscriber(subscriberId);
                 logger.info('ISP Subscriber Renewed', { subscriberId, paymentId, attempt });
-            } else if (macAddress && routerId) {
+            } else if (macAddress && _routerId) {
                 // HOTSPOT MODE: Grant instant access
-                await SessionOrchestrator.grantAccess(paymentId, macAddress, ipAddress);
+                await SessionOrchestrator.grantAccess(paymentId, macAddress, _ipAddress);
                 logger.info('Hotspot Access Granted', { mac: macAddress, paymentId, attempt });
             }
 
@@ -42,7 +41,7 @@ async function processFulfillment(fulfillmentData: any) {
                 paymentId,
                 macAddress,
                 subscriberId,
-                routerId,
+                routerId: _routerId,
                 timestamp: new Date()
             });
 

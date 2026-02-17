@@ -1,5 +1,5 @@
 import { sequelize, Tenant, AdminUser, Subscriber, Payment, Session, Wallet, WalletTransaction, Invoice, Voucher, Campaign, SMSLog, AuditLog, PlatformTransaction, FraudLog } from '../src/models';
-import logger from '../src/utils/logger';
+
 
 async function cleanupDatabase() {
     try {
@@ -66,7 +66,7 @@ async function cleanupDatabase() {
                     console.log(`⚠️ Found ${tenantList.length} duplicates for subdomain '${subdomain}'`);
 
                     // Keep the first one found since we wiped data and can't reliability sort by time without createdAt
-                    const keeper = tenantList[0];
+                    tenantList[0];
                     const toDelete = tenantList.slice(1);
 
                     for (const d of toDelete) {

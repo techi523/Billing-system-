@@ -1,4 +1,4 @@
-import { Payment, Tenant } from '../models';
+import { Payment } from '../models';
 import logger from '../utils/logger';
 import { WalletService } from './wallet.service';
 

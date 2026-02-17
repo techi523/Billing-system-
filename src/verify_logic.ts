@@ -1,5 +1,5 @@
-import { Package, Payment, Session, sequelize } from './models';
-import { SessionOrchestrator } from './orchestrator';
+import { Package, Payment, sequelize } from './models';
+
 
 async function verify() {
     console.log('--- STARTING VERIFICATION ---');

@@ -1,7 +1,6 @@
 import axios from 'axios';
 import crypto from 'crypto';
 import logger from '../utils/logger';
-import { Payment, Tenant } from '../models';
 import { config } from '../config/env';
 
 export class IntaSendService {

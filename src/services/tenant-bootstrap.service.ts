@@ -1,4 +1,4 @@
-import { Tenant, Package, Wallet, AdminUser } from '../models';
+import { Wallet } from '../models';
 import { WalletService } from './wallet.service';
 import { sequelize } from '../models';
 import logger from '../utils/logger';

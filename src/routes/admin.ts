@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { Package, Subscriber, Invoice, Tenant, AuditLog, Payment, Session, Voucher, FraudLog, Router as RouterModel, AdminUser } from '../models';
-import { authMiddleware, authorize } from '../middleware/auth';
+import { Package, Subscriber, Tenant, AuditLog, Payment, Session, Router as RouterModel, AdminUser } from '../models';
+import { authMiddleware } from '../middleware/auth';
 import { TenantBootstrapService } from '../services/tenant-bootstrap.service';
 import logger from '../utils/logger';
-import { TenantResolver } from '../middleware/tenant-resolver';
+
 import { IspService } from '../services/isp.service';
 
 const router = Router();

@@ -21,7 +21,7 @@ const requiredEnvVars = [
     'INTASEND_SECRET_KEY',
 ] as const;
 
-type RequiredEnvVar = typeof requiredEnvVars[number];
+
 
 function validateEnv(): Record<string, string> {
     const missingVars: string[] = [];

@@ -1,4 +1,4 @@
-import { Subscriber, Package, Router, Payment, Invoice } from '../models';
+import { Subscriber, Package, Router } from '../models';
 import { Op } from 'sequelize';
 import { MikroTikService } from './mikrotik.service';
 

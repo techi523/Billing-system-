@@ -45,7 +45,7 @@ async function seedTemplatesWithSync() {
             ];
 
             for (const t of templates) {
-                const [template, created] = await MessageTemplate.findOrCreate({
+                const [_template, created] = await MessageTemplate.findOrCreate({
                     where: { name: t.name, tenantId: t.tenantId, channel: 'WHATSAPP' },
                     defaults: t
                 });

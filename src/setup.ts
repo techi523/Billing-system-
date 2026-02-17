@@ -81,7 +81,7 @@ async function initialSetup() {
 
         // 4. Routers
         const r1 = await RouterModel.create({ name: 'Node 01 - CBD', host: '197.10.20.1', username: 'api', password: 'password', tenantId: tenant.id });
-        const r2 = await RouterModel.create({ name: 'Node 02 - Westlands', host: '197.10.20.2', username: 'api', password: 'password', tenantId: tenant.id });
+        await RouterModel.create({ name: 'Node 02 - Westlands', host: '197.10.20.2', username: 'api', password: 'password', tenantId: tenant.id });
 
         // 5. Packages
         const p1 = await Package.create({ name: '1 Hour Fast', price: 20, durationMinutes: 60, type: 'HOTSPOT', tenantId: tenant.id, isEnabled: true });

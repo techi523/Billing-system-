@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Payment, Package, Tenant, sequelize } from '../models';
+import { Payment, Package, sequelize } from '../models';
 import { SessionOrchestrator } from '../orchestrator';
 import { WalletService } from '../services/wallet.service';
 import logger from '../utils/logger';
@@ -12,7 +12,7 @@ const router = Router();
  */
 router.post('/callback', async (req, res) => {
     const payload = req.body;
-    const { checkoutRequestId, transactionId, status, amount, metadata } = payload;
+    const { checkoutRequestId, transactionId, status, amount: _amount, metadata: _metadata } = payload;
 
     logger.info('Received aggregator callback', { checkoutRequestId, transactionId, status });
 

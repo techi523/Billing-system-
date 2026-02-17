@@ -42,7 +42,7 @@ async function seed() {
 
     // 5. Create Demo Agent
     const agentPassword = await bcrypt.hash('agent123', 10);
-    const agent = await AdminUser.create({
+    await AdminUser.create({
         email: 'agent@demoisp.com',
         password: agentPassword,
         role: 'AGENT',

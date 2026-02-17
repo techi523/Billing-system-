@@ -1,4 +1,4 @@
-import { Campaign, CampaignLog, Subscriber, sequelize } from '../models';
+import { Campaign, CampaignLog, Subscriber } from '../models';
 import { sendEmail } from './emailService';
 import { SMSService } from './sms.service';
 import { WhatsAppService } from './whatsapp.service';

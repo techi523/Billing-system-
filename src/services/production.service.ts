@@ -1,5 +1,4 @@
-import { Payment, Session, Router, Package, Tenant, AuditLog, sequelize } from '../models';
-import { MikroTikService } from './mikrotik.service';
+import { Payment, Session, Router, Package, Tenant, sequelize } from '../models';
 import logger from '../utils/logger';
 import { AuditService } from './audit.service';
 
@@ -18,7 +17,7 @@ export class ProductionService {
         ]);
 
         const checks = {
-            routerConnected: routers.length > 0 && routers.some(r => r.validationStatus === 'VALIDATED'),
+            routerConnected: routers.some(r => r.validationStatus === 'VALIDATED'),
             packagesExist: packages.length > 0,
             paymentConfigured: !!(tenant.intasendPublishableKey && tenant.intasendSecretKey),
             hasTestActivity: !!payments,

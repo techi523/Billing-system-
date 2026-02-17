@@ -9,7 +9,7 @@ async function seedDatabase() {
 
         // 1. Create Super Admin
         const superAdminPassword = await bcrypt.hash('admin123', 12);
-        const superAdmin = await AdminUser.create({
+        await AdminUser.create({
             email: 'superadmin@example.com',
             password: superAdminPassword,
             role: 'SUPER_ADMIN'
@@ -30,7 +30,7 @@ async function seedDatabase() {
 
         // 3. Create Tenant Admin
         const tenantAdminPassword = await bcrypt.hash('tenant123', 12);
-        const tenantAdmin = await AdminUser.create({
+        await AdminUser.create({
             email: 'admin@demoisp.com',
             password: tenantAdminPassword,
             role: 'TENANT',

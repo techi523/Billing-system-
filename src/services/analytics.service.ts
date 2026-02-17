@@ -233,7 +233,7 @@ export class AnalyticsService {
 
         // Group sessions by hour of day (0-23)
         const isMySQL = process.env.DB_TYPE === 'mysql';
-        const hourFunc = isMySQL ? 'HOUR' : 'strftime'; // SQLite: strftime('%H', startTime)
+
         const hourCol = isMySQL ? sequelize.fn('HOUR', sequelize.col('startTime')) : sequelize.literal("cast(strftime('%H', startTime) as integer)") as any;
 
         const sessionsByHour = await Session.findAll({
@@ -250,7 +250,7 @@ export class AnalyticsService {
         });
 
         // Find the 3-hour window with max sessions
-        const hoursMap = new Array(24).fill(0);
+        const hoursMap: number[] = Array.from({ length: 24 }).fill(0) as number[];
         sessionsByHour.forEach((r: any) => {
             hoursMap[parseInt(r.hour)] = parseInt(r.count);
         });
