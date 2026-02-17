@@ -1,8 +1,16 @@
 import { useState } from 'react';
-import { Ticket, Printer, RefreshCw, Copy, Download } from 'lucide-react';
+import { Printer, RefreshCw, Copy, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const VoucherCard = ({ voucher, index }: any) => (
+interface Voucher {
+    id: number;
+    code: string;
+    price: number;
+    plan: string;
+    batch: string;
+}
+
+const VoucherCard = ({ voucher, index }: { voucher: Voucher; index: number }) => (
     <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -36,7 +44,7 @@ const VoucherCard = ({ voucher, index }: any) => (
                     </div>
                 </div>
                 <div className="text-right">
-                    <p className="text-sm font-black text-slate-900">KES {voucher.price}</p>
+                    <p className="text-sm font-black text-slate-900">KES {(voucher.price || 0)}</p>
                     <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wide">
                         Unused
                     </span>
@@ -60,11 +68,11 @@ const VoucherCard = ({ voucher, index }: any) => (
     </motion.div>
 );
 
-import Modal from '../Common/Modal';
+import VoucherModal from '../Modals/VoucherModal';
 
 const VoucherManager = () => {
     // Generate Mock Vouchers
-    const vouchers = Array.from({ length: 9 }).map((_, i) => ({
+    const vouchers: Voucher[] = Array.from({ length: 9 }).map((_, i) => ({
         id: i,
         code: `${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
         price: 50,
@@ -72,6 +80,11 @@ const VoucherManager = () => {
         batch: 'A-202'
     }));
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleBatchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsModalOpen(false);
+    };
 
     return (
         <div className="space-y-8">
@@ -99,37 +112,11 @@ const VoucherManager = () => {
                 ))}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Generate Voucher Batch">
-                <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); setIsModalOpen(false); }}>
-                    <div>
-                        <label className="block text-xs font-black uppercase text-slate-400 tracking-widest mb-2">Linked Plan</label>
-                        <select className="input-field">
-                            <option>Daily Unlimited (KES 50)</option>
-                            <option>Weekly Surf (KES 350)</option>
-                        </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-black uppercase text-slate-400 tracking-widest mb-2">Quantity</label>
-                            <input className="input-field" type="number" defaultValue="50" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-black uppercase text-slate-400 tracking-widest mb-2">Prefix</label>
-                            <input className="input-field" placeholder="e.g. SB-DEC" />
-                        </div>
-                    </div>
-                    <div className="p-4 bg-yellow-50 rounded-2xl border border-yellow-100 flex gap-3">
-                        <div className="mt-1 text-yellow-600">
-                            <Ticket size={20} />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-yellow-900 text-sm">Printing Check</h4>
-                            <p className="text-xs text-yellow-700 opacity-80 mt-1 leading-relaxed">Generated vouchers will be downloadable as a PDF sheet immediately after creation.</p>
-                        </div>
-                    </div>
-                    <button type="submit" className="btn-primary w-full py-4 text-sm uppercase tracking-widest">Start Generation</button>
-                </form>
-            </Modal>
+            <VoucherModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSubmit={handleBatchSubmit}
+            />
         </div>
     );
 };

@@ -1,12 +1,33 @@
 import { useState, useEffect } from 'react';
 import { Mail, MessageSquare, Shield, Globe, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import axios from 'axios';
+
+interface PlatformSetting {
+    key: string;
+    value: string;
+}
+
+interface SettingsMap {
+    [key: string]: string;
+}
+
+interface MessageState {
+    type: 'success' | 'error' | 'info' | '';
+    text: string;
+}
+
+interface TabConfig {
+    id: string;
+    label: string;
+    icon: LucideIcon;
+}
 
 const PlatformSettings = () => {
     const [activeTab, setActiveTab] = useState('system');
-    const [settings, setSettings] = useState<any>({});
+    const [settings, setSettings] = useState<SettingsMap>({});
     const [loading, setLoading] = useState(true);
-    const [message, setMessage] = useState({ type: '', text: '' });
+    const [message, setMessage] = useState<MessageState>({ type: '', text: '' });
 
     useEffect(() => {
         fetchSettings();
@@ -14,13 +35,13 @@ const PlatformSettings = () => {
 
     const fetchSettings = async () => {
         try {
-            const res = await axios.get('/api/v1/superadmin/settings');
-            const settingsMap = res.data.reduce((acc: any, curr: any) => {
+            const res = await axios.get<PlatformSetting[]>('/api/v1/superadmin/settings');
+            const settingsMap = res.data.reduce((acc: SettingsMap, curr: PlatformSetting) => {
                 acc[curr.key] = curr.value;
                 return acc;
             }, {});
             setSettings(settingsMap);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Failed to fetch settings', error);
         } finally {
             setLoading(false);
@@ -30,10 +51,11 @@ const PlatformSettings = () => {
     const handleSave = async (key: string, value: string) => {
         try {
             await axios.put(`/api/v1/superadmin/settings/${key}`, { value });
-            setSettings({ ...settings, [key]: value });
+            setSettings(prev => ({ ...prev, [key]: value }));
             setMessage({ type: 'success', text: `Setting ${key} updated successfully` });
             setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-        } catch (error) {
+        } catch (error: unknown) {
+            console.error(`Failed to update ${key}`, error);
             setMessage({ type: 'error', text: `Failed to update ${key}` });
         }
     };
@@ -43,8 +65,12 @@ const PlatformSettings = () => {
             setMessage({ type: 'info', text: 'Sending test email...' });
             await axios.post('/api/v1/superadmin/test-email');
             setMessage({ type: 'success', text: 'Test email sent successfully!' });
-        } catch (error: any) {
-            setMessage({ type: 'error', text: error.response?.data?.error || 'SMTP Test failed' });
+        } catch (error: unknown) {
+            let errorMsg = 'SMTP Test failed';
+            if (axios.isAxiosError(error) && error.response?.data?.error) {
+                errorMsg = error.response.data.error;
+            }
+            setMessage({ type: 'error', text: errorMsg });
         }
     };
 
@@ -55,7 +81,7 @@ const PlatformSettings = () => {
         </div>
     );
 
-    const tabs = [
+    const tabs: TabConfig[] = [
         { id: 'system', label: 'System', icon: Globe },
         { id: 'email', label: 'Email (SMTP)', icon: Mail },
         { id: 'sms', label: 'SMS & WhatsApp', icon: MessageSquare },

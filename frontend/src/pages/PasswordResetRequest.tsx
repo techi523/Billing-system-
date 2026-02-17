@@ -18,10 +18,14 @@ const PasswordResetRequest = () => {
         setMessage('');
 
         try {
-            const res = await axios.post('/api/v1/auth/password-reset/request', { email });
+            const res = await axios.post<{ message: string }>('/api/v1/auth/password-reset/request', { email });
             setMessage(res.data.message);
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Something went wrong. Please try again.');
+        } catch (err: unknown) {
+            let errorMsg = 'Something went wrong. Please try again.';
+            if (axios.isAxiosError(err) && err.response?.data?.error) {
+                errorMsg = err.response.data.error;
+            }
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }

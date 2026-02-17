@@ -2,7 +2,17 @@ import { useState } from 'react';
 import { Check, Zap, Clock, Trash2, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const PlanCard = ({ plan, index }: any) => (
+interface Plan {
+    id: number;
+    name: string;
+    price: number;
+    duration: string;
+    speed: string;
+    devices: number;
+    isPopular: boolean;
+}
+
+const PlanCard = ({ plan, index }: { plan: Plan; index: number }) => (
     <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -25,7 +35,7 @@ const PlanCard = ({ plan, index }: any) => (
             <h3 className="text-xl font-black tracking-tight mb-2">{plan.name}</h3>
             <div className="flex items-baseline gap-1">
                 <span className="text-sm font-bold opacity-60">KES</span>
-                <span className="text-4xl font-black tracking-tighter">{plan.price.toLocaleString()}</span>
+                <span className="text-4xl font-black tracking-tighter">{(plan.price || 0).toLocaleString()}</span>
             </div>
         </div>
 
@@ -67,16 +77,21 @@ const PlanCard = ({ plan, index }: any) => (
     </motion.div>
 );
 
-import Modal from '../Common/Modal';
+import PackageModal from '../Modals/PackageModal';
 
 const PackagePlans = () => {
-    const [plans] = useState([
+    const [plans] = useState<Plan[]>([
         { id: 1, name: 'Hourly Pass', price: 20, duration: '1 Hour', speed: '5 Mbps', devices: 1, isPopular: false },
         { id: 2, name: 'Daily Unlimited', price: 50, duration: '24 Hours', speed: '10 Mbps', devices: 2, isPopular: true },
         { id: 3, name: 'Weekly Surf', price: 350, duration: '7 Days', speed: '8 Mbps', devices: 3, isPopular: false },
         { id: 4, name: 'Monthly Pro', price: 1500, duration: '30 Days', speed: '20 Mbps', devices: 5, isPopular: false },
     ]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handlePackageSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsModalOpen(false);
+    };
 
     return (
         <div className="space-y-10">
@@ -96,47 +111,11 @@ const PackagePlans = () => {
                 ))}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Design New Service Plan">
-                <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); setIsModalOpen(false); }}>
-                    <div>
-                        <label className="block text-xs font-black uppercase text-slate-400 tracking-widest mb-2">Plan Name</label>
-                        <input className="input-field" placeholder="e.g. Weekend Gamer Special" autoFocus />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-black uppercase text-slate-400 tracking-widest mb-2">Price (KES)</label>
-                            <input className="input-field" placeholder="0.00" type="number" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-black uppercase text-slate-400 tracking-widest mb-2">Speed Limit</label>
-                            <select className="input-field">
-                                <option>5 Mbps</option>
-                                <option>10 Mbps</option>
-                                <option>20 Mbps</option>
-                                <option>100 Mbps</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-black uppercase text-slate-400 tracking-widest mb-2">Duration</label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {[
-                                '1 Hour', '24 Hours', '7 Days', '30 Days'
-                            ].map(d => (
-                                <button key={d} type="button" className="py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 hover:bg-sky-500 hover:text-white transition-all">{d}</button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-sky-50 rounded-2xl border border-sky-100">
-                        <div className="flex-1">
-                            <h4 className="font-bold text-sky-900">Make Popular</h4>
-                            <p className="text-xs text-sky-700 opacity-80">Highlight this plan on the captive portal</p>
-                        </div>
-                        <input type="checkbox" className="w-6 h-6 rounded-lg text-sky-500 border-sky-300 focus:ring-sky-500" />
-                    </div>
-                    <button type="submit" className="btn-primary w-full py-4 text-sm uppercase tracking-widest">Publish Plan</button>
-                </form>
-            </Modal>
+            <PackageModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSubmit={handlePackageSubmit}
+            />
         </div>
     );
 };

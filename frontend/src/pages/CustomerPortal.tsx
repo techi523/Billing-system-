@@ -5,11 +5,28 @@ import { motion } from 'framer-motion';
 import BackButton from '../components/Common/BackButton';
 import ThemeToggle from '../components/Common/ThemeToggle';
 
+interface ActivityItem {
+    action: string;
+    date: string;
+    amount: string;
+}
+
+interface CustomerDashboardData {
+    name: string;
+    email: string;
+    currentPlan: string;
+    balance: number;
+    dataUsed: number;
+    dataLimit: number;
+    expires: string;
+    recentActivity: ActivityItem[];
+}
+
 const CustomerPortal = () => {
     const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [customerData, setCustomerData] = useState<any>(null);
+    const [customerData, setCustomerData] = useState<CustomerDashboardData | null>(null);
     const [activeTab, setActiveTab] = useState('dashboard');
 
     useEffect(() => {
@@ -45,12 +62,13 @@ const CustomerPortal = () => {
             if (token) {
                 try {
                     // Try to verify token with backend
-                    const res = await axios.get('/api/v1/auth/verify', {
+                    const res = await axios.get<{ customer: CustomerDashboardData }>('/api/v1/auth/verify', {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     setIsAuthenticated(true);
                     setCustomerData(res.data.customer);
-                } catch (err) {
+                } catch (err: unknown) {
+                    console.error('[CustomerPortal] Auth verification failed:', err);
                     // Token invalid, redirect to login
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
@@ -190,9 +208,9 @@ const CustomerPortal = () => {
                             <div className="w-full bg-[var(--bg-surface-elevated)] rounded-full h-4">
                                 <motion.div
                                     initial={{ width: 0 }}
-                                    animate={{ width: `${(customerData?.dataUsed || 45) / (customerData?.dataLimit || 100) * 100}%` }}
+                                    animate={{ width: `${((customerData?.dataUsed ?? 0) / (customerData?.dataLimit ?? 100)) * 100}%` }}
                                     transition={{ duration: 1, ease: "easeOut" }}
-                                    className={`h-4 rounded-full ${customerData?.dataUsed > 80 ? 'bg-rose-500' : customerData?.dataUsed > 60 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                                    className={`h-4 rounded-full ${(customerData?.dataUsed ?? 0) > 80 ? 'bg-rose-500' : (customerData?.dataUsed ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'}`}
                                 ></motion.div>
                             </div>
                             <div className="flex justify-between text-xs text-[var(--text-muted)] font-black uppercase tracking-widest">
@@ -245,7 +263,7 @@ const CustomerPortal = () => {
                             <div className="space-y-6">
                                 <h3 className="text-lg font-black text-[var(--text-primary)]">Billing History</h3>
                                 <div className="space-y-4">
-                                    {customerData?.recentActivity?.map((activity: any, index: number) => (
+                                    {customerData?.recentActivity?.map((activity: ActivityItem, index: number) => (
                                         <div key={index} className="flex justify-between items-center p-4 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl">
                                             <div>
                                                 <p className="font-bold text-[var(--text-primary)]">{activity.action}</p>

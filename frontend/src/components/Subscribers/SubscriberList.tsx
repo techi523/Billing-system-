@@ -3,26 +3,36 @@ import axios from 'axios';
 import { Search, Filter, MoreHorizontal, Smartphone, Clock, Shield, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+interface Subscriber {
+    id: string;
+    name: string;
+    phone: string;
+    plan: string;
+    status: 'Active' | 'Warning' | 'Expired';
+    usage: number;
+    expires: string;
+}
+
 const SubscriberList = () => {
-    const [subscribers, setSubscribers] = useState<any[]>([]);
+    const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchSubscribers = async () => {
             try {
                 const response = await axios.get('/api/v1/admin/subscribers');
-                const mapped = response.data.map((s: any) => ({
-                    id: s.id,
+                const mapped: Subscriber[] = response.data.map((s: any) => ({
+                    id: String(s.id),
                     name: s.name || 'Anonymous',
-                    phone: s.phoneNumber,
+                    phone: s.phoneNumber || 'N/A',
                     plan: s.package?.name || 'No Plan',
-                    status: s.displayStatus,
-                    usage: s.usagePercent,
-                    expires: s.expiresIn
+                    status: s.displayStatus || 'Active',
+                    usage: Number(s.usagePercent || 0),
+                    expires: s.expiresIn || 'Never'
                 }));
                 setSubscribers(mapped);
-            } catch (error) {
-                console.error('Failed to fetch subscribers', error);
+            } catch (error: unknown) {
+                console.error('[Subscribers] Failed to fetch subscribers:', error);
             } finally {
                 setLoading(false);
             }
@@ -89,7 +99,7 @@ const SubscriberList = () => {
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ delay: i * 0.05 }}
-                                    key={sub.id}
+                                    key={String(sub.id)}
                                     className="group hover:bg-slate-50/50 transition-colors"
                                 >
                                     <td className="px-8 py-5">

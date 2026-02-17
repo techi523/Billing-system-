@@ -15,10 +15,31 @@ import SupportFooter from '../components/Common/SupportFooter';
 import SupportSection from '../components/Common/SupportSection';
 import { OFFICIAL_SUPPORT } from '../constants';
 
+interface FeatureItem {
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+    color: string;
+}
+
+interface BenefitCardProps {
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+}
+
+const BenefitCard = ({ icon, title, description }: BenefitCardProps) => (
+    <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
+        <div className="mb-6 transform group-hover:scale-110 transition-transform">{icon}</div>
+        <h3 className="text-xl font-bold mb-3">{title}</h3>
+        <p className="text-slate-400 text-sm font-medium leading-relaxed">{description}</p>
+    </div>
+);
+
 const LandingPage = () => {
     const navigate = useNavigate();
 
-    const features = [
+    const features: FeatureItem[] = [
         {
             icon: <Wifi className="w-6 h-6" />,
             title: "MikroTik Integrated",
@@ -44,14 +65,6 @@ const LandingPage = () => {
             color: "rose"
         }
     ];
-
-    const BenefitCard = ({ icon, title, description }: { icon: any, title: string, description: string }) => (
-        <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
-            <div className="mb-6 transform group-hover:scale-110 transition-transform">{icon}</div>
-            <h3 className="text-xl font-bold mb-3">{title}</h3>
-            <p className="text-slate-400 text-sm font-medium leading-relaxed">{description}</p>
-        </div>
-    );
 
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-600">

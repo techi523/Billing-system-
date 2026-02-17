@@ -1,15 +1,100 @@
 import { useState, useEffect } from 'react';
-import { Globe, Building2, TrendingUp, CheckCircle2, Clock, Activity } from 'lucide-react';
+import { Globe, Building2, TrendingUp, CheckCircle2, Clock, Activity, type LucideIcon, Plus } from 'lucide-react';
+import TenantModal from '../Modals/TenantModal';
 import axios from 'axios';
 
+interface DashboardStats {
+    totalRevenue: number;
+    activeTenants: number;
+    totalTenants: number;
+    totalPayments: number;
+}
+
+interface Tenant {
+    id: string;
+    name: string;
+    subdomain: string;
+    status: 'ACTIVE' | 'SUSPENDED' | 'PENDING';
+}
+
+interface AuditLog {
+    action: string;
+    details: string;
+    ipAddress: string;
+    createdAt: string;
+}
+
+interface Wallet {
+    id: string;
+    tenantName: string;
+    balance: string | number;
+    pendingBalance: string | number;
+    settledBalance: string | number;
+}
+
+interface PlatformFee {
+    id: string;
+    feeType: string;
+    description: string;
+    feeValue: number;
+    isPercentage: boolean;
+}
+
+interface RouterStat {
+    id: string;
+    name: string;
+    host: string;
+    lastSeen: string | null;
+}
+
+interface RouterStatsResponse {
+    stats: {
+        total: number;
+        online: number;
+        offline: number;
+    };
+    criticalOffline: RouterStat[];
+}
+
+interface StatCardProps {
+    label: string;
+    value: string | number;
+    sub: string;
+    icon: LucideIcon;
+    color: 'indigo' | 'sky' | 'emerald' | 'orange';
+    delay: number;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon: Icon, color, delay }) => (
+    <div className="group relative" style={{ animationDelay: `${delay}s` }}>
+        <div className={`absolute inset-0 bg-gradient-to-br from-${color}-500/20 to-transparent rounded-[2rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700`}></div>
+        <div className="relative bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-6 rounded-[2rem] shadow-xl hover:-translate-y-1 transition-all duration-500">
+            <div className="flex justify-between items-start mb-4">
+                <div className={`p-3 rounded-2xl bg-${color}-500/10 text-${color}-500 group-hover:scale-110 transition-transform`}>
+                    <Icon size={24} strokeWidth={2} />
+                </div>
+                <span className={`text-[10px] font-black px-2 py-1 rounded-lg bg-${color}-500/10 text-${color}-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity`}>
+                    Live
+                </span>
+            </div>
+            <h3 className="text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">
+                {typeof value === 'number' && label.includes('Revenue') ? `KES ${value.toLocaleString()}` : value}
+            </h3>
+            <p className="text-xs font-black text-[var(--text-muted)] uppercase tracking-wider">{label}</p>
+            <p className="text-[10px] text-[var(--text-muted)] mt-1 font-medium">{sub}</p>
+        </div>
+    </div>
+);
+
 const SuperAdminDashboard = () => {
+    const [isTenantModalOpen, setIsTenantModalOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [stats, setStats] = useState<any>(null);
-    const [tenants, setTenants] = useState<any[]>([]);
-    const [auditLogs, setAuditLogs] = useState<any[]>([]);
-    const [wallets, setWallets] = useState<any[]>([]);
-    const [platformFees, setPlatformFees] = useState<any[]>([]);
-    const [routerStats, setRouterStats] = useState<any>(null);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [tenants, setTenants] = useState<Tenant[]>([]);
+    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+    const [wallets, setWallets] = useState<Wallet[]>([]);
+    const [platformFees, setPlatformFees] = useState<PlatformFee[]>([]);
+    const [routerStats, setRouterStats] = useState<RouterStatsResponse | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -20,23 +105,23 @@ const SuperAdminDashboard = () => {
                 const config = { headers: { Authorization: `Bearer ${token}` } };
 
                 // Allow independent failures for widgets
-                const fetchSafe = async (url: string) => {
+                const fetchSafe = async <T,>(url: string): Promise<T | null> => {
                     try {
-                        const res = await axios.get(url, config);
+                        const res = await axios.get<T>(url, config);
                         return res.data;
-                    } catch (e) {
+                    } catch (e: unknown) {
                         console.error(`Failed to fetch ${url}`, e);
                         return null;
                     }
                 };
 
                 const [statsData, tenantsData, logsData, walletsData, feesData, routersData] = await Promise.all([
-                    fetchSafe('/api/v1/superadmin/platform-stats'),
-                    fetchSafe('/api/v1/superadmin/tenants'),
-                    fetchSafe('/api/v1/superadmin/audit-logs'),
-                    fetchSafe('/api/v1/superadmin/wallets'),
-                    fetchSafe('/api/v1/superadmin/platform-fees'),
-                    fetchSafe('/api/v1/superadmin/routers')
+                    fetchSafe<DashboardStats>('/api/v1/superadmin/platform-stats'),
+                    fetchSafe<Tenant[]>('/api/v1/superadmin/tenants'),
+                    fetchSafe<AuditLog[]>('/api/v1/superadmin/audit-logs'),
+                    fetchSafe<Wallet[]>('/api/v1/superadmin/wallets'),
+                    fetchSafe<PlatformFee[]>('/api/v1/superadmin/platform-fees'),
+                    fetchSafe<RouterStatsResponse>('/api/v1/superadmin/routers')
                 ]);
 
                 if (!statsData) setError('Failed to load critical platform stats. Backend may be unreachable.');
@@ -48,9 +133,10 @@ const SuperAdminDashboard = () => {
                 setPlatformFees(feesData || []);
                 setRouterStats(routersData || { stats: { total: 0, online: 0, offline: 0 }, criticalOffline: [] });
 
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error('Failed to fetch SuperAdmin data', error);
-                setError(error.message || 'Fatal dashboard error');
+                const errorMessage = error instanceof Error ? error.message : 'Fatal dashboard error';
+                setError(errorMessage);
             }
         };
         fetchData();
@@ -65,7 +151,8 @@ const SuperAdminDashboard = () => {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setTenants(tenants.map(t => t.id === id ? { ...t, status: newStatus } : t));
-        } catch (e) {
+        } catch (e: unknown) {
+            console.error('Failed to update tenant status', e);
             alert('Failed to update tenant status');
         }
     };
@@ -100,44 +187,39 @@ const SuperAdminDashboard = () => {
                     Platform <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-indigo-500">Command Center</span>
                 </h1>
                 <p className="text-[var(--text-secondary)] font-medium">Global Infrastructure Oversight</p>
-                <div className="absolute top-0 right-0 p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] backdrop-blur-xl rounded-2xl flex items-center gap-3">
-                    <div className="relative">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-full animate-ping absolute top-0 right-0 opacity-75"></div>
-                        <div className="w-3 h-3 bg-emerald-500 rounded-full relative z-10"></div>
+                <div className="absolute top-0 right-0 flex items-center gap-3">
+                    <button
+                        onClick={() => setIsTenantModalOpen(true)}
+                        className="p-3 bg-sky-500 hover:bg-sky-400 text-white rounded-2xl flex items-center gap-2 text-xs font-black uppercase tracking-widest shadow-lg shadow-sky-500/20 transition-all hover:-translate-y-1"
+                    >
+                        <Plus size={16} strokeWidth={3} />
+                        Register Tenant
+                    </button>
+                    <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] backdrop-blur-xl rounded-2xl flex items-center gap-3">
+                        <div className="relative">
+                            <div className="w-3 h-3 bg-emerald-500 rounded-full animate-ping absolute top-0 right-0 opacity-75"></div>
+                            <div className="w-3 h-3 bg-emerald-500 rounded-full relative z-10"></div>
+                        </div>
+                        <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">System Operational</span>
                     </div>
-                    <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">System Operational</span>
                 </div>
             </div>
 
+            <TenantModal
+                isOpen={isTenantModalOpen}
+                onClose={() => setIsTenantModalOpen(false)}
+                onSubmit={(e) => { e.preventDefault(); setIsTenantModalOpen(false); }}
+            />
+
             {/* Global Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                    { label: 'Platform Revenue', value: stats.totalRevenue, sub: 'Gross Ledger', icon: TrendingUp, color: 'indigo', delay: 0 },
-                    { label: 'Active Tenants', value: stats.activeTenants, sub: `Out of ${stats.totalTenants} Total`, icon: Building2, color: 'sky', delay: 0.1 },
-                    { label: 'Global Transactions', value: stats.totalPayments, sub: 'Success Rate: 98%', icon: CheckCircle2, color: 'emerald', delay: 0.2 },
-                    { label: 'Regional Hub Load', value: 'Optimal', sub: 'Latency: 12ms', icon: Globe, color: 'orange', delay: 0.3 }
-                ].map((s, i) => (
-                    <div key={i} className="group relative" style={{ animationDelay: `${s.delay}s` }}>
-                        <div className={`absolute inset-0 bg-gradient-to-br from-${s.color}-500/20 to-transparent rounded-[2rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700`}></div>
-                        <div className="relative bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-6 rounded-[2rem] shadow-xl hover:-translate-y-1 transition-all duration-500">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className={`p-3 rounded-2xl bg-${s.color}-500/10 text-${s.color}-500 group-hover:scale-110 transition-transform`}>
-                                    <s.icon size={24} strokeWidth={2} />
-                                </div>
-                                <span className={`text-[10px] font-black px-2 py-1 rounded-lg bg-${s.color}-500/10 text-${s.color}-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity`}>
-                                    Live
-                                </span>
-                            </div>
-                            <h3 className="text-3xl font-black text-[var(--text-primary)] tracking-tight mb-1">
-                                {typeof s.value === 'number' && s.label.includes('Revenue') ? `KES ${s.value.toLocaleString()}` : s.value}
-                            </h3>
-                            <p className="text-xs font-black text-[var(--text-muted)] uppercase tracking-wider">{s.label}</p>
-                        </div>
-                    </div>
-                ))}
+                <StatCard label="Platform Revenue" value={stats.totalRevenue} sub="Gross Ledger" icon={TrendingUp} color="indigo" delay={0} />
+                <StatCard label="Active Tenants" value={stats.activeTenants} sub={`Out of ${stats.totalTenants} Total`} icon={Building2} color="sky" delay={0.1} />
+                <StatCard label="Global Transactions" value={stats.totalPayments} sub="Success Rate: 98%" icon={CheckCircle2} color="emerald" delay={0.2} />
+                <StatCard label="Regional Hub Load" value="Optimal" sub="Latency: 12ms" icon={Globe} color="orange" delay={0.3} />
             </div>
 
-            {/* Router Status Widget (New) */}
+            {/* Router Status Widget */}
             <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-8 rounded-[2rem] shadow-xl transition-all">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
@@ -145,17 +227,17 @@ const SuperAdminDashboard = () => {
                         MikroTik Router Fleet
                     </h3>
                     <div className="flex gap-2 text-xs font-bold">
-                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full">{routerStats?.stats.online} ONLINE</span>
-                        <span className="px-3 py-1 bg-rose-500/10 text-rose-500 rounded-full">{routerStats?.stats.offline} OFFLINE</span>
+                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full">{routerStats?.stats.online || 0} ONLINE</span>
+                        <span className="px-3 py-1 bg-rose-500/10 text-rose-500 rounded-full">{routerStats?.stats.offline || 0} OFFLINE</span>
                     </div>
                 </div>
                 <div className="flex gap-4 overflow-x-auto pb-2">
-                    {routerStats?.criticalOffline.length === 0 ? (
+                    {!routerStats?.criticalOffline || routerStats.criticalOffline.length === 0 ? (
                         <div className="w-full p-4 text-center text-sm font-bold text-emerald-500 bg-emerald-500/5 rounded-xl border border-emerald-500/20">
                             All systems normal. No critical outages reported.
                         </div>
                     ) : (
-                        routerStats?.criticalOffline.map((r: any) => (
+                        routerStats.criticalOffline.map((r) => (
                             <div key={r.id} className="min-w-[200px] p-4 bg-rose-500/5 border border-rose-500/20 rounded-xl flex flex-col gap-1">
                                 <div className="text-xs font-black text-rose-500 uppercase">Offline Alert</div>
                                 <div className="font-bold text-[var(--text-primary)]">{r.name || 'Unnamed Router'}</div>
@@ -170,7 +252,7 @@ const SuperAdminDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Visual Map / Audit (Replacing Map with Audit for now as verified component) */}
+                {/* Visual Map / Audit */}
                 <div className="lg:col-span-2 bg-[#0f172a] rounded-[2.5rem] p-8 text-white relative overflow-hidden flex flex-col h-[500px] border border-white/5 shadow-2xl">
                     {/* Decorative Gradients */}
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] -mr-32 -mt-32 animate-pulse-slow"></div>

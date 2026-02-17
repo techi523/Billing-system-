@@ -16,11 +16,38 @@ import axios from 'axios';
 import SupportFooter from '../components/Common/SupportFooter';
 import BackButton from '../components/Common/BackButton';
 
+interface RevenueData {
+    today: number;
+    month: number;
+}
+
+interface BandwidthUsage {
+    in: number;
+    out: number;
+}
+
+interface BandwidthData {
+    activeSessions: number;
+    totalIn: number;
+    totalOut: number;
+    usageByRouter: Record<string, BandwidthUsage>;
+}
+
+interface PerformanceData {
+    rate: number;
+    failed: number;
+}
+
+interface TrafficContext {
+    peakHours: string;
+    netEfficiency: string;
+}
+
 const Analytics: React.FC = () => {
-    const [revenue, setRevenue] = useState<any>(null);
-    const [bandwidth, setBandwidth] = useState<any>(null);
-    const [performance, setPerformance] = useState<any>(null);
-    const [trafficContext, setTrafficContext] = useState<any>(null);
+    const [revenue, setRevenue] = useState<RevenueData | null>(null);
+    const [bandwidth, setBandwidth] = useState<BandwidthData | null>(null);
+    const [performance, setPerformance] = useState<PerformanceData | null>(null);
+    const [trafficContext, setTrafficContext] = useState<TrafficContext | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -28,18 +55,20 @@ const Analytics: React.FC = () => {
         setRefreshing(true);
         try {
             const [revRes, bandRes, perfRes] = await Promise.all([
-                axios.get('/api/v1/admin/analytics/revenue'),
-                axios.get('/api/v1/admin/analytics/bandwidth'),
-                axios.get('/api/v1/admin/analytics/performance')
+                axios.get<RevenueData>('/api/v1/admin/analytics/revenue'),
+                axios.get<BandwidthData>('/api/v1/admin/analytics/bandwidth'),
+                axios.get<PerformanceData>('/api/v1/admin/analytics/performance')
             ]);
             setRevenue(revRes.data);
             setBandwidth(bandRes.data);
             setPerformance(perfRes.data);
 
             // Fetch traffic context separately to not block main stats
-            axios.get('/api/v1/admin/analytics/context').then(res => setTrafficContext(res.data)).catch(console.error);
-        } catch (error) {
-            console.error('Failed to fetch analytics', error);
+            axios.get<TrafficContext>('/api/v1/admin/analytics/context')
+                .then(res => setTrafficContext(res.data))
+                .catch(err => console.error('[Analytics] Failed to fetch traffic context:', err));
+        } catch (error: unknown) {
+            console.error('[Analytics] Failed to fetch analytics:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -126,9 +155,9 @@ const Analytics: React.FC = () => {
                     />
                     <KPICard
                         title="Success Rate"
-                        value={`${performance?.rate?.toFixed(1)}%`}
-                        trend={performance?.failed > 0 ? `${performance?.failed} failed` : 'Perfect'}
-                        positive={performance?.rate > 90}
+                        value={`${(performance?.rate ?? 0).toFixed(1)}%`}
+                        trend={(performance?.failed ?? 0) > 0 ? `${performance?.failed} failed` : 'Perfect'}
+                        positive={(performance?.rate ?? 0) > 90}
                         icon={<ShieldCheck className="w-6 h-6" />}
                         color="violet"
                     />
@@ -157,7 +186,7 @@ const Analytics: React.FC = () => {
 
                         {/* Placeholder for actual chart - using simple Bars for routers */}
                         <div className="space-y-6">
-                            {Object.entries(bandwidth?.usageByRouter || {}).map(([routerId, usage]: any) => (
+                            {bandwidth && Object.entries(bandwidth.usageByRouter).map(([routerId, usage]) => (
                                 <div key={routerId} className="space-y-2">
                                     <div className="flex justify-between text-xs font-black uppercase tracking-widest text-[var(--text-secondary)]">
                                         <span>Router: {routerId.split('-')[0]}...</span>
@@ -166,18 +195,18 @@ const Analytics: React.FC = () => {
                                     <div className="h-4 w-full bg-[var(--bg-surface-elevated)] rounded-full overflow-hidden flex">
                                         <motion.div
                                             initial={{ width: 0 }}
-                                            animate={{ width: `${Math.min(100, (usage.out / (bandwidth.totalOut || 1)) * 100)}%` }}
+                                            animate={{ width: `${bandwidth.totalOut ? Math.min(100, (usage.out / bandwidth.totalOut) * 100) : 0}%` }}
                                             className="h-full bg-sky-500"
                                         />
                                         <motion.div
                                             initial={{ width: 0 }}
-                                            animate={{ width: `${Math.min(100, (usage.in / (bandwidth.totalIn || 1)) * 100)}%` }}
+                                            animate={{ width: `${bandwidth.totalIn ? Math.min(100, (usage.in / bandwidth.totalIn) * 100) : 0}%` }}
                                             className="h-full bg-indigo-500"
                                         />
                                     </div>
                                 </div>
                             ))}
-                            {Object.keys(bandwidth?.usageByRouter || {}).length === 0 && (
+                            {(!bandwidth || Object.keys(bandwidth.usageByRouter).length === 0) && (
                                 <div className="h-40 flex items-center justify-center border-2 border-dashed border-slate-100 rounded-3xl">
                                     <p className="text-slate-400 font-bold text-sm">Waiting for active traffic data...</p>
                                 </div>
@@ -222,8 +251,8 @@ const Analytics: React.FC = () => {
     );
 };
 
-const KPICard: React.FC<{ title: string, value: string | number, trend: string, positive: boolean, icon: React.ReactNode, color: string }> = ({ title, value, trend, positive, icon, color }) => {
-    const colorMap: any = {
+const KPICard: React.FC<{ title: string, value: string | number, trend: string, positive: boolean, icon: React.ReactNode, color: 'sky' | 'indigo' | 'emerald' | 'violet' }> = ({ title, value, trend, positive, icon, color }) => {
+    const colorMap: Record<string, string> = {
         sky: 'bg-sky-50 text-sky-600',
         indigo: 'bg-indigo-50 text-indigo-600',
         emerald: 'bg-emerald-50 text-emerald-600',

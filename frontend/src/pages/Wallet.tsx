@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import {
     Wallet as WalletIcon,
@@ -19,13 +19,46 @@ import BackButton from '../components/Common/BackButton';
 import ThemeToggle from '../components/Common/ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 
+interface WalletBalance {
+    balance: number;
+    settled: number;
+    pending: number;
+    frozen: number;
+}
+
+interface Transaction {
+    id: string;
+    createdAt: string;
+    transactionType: 'CREDIT' | 'DEBIT' | 'FROZEN' | 'RELEASED';
+    description: string;
+    amount: number;
+    balanceAfter: number;
+}
+
+interface AuditLog {
+    id: string;
+    action: string;
+    createdAt: string;
+}
+
+interface TransactionTrace {
+    transaction: Transaction;
+    source?: {
+        gateway?: string;
+        type?: string;
+        reference: string;
+        rawPayload?: any;
+    };
+    auditTrail: AuditLog[];
+}
+
 const WalletPage = () => {
     const { logout } = useAuth();
-    const [balance, setBalance] = useState<any>(null);
-    const [transactions, setTransactions] = useState([]);
+    const [balance, setBalance] = useState<WalletBalance | null>(null);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [isReconciling, setIsReconciling] = useState(false);
-    const [reconcileResult, setReconcileResult] = useState<any>(null);
-    const [selectedTxTrace, setSelectedTxTrace] = useState<any>(null);
+    const [reconcileResult, setReconcileResult] = useState<{ status: 'MATCH' | 'DISCREPANCY'; discrepancy: number } | null>(null);
+    const [selectedTxTrace, setSelectedTxTrace] = useState<TransactionTrace | null>(null);
     const [isTraceLoading, setIsTraceLoading] = useState(false);
 
     // Withdrawal state
@@ -36,32 +69,34 @@ const WalletPage = () => {
     const [step, setStep] = useState('REQUEST');
     const [message, setMessage] = useState('');
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const [balanceRes, transRes] = await Promise.all([
-                axios.get('/api/v1/wallet/balance'),
-                axios.get('/api/v1/wallet/transactions')
+                axios.get<WalletBalance>('/api/v1/wallet/balance'),
+                axios.get<Transaction[]>('/api/v1/wallet/transactions')
             ]);
             setBalance(balanceRes.data);
             setTransactions(transRes.data);
-        } catch (error: any) {
-            console.error('Failed to fetch wallet data', error);
-            if (error.response?.status === 401) logout();
+        } catch (error: unknown) {
+            console.error('[Wallet] Failed to fetch wallet data', error);
+            if (axios.isAxiosError(error) && error.response?.status === 401) {
+                logout();
+            }
         }
-    };
+    }, [logout]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const handleReconcile = async () => {
         try {
             setIsReconciling(true);
-            const res = await axios.post('/api/v1/wallet/reconcile');
+            const res = await axios.post<{ status: 'MATCH' | 'DISCREPANCY'; discrepancy: number }>('/api/v1/wallet/reconcile');
             setReconcileResult(res.data);
             fetchData();
-        } catch (error) {
-            console.error('Reconciliation failed', error);
+        } catch (error: unknown) {
+            console.error('[Wallet] Reconciliation failed', error);
         } finally {
             setIsReconciling(false);
         }
@@ -70,10 +105,10 @@ const WalletPage = () => {
     const fetchTxTrace = async (id: string) => {
         try {
             setIsTraceLoading(true);
-            const res = await axios.get(`/api/v1/wallet/transactions/${id}/trace`);
+            const res = await axios.get<TransactionTrace>(`/api/v1/wallet/transactions/${id}/trace`);
             setSelectedTxTrace(res.data);
-        } catch (error) {
-            console.error('Failed to fetch transaction trace', error);
+        } catch (error: unknown) {
+            console.error('[Wallet] Failed to fetch transaction trace', error);
         } finally {
             setIsTraceLoading(false);
         }
@@ -81,7 +116,7 @@ const WalletPage = () => {
 
     const handleWithdrawRequest = async () => {
         try {
-            const res = await axios.post('/api/v1/wallet/withdraw/request',
+            const res = await axios.post<{ step: string }>('/api/v1/wallet/withdraw/request',
                 { amount: parseFloat(withdrawAmount) * 100, method: withdrawMethod } // Convert to cents
             );
 
@@ -93,8 +128,12 @@ const WalletPage = () => {
                 setShowWithdrawModal(false);
                 fetchData();
             }
-        } catch (error: any) {
-            setMessage(error.response?.data?.error || 'Failed to request withdrawal');
+        } catch (error: unknown) {
+            let errorMsg = 'Failed to request withdrawal';
+            if (axios.isAxiosError(error) && error.response?.data?.error) {
+                errorMsg = error.response.data.error;
+            }
+            setMessage(errorMsg);
         }
     };
 
@@ -107,14 +146,18 @@ const WalletPage = () => {
             setShowWithdrawModal(false);
             setStep('REQUEST');
             fetchData();
-        } catch (error: any) {
-            setMessage(error.response?.data?.error || 'Verification failed');
+        } catch (error: unknown) {
+            let errorMsg = 'Verification failed';
+            if (axios.isAxiosError(error) && error.response?.data?.error) {
+                errorMsg = error.response.data.error;
+            }
+            setMessage(errorMsg);
         }
     };
 
     const handleExport = () => {
         const headers = ['Timestamp', 'Type', 'Description', 'Amount (KES)', 'Balance After (KES)', 'ID'];
-        const rows = transactions.map((tx: any) => [
+        const rows = transactions.map(tx => [
             new Date(tx.createdAt).toLocaleString(),
             tx.transactionType,
             tx.description,
@@ -265,7 +308,7 @@ const WalletPage = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
-                                    {transactions.map((tx: any) => (
+                                    {transactions.map((tx: Transaction) => (
                                         <tr
                                             key={tx.id}
                                             onClick={() => fetchTxTrace(tx.id)}
@@ -363,7 +406,7 @@ const WalletPage = () => {
                                     <div className="space-y-3">
                                         {selectedTxTrace.auditTrail.length === 0 ? (
                                             <p className="text-xs font-bold text-slate-400 italic px-2">No audit logs for this specific TX.</p>
-                                        ) : selectedTxTrace.auditTrail.map((log: any) => (
+                                        ) : selectedTxTrace.auditTrail.map((log: AuditLog) => (
                                             <div key={log.id} className="flex gap-3 pl-2">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-sky-500 mt-1.5 shrink-0"></div>
                                                 <div>

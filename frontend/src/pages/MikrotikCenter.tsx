@@ -15,10 +15,17 @@ import axios from 'axios';
 import SupportFooter from '../components/Common/SupportFooter';
 import BackButton from '../components/Common/BackButton';
 
+interface RouterSetupDetails {
+    name: string;
+    host: string;
+    port: string;
+    version: string;
+}
+
 const MikrotikCenter: React.FC = () => {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
-    const [routerDetails, setRouterDetails] = useState({
+    const [routerDetails, setRouterDetails] = useState<RouterSetupDetails>({
         name: '',
         host: '',
         port: '8728',
@@ -36,14 +43,18 @@ const MikrotikCenter: React.FC = () => {
 
         setLoading(true);
         try {
-            const response = await axios.post('/api/v1/admin/routers/generate-setup', {
+            const response = await axios.post<{ script: string }>('/api/v1/admin/routers/generate-setup', {
                 ...routerDetails
             });
             setGeneratedScript(response.data.script);
             setStep(3);
-        } catch (error: any) {
-            console.error('Generation failed', error);
-            alert(error.response?.data?.message || 'Failed to generate script');
+        } catch (error: unknown) {
+            console.error('[Mikrotik] Generation failed', error);
+            let errorMsg = 'Failed to generate script';
+            if (axios.isAxiosError(error) && error.response?.data?.message) {
+                errorMsg = error.response.data.message;
+            }
+            alert(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -53,7 +64,7 @@ const MikrotikCenter: React.FC = () => {
         setVerificationStatus('PENDING');
         setVerificationError('');
         try {
-            const response = await axios.post('/api/v1/admin/routers/verify', {
+            const response = await axios.post<{ success: boolean; message?: string }>('/api/v1/admin/routers/verify', {
                 host: routerDetails.host
             });
             if (response.data.success) {
@@ -62,9 +73,13 @@ const MikrotikCenter: React.FC = () => {
                 setVerificationStatus('FAILED');
                 setVerificationError(response.data.message || 'Verification failed');
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             setVerificationStatus('FAILED');
-            setVerificationError(error.response?.data?.message || 'Connection timeout');
+            let errorMsg = 'Connection timeout';
+            if (axios.isAxiosError(error) && error.response?.data?.message) {
+                errorMsg = error.response.data.message;
+            }
+            setVerificationError(errorMsg);
         }
     };
 

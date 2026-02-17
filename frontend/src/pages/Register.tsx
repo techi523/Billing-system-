@@ -33,8 +33,12 @@ const Register = () => {
             });
             setSuccess(true);
             setTimeout(() => navigate('/login'), 3000);
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Registration failed. Please contact support.');
+        } catch (err: unknown) {
+            let errorMsg = 'Registration failed. Please contact support.';
+            if (axios.isAxiosError(err) && err.response?.data?.error) {
+                errorMsg = err.response.data.error;
+            }
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }

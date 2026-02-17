@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubscriberTable from '../components/Modern/SubscriberTable';
 import axios from 'axios';
@@ -9,45 +9,66 @@ import SupportSection from '../components/Common/SupportSection';
 import { Shield, Zap, ArrowRight } from 'lucide-react';
 import ThemeToggle from '../components/Common/ThemeToggle';
 
+interface TenantDashboardData {
+    tenantName: string;
+    tenantLogo?: string;
+    tenantColor?: string;
+    activeUsers: number;
+    subscriberCount: number;
+    pendingPayments: number;
+    walletBalance: number;
+    settledBalance: number;
+    plan: string;
+    isNewTenant: boolean;
+}
+
 const TenantPortal = () => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
-    const [tenantData, setTenantData] = useState<any>(null);
+    const [tenantData, setTenantData] = useState<TenantDashboardData | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchDashboardData = async () => {
-            try {
-                setIsLoading(true);
-                // Check if tenant needs initialization
-                const initStatusRes = await axios.get('/api/v1/admin/initialize/status');
-                const isBootstrapped = initStatusRes.data.isBootstrapped;
+    const fetchDashboardData = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            // Check if tenant needs initialization
+            const initStatusRes = await axios.get<{ isBootstrapped: boolean }>('/api/v1/admin/initialize/status');
+            const isBootstrapped = initStatusRes.data.isBootstrapped;
 
-                // If not bootstrapped, initialize the tenant
-                if (!isBootstrapped) {
-                    await axios.post('/api/v1/admin/initialize');
-                }
+            // If not bootstrapped, initialize the tenant
+            if (!isBootstrapped) {
+                await axios.post('/api/v1/admin/initialize');
+            }
 
-                const [statsRes, walletRes] = await Promise.all([
-                    axios.get('/api/v1/admin/dashboard-summary'),
-                    axios.get('/api/v1/wallet/balance')
-                ]);
+            const [statsRes, walletRes] = await Promise.all([
+                axios.get<{
+                    tenantName: string;
+                    tenantLogo?: string;
+                    tenantColor?: string;
+                    activeSessions: number;
+                    subscriberCount: number;
+                    pendingPayments: number;
+                    plan: string;
+                }>('/api/v1/admin/dashboard-summary'),
+                axios.get<{ balance: number; settledBalance: number }>('/api/v1/wallet/balance')
+            ]);
 
-                setTenantData({
-                    tenantName: statsRes.data.tenantName || 'Your Tenant',
-                    tenantLogo: statsRes.data.tenantLogo,
-                    tenantColor: statsRes.data.tenantColor,
-                    activeUsers: statsRes.data.activeSessions || 0,
-                    subscriberCount: statsRes.data.subscriberCount || 0,
-                    pendingPayments: statsRes.data.pendingPayments || 0,
-                    walletBalance: walletRes.data.balance || 0,
-                    settledBalance: walletRes.data.settledBalance || 0,
-                    plan: statsRes.data.plan || 'Standard',
-                    isNewTenant: !isBootstrapped
-                });
-            } catch (err: any) {
-                console.error('Failed to fetch tenant data', err);
+            setTenantData({
+                tenantName: statsRes.data.tenantName || 'Your Tenant',
+                tenantLogo: statsRes.data.tenantLogo,
+                tenantColor: statsRes.data.tenantColor,
+                activeUsers: statsRes.data.activeSessions || 0,
+                subscriberCount: statsRes.data.subscriberCount || 0,
+                pendingPayments: statsRes.data.pendingPayments || 0,
+                walletBalance: walletRes.data.balance || 0,
+                settledBalance: walletRes.data.settledBalance || 0,
+                plan: statsRes.data.plan || 'Standard',
+                isNewTenant: !isBootstrapped
+            });
+        } catch (err: unknown) {
+            console.error('Failed to fetch tenant data', err);
+            if (axios.isAxiosError(err)) {
                 if (err.response?.status === 401) {
                     // Session expired or invalid
                     logout();
@@ -60,13 +81,17 @@ const TenantPortal = () => {
                 } else {
                     setError('Failed to load tenant data. Please try again.');
                 }
-            } finally {
-                setIsLoading(false);
+            } else {
+                setError('An unexpected error occurred.');
             }
-        };
+        } finally {
+            setIsLoading(false);
+        }
+    }, [logout]);
 
+    useEffect(() => {
         fetchDashboardData();
-    }, [user?.tenantId]);
+    }, [fetchDashboardData]);
 
     if (isLoading) {
         return (

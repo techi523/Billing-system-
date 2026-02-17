@@ -21,13 +21,13 @@ export const SupportProvider: React.FC<{ children: React.ReactNode }> = ({ child
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const response = await axios.get('/api/v1/portal/public/settings');
-                const settingsMap = response.data.reduce((acc: Record<string, string>, curr: PlatformSetting) => {
+                const response = await axios.get<PlatformSetting[]>('/api/v1/portal/public/settings');
+                const settingsMap = response.data.reduce((acc, curr) => {
                     acc[curr.key] = curr.value;
                     return acc;
-                }, {});
+                }, {} as Record<string, string>);
                 setSettings(settingsMap);
-            } catch (error) {
+            } catch (error: unknown) {
                 console.error('Failed to fetch platform settings:', error);
                 // Fallback to defaults if API fails
                 setSettings({

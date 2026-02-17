@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, type User } from '../context/AuthContext';
 import logo from '../assets/logo-main.png';
 import SupportFooter from '../components/Common/SupportFooter';
 import { OFFICIAL_SUPPORT } from '../constants';
@@ -24,7 +24,7 @@ const Login = () => {
         setError('');
 
         try {
-            const res = await axios.post('/api/v1/auth/login', { email, password });
+            const res = await axios.post<{ token: string; user: User }>('/api/v1/auth/login', { email, password });
             const { token, user } = res.data;
 
             login(token, user);
@@ -36,8 +36,12 @@ const Login = () => {
             } else if (user.role === 'STAFF') {
                 navigate('/admin');
             }
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
+        } catch (err: unknown) {
+            let errorMsg = 'Invalid credentials. Please try again.';
+            if (axios.isAxiosError(err) && err.response?.data?.error) {
+                errorMsg = err.response.data.error;
+            }
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }

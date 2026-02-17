@@ -40,8 +40,12 @@ const PasswordResetConfirm = () => {
             });
             setSuccess(true);
             setTimeout(() => navigate('/login'), 3000);
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to reset password. Token may be expired.');
+        } catch (err: unknown) {
+            let errorMsg = 'Failed to reset password. Token may be expired.';
+            if (axios.isAxiosError(err) && err.response?.data?.error) {
+                errorMsg = err.response.data.error;
+            }
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import SuperAdminDashboard from '../components/SuperAdmin/SuperAdminDashboard';
 import PlatformSettings from '../components/SuperAdmin/PlatformSettings';
 import { useAuth } from '../context/AuthContext';
@@ -8,16 +8,9 @@ import { LayoutDashboard, Settings as SettingsIcon } from 'lucide-react';
 
 const SuperAdminPortal = () => {
     const { logout, loading: authLoading } = useAuth();
-    const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'settings'>('dashboard');
 
-    useEffect(() => {
-        if (!authLoading) {
-            setIsLoading(false);
-        }
-    }, [authLoading]);
-
-    if (isLoading) {
+    if (authLoading) {
         return (
             <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center transition-colors duration-300">
                 <div className="text-center">

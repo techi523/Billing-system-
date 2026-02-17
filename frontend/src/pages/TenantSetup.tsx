@@ -26,7 +26,7 @@ const TenantSetup: React.FC = () => {
 
         try {
             // Using /api/v1 prefix as standardized
-            const response = await axios.post('/api/v1/admin/tenants/setup', formData);
+            const response = await axios.post<{ tenant: { id: string } }>('/api/v1/admin/tenants/setup', formData);
             const { tenant } = response.data;
 
             // Update user in context with the new tenantId
@@ -37,8 +37,12 @@ const TenantSetup: React.FC = () => {
                     navigate('/tenant');
                 }, 1500);
             }
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to create workspace. Please try again.');
+        } catch (err: unknown) {
+            let errorMsg = 'Failed to create workspace. Please try again.';
+            if (axios.isAxiosError(err) && err.response?.data?.error) {
+                errorMsg = err.response.data.error;
+            }
+            setError(errorMsg);
             setStatus('idle');
             setLoading(false);
         }

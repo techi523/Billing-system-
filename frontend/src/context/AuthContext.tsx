@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-interface User {
+export interface User {
     id: string;
     email: string;
     role: 'SUPER_ADMIN' | 'TENANT' | 'STAFF' | 'AGENT';
@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (storedToken && storedUser) {
             // CRITICAL FIX: Verify token with backend to ensure fresh tenant data
             // This prevents stale localStorage from causing "new tenant" behavior
-            axios.get('/api/v1/auth/verify', {
+            axios.get<{ user: User }>('/api/v1/auth/verify', {
                 headers: { Authorization: `Bearer ${storedToken}` }
             })
                 .then(response => {
@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     localStorage.setItem('user', JSON.stringify(freshUser)); // Update localStorage
                     axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
                 })
-                .catch((error) => {
+                .catch((error: unknown) => {
                     console.error('[AuthContext] Token verification failed:', error);
                     // Token invalid or expired, clear state
                     localStorage.removeItem('token');

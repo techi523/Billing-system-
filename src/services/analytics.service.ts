@@ -250,9 +250,13 @@ export class AnalyticsService {
         });
 
         // Find the 3-hour window with max sessions
-        const hoursMap: number[] = Array.from({ length: 24 }).fill(0) as number[];
+        const hoursMap: number[] = Array.from({ length: 24 }, () => 0);
         sessionsByHour.forEach((r: any) => {
-            hoursMap[parseInt(r.hour)] = parseInt(r.count);
+            const hour = Number(r.hour);
+            const count = Number(r.count);
+            if (!isNaN(hour) && hour >= 0 && hour < 24) {
+                hoursMap[hour] = count;
+            }
         });
 
         let maxVolume = 0;

@@ -21,17 +21,46 @@ import BackButton from '../components/Common/BackButton';
 import ThemeToggle from '../components/Common/ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 
+interface Campaign {
+    id: string;
+    name: string;
+    type: 'SMS' | 'EMAIL' | 'WHATSAPP';
+    status: 'DRAFT' | 'SENDING' | 'COMPLETED' | 'FAILED';
+    content: string;
+    subject?: string;
+    totalRecipients: number;
+    sentCount: number;
+    failedCount: number;
+    createdAt: string;
+}
+
+interface CampaignTemplate {
+    id: string;
+    name: string;
+    content: string;
+    status: string;
+}
+
+interface CampaignFormData {
+    name: string;
+    type: 'SMS' | 'EMAIL' | 'WHATSAPP';
+    content: string;
+    subject: string;
+    templateId: string;
+    filterCriteria: { packageId: string };
+}
+
 const Campaigns = () => {
     const { logout } = useAuth();
-    const [campaigns, setCampaigns] = useState<any[]>([]);
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
+    const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
     const [isSending, setIsSending] = useState(false);
-    const [templates, setTemplates] = useState<any[]>([]);
+    const [templates, setTemplates] = useState<CampaignTemplate[]>([]);
 
     // New Campaign Form State
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<CampaignFormData>({
         name: '',
         type: 'SMS', // Default to SMS as it's more common for hotspots
         content: '',
@@ -47,21 +76,23 @@ const Campaigns = () => {
 
     const fetchTemplates = async () => {
         try {
-            const res = await axios.get('/api/v1/campaigns/templates');
+            const res = await axios.get<CampaignTemplate[]>('/api/v1/campaigns/templates');
             setTemplates(res.data);
-        } catch (err) {
-            console.error('Failed to fetch templates', err);
+        } catch (err: unknown) {
+            console.error('[Campaigns] Failed to fetch templates', err);
         }
     };
 
     const fetchCampaigns = async () => {
         try {
             setIsLoading(true);
-            const res = await axios.get('/api/v1/campaigns');
+            const res = await axios.get<Campaign[]>('/api/v1/campaigns');
             setCampaigns(res.data);
-        } catch (err: any) {
-            console.error('Failed to fetch campaigns', err);
-            if (err.response?.status === 401) logout();
+        } catch (err: unknown) {
+            console.error('[Campaigns] Failed to fetch campaigns', err);
+            if (axios.isAxiosError(err) && err.response?.status === 401) {
+                logout();
+            }
         } finally {
             setIsLoading(false);
         }
@@ -75,8 +106,8 @@ const Campaigns = () => {
             setIsCreateModalOpen(false);
             setFormData({ name: '', type: 'SMS', content: '', subject: '', templateId: '', filterCriteria: { packageId: 'ALL' } });
             fetchCampaigns();
-        } catch (err) {
-            console.error('Failed to create campaign', err);
+        } catch (err: unknown) {
+            console.error('[Campaigns] Failed to create campaign', err);
         } finally {
             setIsSending(false);
         }
@@ -88,13 +119,13 @@ const Campaigns = () => {
             await axios.post(`/api/v1/campaigns/${id}/send`);
             fetchCampaigns();
             alert('Campaign delivery started in the background.');
-        } catch (err) {
-            console.error('Failed to send campaign', err);
+        } catch (err: unknown) {
+            console.error('[Campaigns] Failed to send campaign', err);
         }
     };
 
-    const StatusBadge = ({ status }: { status: string }) => {
-        const colors: any = {
+    const StatusBadge = ({ status }: { status: Campaign['status'] }) => {
+        const colors: Record<Campaign['status'], string> = {
             DRAFT: 'bg-slate-100 text-slate-600',
             SENDING: 'bg-blue-100 text-blue-600 animate-pulse',
             COMPLETED: 'bg-emerald-100 text-emerald-600',

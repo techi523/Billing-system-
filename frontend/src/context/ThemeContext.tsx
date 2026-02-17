@@ -57,8 +57,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     await axios.post('/api/v1/auth/theme', { theme }, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
-                } catch (e) {
-                    console.error('Failed to sync theme preference to backend');
+                } catch (e: unknown) {
+                    console.error('Failed to sync theme preference to backend:', e);
                 }
             }
         };

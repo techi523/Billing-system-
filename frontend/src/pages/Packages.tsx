@@ -64,9 +64,10 @@ const Packages = () => {
 
     const fetchPackages = async () => {
         try {
-            const response = await axios.get('/api/v1/admin/packages');
+            const response = await axios.get<Package[]>('/api/v1/admin/packages');
             setPackages(response.data);
-        } catch (err: any) {
+        } catch (err: unknown) {
+            console.error('[Packages] Failed to load packages:', err);
             setError('Failed to load packages. Please check your connection.');
         } finally {
             setLoading(false);
@@ -76,15 +77,24 @@ const Packages = () => {
     const handleSync = async (id: number) => {
         setSyncingId(id);
         try {
-            const res = await axios.post(`/api/v1/admin/packages/${id}/sync`);
+            interface SyncResult {
+                routerName: string;
+                status: 'SUCCESS' | 'FAILED';
+                error?: string;
+            }
+            const res = await axios.post<{ success: boolean; results: SyncResult[] }>(`/api/v1/admin/packages/${id}/sync`);
             if (res.data.success) {
                 alert('Successfully synced to all routers!');
             } else {
-                const failed = res.data.results.filter((r: any) => r.status === 'FAILED');
-                alert(`Sync completed with issues:\n${failed.map((f: any) => `${f.routerName}: ${f.error}`).join('\n')}`);
+                const failed = res.data.results.filter(r => r.status === 'FAILED');
+                alert(`Sync completed with issues:\n${failed.map(f => `${f.routerName}: ${f.error}`).join('\n')}`);
             }
-        } catch (err: any) {
-            alert(err.response?.data?.error || 'Sync failed');
+        } catch (err: unknown) {
+            let errorMsg = 'Sync failed';
+            if (axios.isAxiosError(err) && err.response?.data?.error) {
+                errorMsg = err.response.data.error;
+            }
+            alert(errorMsg);
         } finally {
             setSyncingId(null);
         }
@@ -126,8 +136,12 @@ const Packages = () => {
             setEditingPackage(null);
             fetchPackages();
             setFormData(initialFormData);
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Operation failed');
+        } catch (err: unknown) {
+            let errorMsg = 'Operation failed';
+            if (axios.isAxiosError(err) && err.response?.data?.error) {
+                errorMsg = err.response.data.error;
+            }
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -138,8 +152,12 @@ const Packages = () => {
         try {
             await axios.post(`/api/v1/admin/packages/${id}/delete`);
             fetchPackages();
-        } catch (err: any) {
-            alert(err.response?.data?.error || 'Failed to delete package');
+        } catch (err: unknown) {
+            let errorMsg = 'Failed to delete package';
+            if (axios.isAxiosError(err) && err.response?.data?.error) {
+                errorMsg = err.response.data.error;
+            }
+            alert(errorMsg);
         }
     };
 
@@ -261,7 +279,7 @@ const Packages = () => {
                                                         className="w-full bg-slate-900/80 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white font-bold focus:border-emerald-500 focus:outline-none transition-all" placeholder="Price (KES)" />
                                                 </div>
 
-                                                <select value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value as any })}
+                                                <select value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value as 'HOTSPOT' | 'ISP' })}
                                                     className="w-full bg-slate-900/80 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold focus:border-sky-500 focus:outline-none transition-all appearance-none cursor-pointer">
                                                     <option value="HOTSPOT">Hotspot (Voucher/Login)</option>
                                                     <option value="ISP">Fixed Home (PPPoE)</option>
@@ -339,7 +357,7 @@ const Packages = () => {
                                                         {['SUSPEND', 'DELETE', 'NOTIFY'].map(action => (
                                                             <label key={action} className="flex items-center gap-3 cursor-pointer group">
                                                                 <input type="radio" name="expiryAction" value={action} checked={formData.expiryAction === action}
-                                                                    onChange={e => setFormData({ ...formData, expiryAction: e.target.value as any })} className="hidden" />
+                                                                    onChange={e => setFormData({ ...formData, expiryAction: e.target.value as 'SUSPEND' | 'DELETE' | 'NOTIFY' })} className="hidden" />
                                                                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${formData.expiryAction === action ? 'border-sky-500 bg-sky-500' : 'border-slate-700'}`}>
                                                                     {formData.expiryAction === action && <div className="w-2 h-2 bg-white rounded-full"></div>}
                                                                 </div>

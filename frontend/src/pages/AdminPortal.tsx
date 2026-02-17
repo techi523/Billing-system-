@@ -30,7 +30,8 @@ const AdminPortal = () => {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     setIsAuthenticated(true);
-                } catch (err) {
+                } catch (err: unknown) {
+                    console.error('[AdminPortal] Auth verification failed:', err);
                     // Token invalid, redirect to login
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');

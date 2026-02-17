@@ -2,12 +2,20 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { TrendingUp, Building2, CheckCircle2, Globe, AlertCircle, RefreshCw } from 'lucide-react';
 
+interface DashboardStats {
+    totalRevenue: number;
+    activeTenants: number;
+    totalTenants: number;
+    totalPayments: number;
+}
+
 const AdminDashboard = () => {
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        const controller = new AbortController();
         const fetchStats = async () => {
             setIsLoading(true);
             setError(null);
@@ -15,21 +23,23 @@ const AdminDashboard = () => {
             console.log('AdminDashboard: Starting stats fetch...');
 
             try {
-                const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-                const res = await axios.get('/api/v1/superadmin/platform-stats', {
+                const res = await axios.get<DashboardStats>('/api/v1/superadmin/platform-stats', {
                     signal: controller.signal
                 });
 
                 clearTimeout(timeoutId);
                 console.log('AdminDashboard: Stats fetch successful', res.data);
                 setStats(res.data);
-                setIsLoading(false);
-            } catch (err: any) {
+            } catch (err: unknown) {
+                if (axios.isCancel(err)) {
+                    console.log('AdminDashboard: Fetch aborted');
+                    return;
+                }
                 console.error('AdminDashboard: Stats fetch failed', err);
-                setError(err.message || 'Failed to load dashboard data');
-                setIsLoading(false);
+                const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard data';
+                setError(errorMessage);
 
                 // Set default stats for fallback UI
                 setStats({
@@ -38,10 +48,13 @@ const AdminDashboard = () => {
                     totalTenants: 0,
                     totalPayments: 0
                 });
+            } finally {
+                setIsLoading(false);
             }
         };
 
         fetchStats();
+        return () => controller.abort();
     }, []);
 
     if (isLoading) {
@@ -98,9 +111,9 @@ const AdminDashboard = () => {
     }
 
     const cards = [
-        { label: 'Platform Revenue', value: `KES ${stats.totalRevenue?.toLocaleString()}`, icon: TrendingUp, color: 'indigo' },
-        { label: 'Active Tenants', value: stats.activeTenants, sub: `out of ${stats.totalTenants}`, icon: Building2, color: 'sky' },
-        { label: 'Global Transactions', value: stats.totalPayments, icon: CheckCircle2, color: 'emerald' },
+        { label: 'Platform Revenue', value: `KES ${stats?.totalRevenue?.toLocaleString() ?? 0}`, icon: TrendingUp, color: 'indigo' },
+        { label: 'Active Tenants', value: stats?.activeTenants ?? 0, sub: `out of ${stats?.totalTenants ?? 0}`, icon: Building2, color: 'sky' },
+        { label: 'Global Transactions', value: stats?.totalPayments ?? 0, icon: CheckCircle2, color: 'emerald' },
         { label: 'Nairobi Hub Load', value: 'Optimal', icon: Globe, color: 'orange' },
     ];
 
