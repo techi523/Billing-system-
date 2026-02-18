@@ -152,7 +152,7 @@ const SubscriberTable = () => {
     };
 
     const filteredAndSortedSubscribers = useMemo(() => {
-        let filtered = subscribers.filter(subscriber => {
+        const filtered = subscribers.filter(subscriber => {
             const matchesSearch = subscriber.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 subscriber.phone.includes(searchTerm) ||
                 subscriber.plan.toLowerCase().includes(searchTerm.toLowerCase());

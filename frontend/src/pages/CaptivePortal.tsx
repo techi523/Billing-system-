@@ -34,7 +34,7 @@ const CaptivePortal = () => {
                 const res = await axios.get(`/api/v1/portal/${tenantId}/packages`);
                 setPackages(Array.isArray(res.data) ? res.data : []);
                 setLoading(false);
-            } catch (e) {
+            } catch {
                 setErrorMessage('Failed to connect to network services');
                 setLoading(false);
             }

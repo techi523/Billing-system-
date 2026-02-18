@@ -4,3 +4,5 @@ node_modules/
 server_log.txt
 dist/
 logs/
+
+tsc_errors_*.txt

@@ -97,7 +97,7 @@ const CaptivePortal = () => {
                 setPhoneNumber('');
             }, 3000);
 
-        } catch (error) {
+        } catch {
             setPaymentStatus('error');
             alert('Payment failed. Please try again.');
             setTimeout(() => setPaymentStatus('idle'), 2000);

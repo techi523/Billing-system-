@@ -23,7 +23,7 @@ const AdminDashboard = () => {
                     activeUsers: 2156,
                     networkLoad: 67
                 });
-            } catch (e) {
+            } catch {
                 console.error('Failed to load admin stats');
             } finally {
                 setLoading(false);

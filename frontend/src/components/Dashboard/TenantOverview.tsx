@@ -38,7 +38,7 @@ const TenantOverview = () => {
                 ]);
                 setStats(statsRes.data);
                 setPayments(Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
-            } catch (error) {
+            } catch {
                 console.error('Dashboard Fetch Failed');
             }
         };

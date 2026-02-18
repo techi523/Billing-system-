@@ -20,7 +20,7 @@ const DemoAdmin = () => {
             try {
                 await axios.get('/api/v1/superadmin/platform-stats', { timeout: 3000 });
                 setIsConnected(true);
-            } catch (e) {
+            } catch {
                 setIsConnected(false);
             }
         };
