@@ -84,8 +84,10 @@ const AdminDashboard = () => {
         }
     ];
 
-    const quickActions = [
-        { label: "Add New Tenant", icon: Users, variant: "primary" },
+    type ButtonVariant = 'default' | 'secondary' | 'ghost' | 'link' | 'destructive' | 'outline';
+
+    const quickActions: { label: string; icon: typeof Users; variant: ButtonVariant }[] = [
+        { label: "Add New Tenant", icon: Users, variant: "default" },
         { label: "View Reports", icon: TrendingUp, variant: "secondary" },
         { label: "System Logs", icon: AlertTriangle, variant: "ghost" }
     ];
@@ -229,7 +231,7 @@ const AdminDashboard = () => {
                                 {quickActions.map((action, index) => {
                                     const Icon = action.icon;
                                     return (
-                                        <Button key={index} variant={action.variant as "default" | "secondary" | "ghost" | "link" | "destructive" | "outline"} className="w-full justify-start">
+                                        <Button key={index} variant={action.variant} className="w-full justify-start">
                                             <Icon size={18} className="mr-2" />
                                             {action.label}
                                         </Button>

@@ -13,7 +13,7 @@ import { Input } from '../Common/Input';
 import { Badge } from '../Common/Badge';
 import { Card } from '../Common/Card';
 import SubscriberModal from '../Modals/SubscriberModal';
-import type { Subscriber, SubscriberFormData, Package, Router } from '../../types';
+import type { Subscriber, SubscriberFormData, Package, Router, ApiSubscriberRaw } from '../../types';
 
 const SubscriberTable = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -41,15 +41,14 @@ const SubscriberTable = () => {
     const fetchSubscribers = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('/api/v1/admin/subscribers');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const mapped: Subscriber[] = response.data.map((s: Record<string, any>) => ({
-                id: s.id,
+            const response = await axios.get<ApiSubscriberRaw[]>('/api/v1/admin/subscribers');
+            const mapped: Subscriber[] = response.data.map((s: ApiSubscriberRaw) => ({
+                id: String(s.id),
                 name: s.name || 'Anonymous',
-                phone: s.phoneNumber,
+                phone: s.phoneNumber || s.phone || 'N/A',
                 plan: s.package?.name || 'No Plan',
-                status: s.displayStatus as Subscriber['status'],
-                usage: s.usagePercent,
+                status: (s.displayStatus as Subscriber['status']) || 'Inactive',
+                usage: s.usagePercent ?? 0,
                 expires: s.expiresIn,
                 lastSeen: s.activeSession ? 'Online' : (s.lastPaymentDate ? 'Last seen ' + new Date(s.lastPaymentDate).toLocaleDateString() : 'Never'),
                 ipAddress: s.activeSession?.ipAddress || '',
@@ -110,8 +109,11 @@ const SubscriberTable = () => {
     };
 
     const openEditModal = (subscriber: Subscriber) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const s = (subscriber.raw || subscriber) as any; // Fallback if raw is missing
+        const s: ApiSubscriberRaw = subscriber.raw ?? {
+            id: subscriber.id,
+            name: subscriber.name,
+            phone: subscriber.phone,
+        };
         setFormData({
             name: s.name || '',
             phoneNumber: s.phoneNumber || s.phone || '', // Check both fields

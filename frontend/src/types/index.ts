@@ -1,7 +1,27 @@
+/** Raw API response shape from /api/v1/admin/subscribers */
+export interface ApiSubscriberRaw {
+    id: string | number;
+    name?: string;
+    phoneNumber?: string;
+    phone?: string;
+    package?: { name: string };
+    displayStatus?: string;
+    usagePercent?: number;
+    expiresIn?: string;
+    lastPaymentDate?: string;
+    activeSession?: { ipAddress?: string } | null;
+    pppoeUsername?: string;
+    pppoePassword?: string;
+    packageId?: string;
+    routerId?: string;
+    address?: string;
+    notes?: string;
+}
+
 export interface Subscriber {
     id: string;
     name: string;
-    ip?: string; // Made optional as it's not always present in list view
+    ip?: string;
     status: 'Active' | 'Inactive' | 'Suspended' | 'Warning' | 'Expired';
     plan: string;
     usage: number;
@@ -14,7 +34,7 @@ export interface Subscriber {
     lastSeen?: string;
     ipAddress?: string;
     deviceType?: string;
-    [key: string]: unknown; // Keep loose for now to prevent breakage during transition
+    raw?: ApiSubscriberRaw;
 }
 
 export interface SubscriberFormData {
@@ -64,18 +84,10 @@ export interface Payment {
     package?: { name: string };
     date?: string;
     status?: string;
-    [key: string]: unknown;
 }
 
 export interface Router {
-    id: string; // Changed from number to string to match other IDs usually, but RouterList uses number. Checking RouterList again.
-    // RouterList uses number ids: { id: 1, ... }
-    // But other parts might expect string. I'll make it number | string or just number if consistent.
-    // SubscriberTable uses string IDs.
-    // Let's check RouterList usage again.
-    // "id: 1"
-    // I should probably unify this to string or number. Let's stick to string for consistency with others, but RouterList has numbers.
-    // I will use string | number for id in Router to be safe.
+    id: string | number;
     name: string;
     ip: string;
     host?: string;
