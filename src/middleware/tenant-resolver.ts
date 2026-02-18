@@ -1,19 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { Tenant } from '../models';
-import { AuditLog } from '../models';
-
-export interface TenantResolverRequest extends Request {
-    tenant?: Tenant;
-    user?: {
-        id: string;
-        role: string;
-        tenantId?: string;
-        scope?: string;
-    };
-}
+import { Tenant, AuditLog } from '../models';
 
 export class TenantResolver {
-    static async resolveTenant(req: TenantResolverRequest, res: Response, next: NextFunction) {
+    static async resolveTenant(req: Request, res: Response, next: NextFunction) {
         try {
             // If not authenticated, we can't resolve an admin/tenant context
             // Just move to the next middleware (which might be authMiddleware or a public route)
@@ -104,7 +93,7 @@ export class TenantResolver {
         }
     }
 
-    static async requireTenant(req: TenantResolverRequest, res: Response, next: NextFunction) {
+    static async requireTenant(req: Request, res: Response, next: NextFunction) {
         // This is a strict check for routes that MUST have a resolved tenant
         if (req.user?.role === 'SUPER_ADMIN') {
             return next();

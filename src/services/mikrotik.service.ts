@@ -1,6 +1,13 @@
 import { Router as RouterModel, RouterConnectionLog } from '../models';
 import logger from '../utils/logger';
 import { RouterOSClient } from 'routeros-client';
+import {
+    MikroTikCapabilities,
+    MikroTikSession,
+    MikroTikResource,
+    MikroTikUserData,
+    MikroTikProfileData
+} from '../types/mikrotik';
 
 export class MikroTikService {
     /**
@@ -42,11 +49,12 @@ export class MikroTikService {
                 identity: identity[0]?.name || 'Unknown'
             };
 
-        } catch (error: any) {
-            logger.error('MikroTik connection test failed', { host: router.host, error: error.message });
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Connection failed';
+            logger.error('MikroTik connection test failed', { host: router.host, error: errorMessage });
             return {
                 status: false,
-                message: error.message || 'Connection failed'
+                message: errorMessage
             };
         }
     }
@@ -57,14 +65,18 @@ export class MikroTikService {
     static async validateCompatibility(router: RouterModel): Promise<{
         compatible: boolean;
         issues: string[];
-        capabilities: any;
+        capabilities: MikroTikCapabilities;
     }> {
         const client = await this.getConnection(router);
         try {
             const api = await client.connect();
 
             const issues: string[] = [];
-            const capabilities: any = {};
+            const capabilities: MikroTikCapabilities = {
+                hotspot: false,
+                radius: false,
+                queues: true
+            };
 
             // Check for hotspot server
             try {
@@ -97,11 +109,12 @@ export class MikroTikService {
                 capabilities
             };
 
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             return {
                 compatible: false,
-                issues: ['Cannot connect to router: ' + (error.message || 'Unknown error')],
-                capabilities: {}
+                issues: ['Cannot connect to router: ' + errorMessage],
+                capabilities: { hotspot: false, radius: false, queues: false }
             };
         }
     }
@@ -121,7 +134,7 @@ export class MikroTikService {
         try {
             const api = await client.connect();
 
-            const userData: any = {
+            const userData: MikroTikUserData = {
                 name: username,
                 password: password,
                 profile: profile,
@@ -132,13 +145,14 @@ export class MikroTikService {
                 userData['mac-address'] = macAddress;
             }
 
-            await api.menu('/ip/hotspot/user').add(userData);
+            await api.menu('/ip/hotspot/user').add(userData as any);
             await client.close();
 
             await this.logRouterAction(router.id, router.tenantId, 'CREATE_USER', 'SUCCESS', `User ${username} created`);
-        } catch (error: any) {
-            logger.error('Failed to create hotspot user', { routerId: router.id, username, error: error.message });
-            await this.logRouterAction(router.id, router.tenantId, 'CREATE_USER', 'FAILED', `Failed to create user ${username}: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            logger.error('Failed to create hotspot user', { routerId: router.id, username, error: errorMessage });
+            await this.logRouterAction(router.id, router.tenantId, 'CREATE_USER', 'FAILED', `Failed to create user ${username}: ${errorMessage}`);
             throw error;
         }
     }
@@ -163,8 +177,9 @@ export class MikroTikService {
 
             await client.close();
             await this.logRouterAction(router.id, router.tenantId, 'DISCONNECT_USER', 'SUCCESS', `User ${username} disconnected`);
-        } catch (error: any) {
-            logger.error('Failed to disconnect user', { routerId: router.id, username, error: error.message });
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            logger.error('Failed to disconnect user', { routerId: router.id, username, error: errorMessage });
             throw error;
         }
     }
@@ -172,14 +187,14 @@ export class MikroTikService {
     /**
      * Get active hotspot sessions
      */
-    static async getActiveHotspotSessions(router: RouterModel): Promise<any[]> {
+    static async getActiveHotspotSessions(router: RouterModel): Promise<MikroTikSession[]> {
         const client = await this.getConnection(router);
         try {
             const api = await client.connect();
             const sessions = await api.menu('/ip/hotspot/active').get();
             await client.close();
 
-            return sessions.map((s: any) => ({
+            return sessions.map((s: any): MikroTikSession => ({
                 id: s['.id'],
                 username: s.user,
                 ipAddress: s.address,
@@ -189,8 +204,9 @@ export class MikroTikService {
                 bytesOut: s['bytes-out'],
                 sessionTime: s['session-time-left']
             }));
-        } catch (error: any) {
-            logger.error('Failed to get hotspot sessions', { routerId: router.id, error: error.message });
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            logger.error('Failed to get hotspot sessions', { routerId: router.id, error: errorMessage });
             throw error;
         }
     }
@@ -211,8 +227,9 @@ export class MikroTikService {
 
             await client.close();
             await this.logRouterAction(router.id, router.tenantId, 'TOGGLE_USER', 'SUCCESS', `User ${username} ${enabled ? 'enabled' : 'disabled'}`);
-        } catch (error: any) {
-            logger.error('Failed to toggle user', { routerId: router.id, username, error: error.message });
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            logger.error('Failed to toggle user', { routerId: router.id, username, error: errorMessage });
             throw error;
         }
     }
@@ -220,13 +237,7 @@ export class MikroTikService {
     /**
      * Get router system resources
      */
-    static async getSystemResources(router: RouterModel): Promise<{
-        cpuUsage: number;
-        memoryUsage: number;
-        diskUsage: number;
-        uptime: string;
-        temperature: number | null;
-    }> {
+    static async getSystemResources(router: RouterModel): Promise<MikroTikResource> {
         const client = await this.getConnection(router);
         try {
             const api = await client.connect();
@@ -256,8 +267,9 @@ export class MikroTikService {
                 uptime: r.uptime,
                 temperature
             };
-        } catch (error: any) {
-            logger.error('Failed to get system resources', { routerId: router.id, error: error.message });
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            logger.error('Failed to get system resources', { routerId: router.id, error: errorMessage });
             throw error;
         }
     }
@@ -306,9 +318,10 @@ export class MikroTikService {
 
             await client.close();
             await this.logRouterAction(router.id, router.tenantId, 'SYNC_PROFILE', 'SUCCESS', `Profile ${profileName} synced`);
-        } catch (error: any) {
-            logger.error('Failed to sync hotspot profile', { routerId: router.id, profileName, error: error.message });
-            await this.logRouterAction(router.id, router.tenantId, 'SYNC_PROFILE', 'FAILED', `Failed to sync profile ${profileName}: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            logger.error('Failed to sync hotspot profile', { routerId: router.id, profileName, error: errorMessage });
+            await this.logRouterAction(router.id, router.tenantId, 'SYNC_PROFILE', 'FAILED', `Failed to sync profile ${profileName}: ${errorMessage}`);
             throw error;
         }
     }

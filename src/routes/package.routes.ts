@@ -9,11 +9,11 @@ const router = Router();
 /**
  * Utility to ensure a value from req.params or req.query is a string
  */
-const ensureString = (value: any): string => {
+const ensureString = (value: unknown): string => {
     if (Array.isArray(value)) {
-        return value[0] as string;
+        return String(value[0]);
     }
-    return value as string;
+    return String(value);
 };
 
 /**
@@ -79,12 +79,13 @@ router.post('/', authMiddleware, async (req, res) => {
             }
         });
 
-    } catch (error: any) {
-        logger.error('Failed to create package', { error: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Failed to create package', { error: errorMessage });
         res.status(500).json({
             success: false,
             message: 'Failed to create package',
-            error: error.message
+            error: errorMessage
         });
     }
 });
@@ -95,7 +96,8 @@ router.post('/', authMiddleware, async (req, res) => {
  */
 router.get('/', authMiddleware, async (req, res) => {
     try {
-        const tenantId = (req as any).user.tenantId;
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
         const packages = await PackageService.getTenantPackages(tenantId);
 
@@ -133,7 +135,8 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/:id', authMiddleware, async (req, res) => {
     try {
         const id = ensureString(req.params.id);
-        const tenantId = (req as any).user.tenantId;
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
         const result = await PackageService.getPackageWithCompatibility(id, tenantId);
 
@@ -186,10 +189,12 @@ router.put('/:id', authMiddleware, async (req, res) => {
     try {
         const id = ensureString(req.params.id);
         const { name, description, price, validityHours, validityDays, dataLimitMB, uploadSpeed, downloadSpeed, sharedUsers, isActive } = req.body;
-        const tenantId = (req as any).user.tenantId;
-        const userId = (req as any).user.id;
+        const tenantId = req.user?.tenantId;
+        const userId = req.user?.id;
 
-        const updateData: any = {};
+        if (!tenantId || !userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+        const updateData: Record<string, unknown> = {};
         if (name !== undefined) updateData.name = name;
         if (description !== undefined) updateData.description = description;
         if (price !== undefined) updateData.price = price;
@@ -238,8 +243,10 @@ router.put('/:id', authMiddleware, async (req, res) => {
 router.delete('/:id', authMiddleware, async (req, res) => {
     try {
         const id = ensureString(req.params.id);
-        const tenantId = (req as any).user.tenantId;
-        const userId = (req as any).user.id;
+        const tenantId = req.user?.tenantId;
+        const userId = req.user?.id;
+
+        if (!tenantId || !userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
         await PackageService.deletePackage(id, tenantId, userId);
 
@@ -248,12 +255,13 @@ router.delete('/:id', authMiddleware, async (req, res) => {
             message: 'Package deleted successfully'
         });
 
-    } catch (error: any) {
-        logger.error('Failed to delete package', { error: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Failed to delete package', { error: errorMessage });
         res.status(500).json({
             success: false,
             message: 'Failed to delete package',
-            error: error.message
+            error: errorMessage
         });
     }
 });
@@ -337,7 +345,8 @@ router.get('/public/:tenantId', async (req, res) => {
 router.post('/:id/sync', authMiddleware, async (req, res) => {
     try {
         const id = ensureString(req.params.id);
-        const tenantId = (req as any).user.tenantId;
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
         const result = await PackageService.getPackageWithCompatibility(id, tenantId);
 

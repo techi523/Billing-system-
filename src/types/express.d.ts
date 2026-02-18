@@ -1,10 +1,16 @@
-import { Request } from 'express';
+export interface UserAuth {
+    id: string;
+    email: string;
+    role: 'SUPER_ADMIN' | 'TENANT' | 'STAFF' | 'AGENT';
+    tenantId: string | null;
+}
 
 declare global {
     namespace Express {
         interface Request {
             rawBody?: Buffer;
-            user?: any; // Already used in auth middleware
+            user?: UserAuth;
+            tenant?: any; // Import would be better but any is safer for global d.ts simplicity here to avoid circulars
         }
     }
 }

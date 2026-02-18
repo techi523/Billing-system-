@@ -5,13 +5,10 @@ import logger from '../utils/logger';
 import { AdminSession, AuditLog } from '../models';
 import { config } from '../config/env';
 
+import { UserAuth } from '../types/express';
+
 export interface AuthRequest extends Request {
-    user?: {
-        id: string;
-        role: string;
-        tenantId?: string;
-        scope?: string;
-    };
+    user?: UserAuth;
 }
 
 export const authMiddleware = async (req: AuthRequest, res: Response, next: NextFunction) => {

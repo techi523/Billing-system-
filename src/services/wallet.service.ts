@@ -1,6 +1,6 @@
 import { Wallet, WalletTransaction, PlatformWallet, Tenant, Payment, Settlement, PlatformTransaction, AuditLog } from '../models';
 import { sequelize } from '../models';
-import { Op } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
 import logger from '../utils/logger';
 import { AuditService } from './audit.service';
 
@@ -96,8 +96,8 @@ export class WalletService {
             raw: true
         });
 
-        const totalEarnings = BigInt((stats[0] as any)?.totalEarnings || 0);
-        const totalFees = BigInt((payments[0] as any)?.totalFees || 0);
+        const totalEarnings = BigInt((stats[0] as unknown as Record<string, string | number>)?.totalEarnings || 0);
+        const totalFees = BigInt((payments[0] as unknown as Record<string, string | number>)?.totalFees || 0);
 
         return {
             balance: Number(wallet.balance),
@@ -128,7 +128,7 @@ export class WalletService {
     /**
      * Process payment with automated split logic (90/10 or tenant-specific)
      */
-    static async processPayment(payment: Payment, externalTransaction?: any): Promise<WalletTransaction> {
+    static async processPayment(payment: Payment, externalTransaction?: Transaction): Promise<WalletTransaction> {
         const transaction = externalTransaction || await sequelize.transaction();
 
         try {
@@ -287,7 +287,7 @@ export class WalletService {
     /**
      * Update platform wallet
      */
-    static async updatePlatformWallet(amount: number | bigint, transactionType: 'CREDIT' | 'DEBIT', _referenceId: string | null, transaction?: any): Promise<PlatformWallet> {
+    static async updatePlatformWallet(amount: number | bigint, transactionType: 'CREDIT' | 'DEBIT', _referenceId: string | null, transaction?: Transaction): Promise<PlatformWallet> {
         let platformWallet = await PlatformWallet.findOne();
         if (!platformWallet) {
             platformWallet = await PlatformWallet.create({ balance: 0, pendingBalance: 0, currency: 'KES' }, { transaction });

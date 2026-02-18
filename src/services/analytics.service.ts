@@ -42,7 +42,7 @@ export class AnalyticsService {
             activeSessions,
             totalSubscribers,
             voucherSales,
-            dailyRevenue: dailyRevenue.map((r: any) => ({
+            dailyRevenue: (dailyRevenue as unknown as Array<{ date: string, total: string | number }>).map(r => ({
                 date: r.date,
                 total: Number(r.total)
             }))
@@ -50,11 +50,12 @@ export class AnalyticsService {
     }
 
     static async getRevenueReport(tenantId: string, startDate?: string, endDate?: string) {
-        const where: any = { tenantId, status: 'SUCCESS' };
+        const where: Record<string, unknown> = { tenantId, status: 'SUCCESS' };
         if (startDate || endDate) {
-            where.createdAt = {};
-            if (startDate) where.createdAt[Op.gte] = new Date(startDate);
-            if (endDate) where.createdAt[Op.lte] = new Date(endDate);
+            const createdAt: Record<symbol, Date> = {};
+            if (startDate) createdAt[Op.gte as symbol] = new Date(startDate);
+            if (endDate) createdAt[Op.lte as symbol] = new Date(endDate);
+            where.createdAt = createdAt;
         }
 
         return await Payment.findAll({
@@ -81,7 +82,7 @@ export class AnalyticsService {
         });
 
         return {
-            topPackage: (popularPackage[0] as any)?.package?.name || 'N/A',
+            topPackage: (popularPackage[0] as unknown as { package: { name: string } })?.package?.name || 'N/A',
             recommendation: "Consider a discount on your least popular plan to boost traffic."
         };
     }
@@ -173,7 +174,7 @@ export class AnalyticsService {
      * SMS Usage and Metrics
      */
     static async getSmsMetrics(tenantId: string) {
-        const stats = await (SMSLog as any).findAll({
+        const stats = await SMSLog.findAll({
             where: { tenantId },
             attributes: [
                 'status',
@@ -215,7 +216,7 @@ export class AnalyticsService {
         });
 
         return {
-            revenueTrend: revenueTrend.map((r: any) => ({
+            revenueTrend: (revenueTrend as unknown as Array<{ hour: string, amount: string | number }>).map(r => ({
                 hour: r.hour,
                 amount: Number(r.amount) // Cents to Number for charts
             })),
@@ -234,24 +235,24 @@ export class AnalyticsService {
         // Group sessions by hour of day (0-23)
         const isMySQL = process.env.DB_TYPE === 'mysql';
 
-        const hourCol = isMySQL ? sequelize.fn('HOUR', sequelize.col('startTime')) : sequelize.literal("cast(strftime('%H', startTime) as integer)") as any;
+        const hourCol = isMySQL ? sequelize.fn('HOUR', sequelize.col('startTime')) : sequelize.literal("cast(strftime('%H', startTime) as integer)");
 
         const sessionsByHour = await Session.findAll({
             attributes: [
-                [hourCol, 'hour'],
+                [hourCol as any, 'hour'],
                 [sequelize.fn('COUNT', sequelize.col('id')), 'count']
             ],
             where: {
                 tenantId,
                 startTime: { [Op.gte]: last30Days }
             },
-            group: [hourCol],
+            group: [hourCol as any],
             raw: true
         });
 
         // Find the 3-hour window with max sessions
         const hoursMap: number[] = Array.from({ length: 24 }, () => 0);
-        sessionsByHour.forEach((r: any) => {
+        (sessionsByHour as unknown as Array<{ hour: string | number, count: string | number }>).forEach(r => {
             const hour = Number(r.hour);
             const count = Number(r.count);
             if (!isNaN(hour) && hour >= 0 && hour < 24) {

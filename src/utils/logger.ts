@@ -9,23 +9,23 @@ const SENSITIVE_FIELDS = ['password', 'token', 'secret', 'apiKey', 'authorizatio
  * Custom format to redact sensitive information
  */
 const redactSensitiveData = winston.format((info) => {
-    const redactObject = (obj: any): any => {
+    const redactObject = (obj: unknown): unknown => {
         if (typeof obj !== 'object' || obj === null) return obj;
 
-        const redacted = Array.isArray(obj) ? [...obj] : { ...obj };
+        const redacted = Array.isArray(obj) ? [...obj] : { ...obj as Record<string, unknown> };
 
-        for (const key in redacted) {
+        for (const key in redacted as Record<string, unknown>) {
             if (SENSITIVE_FIELDS.some(field => key.toLowerCase().includes(field))) {
-                redacted[key] = '[REDACTED]';
-            } else if (typeof redacted[key] === 'object' && redacted[key] !== null) {
-                redacted[key] = redactObject(redacted[key]);
+                (redacted as Record<string, unknown>)[key] = '[REDACTED]';
+            } else if (typeof (redacted as Record<string, unknown>)[key] === 'object' && (redacted as Record<string, unknown>)[key] !== null) {
+                (redacted as Record<string, unknown>)[key] = redactObject((redacted as Record<string, unknown>)[key]);
             }
         }
 
         return redacted;
     };
 
-    return redactObject(info);
+    return redactObject(info) as winston.Logform.TransformableInfo;
 });
 
 // Create logs directory if it doesn't exist

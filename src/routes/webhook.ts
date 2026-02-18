@@ -16,10 +16,18 @@ const SAFARICOM_IPS = [
     '196.201.212.127', '196.201.212.138'
 ];
 
+interface FulfillmentData {
+    paymentId: string;
+    subscriberId?: string | null;
+    macAddress?: string | null;
+    ipAddress?: string | null;
+    routerId?: string | null;
+}
+
 /**
  * Async fulfillment function with retry logic
  */
-async function processFulfillment(fulfillmentData: any) {
+async function processFulfillment(fulfillmentData: FulfillmentData) {
     const { paymentId, subscriberId, macAddress, ipAddress: _ipAddress, routerId: _routerId } = fulfillmentData;
     const maxRetries = 3;
 
@@ -32,7 +40,7 @@ async function processFulfillment(fulfillmentData: any) {
                 logger.info('ISP Subscriber Renewed', { subscriberId, paymentId, attempt });
             } else if (macAddress && _routerId) {
                 // HOTSPOT MODE: Grant instant access
-                await SessionOrchestrator.grantAccess(paymentId, macAddress, _ipAddress);
+                await SessionOrchestrator.grantAccess(paymentId, macAddress, _ipAddress || undefined);
                 logger.info('Hotspot Access Granted', { mac: macAddress, paymentId, attempt });
             }
 
@@ -40,13 +48,12 @@ async function processFulfillment(fulfillmentData: any) {
             await require('../services/audit.service').logEvent('PAYMENT_FULFILLED', {
                 paymentId,
                 macAddress,
-                subscriberId,
+                subscriberId: subscriberId || undefined,
                 routerId: _routerId,
                 timestamp: new Date()
             });
 
             break; // Success, exit retry loop
-
         } catch (error: any) {
             logger.warn(`Fulfillment attempt ${attempt} failed`, {
                 paymentId,
