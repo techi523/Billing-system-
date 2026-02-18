@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, type ChangeEvent } from 'react';
 import axios from 'axios';
 import {
     Smartphone,
@@ -13,17 +13,23 @@ import { Input } from '../Common/Input';
 import { Badge } from '../Common/Badge';
 import { Card } from '../Common/Card';
 import SubscriberModal from '../Modals/SubscriberModal';
-import type { Subscriber, SubscriberFormData, Package, Router, ApiSubscriberRaw } from '../../types';
+import type {
+    Subscriber,
+    SubscriberFormData,
+    Package,
+    Router,
+    ApiSubscriberRaw
+} from '../../types';
 
 const SubscriberTable = () => {
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState<string>('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [sortBy, setSortBy] = useState<string>('lastSeen');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [isEditing, setIsEditing] = useState<boolean>(false);
     const [currentSubscriber, setCurrentSubscriber] = useState<Subscriber | null>(null);
     const [packages, setPackages] = useState<Package[]>([]);
     const [routers, setRouters] = useState<Router[]>([]);
@@ -38,20 +44,25 @@ const SubscriberTable = () => {
         notes: ''
     });
 
-    const fetchSubscribers = async () => {
+    const fetchSubscribers = async (): Promise<void> => {
         setLoading(true);
         try {
             const response = await axios.get<ApiSubscriberRaw[]>('/api/v1/admin/subscribers');
-            const mapped: Subscriber[] = response.data.map((s: ApiSubscriberRaw) => ({
+
+            const mapped: Subscriber[] = response.data.map((s) => ({
                 id: String(s.id),
-                name: s.name || 'Anonymous',
-                phone: s.phoneNumber || s.phone || 'N/A',
-                plan: s.package?.name || 'No Plan',
-                status: (s.displayStatus as Subscriber['status']) || 'Inactive',
+                name: s.name ?? 'Anonymous',
+                phone: s.phoneNumber ?? s.phone ?? 'N/A',
+                plan: s.package?.name ?? 'No Plan',
+                status: (s.displayStatus as Subscriber['status']) ?? 'Inactive',
                 usage: s.usagePercent ?? 0,
-                expires: s.expiresIn,
-                lastSeen: s.activeSession ? 'Online' : (s.lastPaymentDate ? 'Last seen ' + new Date(s.lastPaymentDate).toLocaleDateString() : 'Never'),
-                ipAddress: s.activeSession?.ipAddress || '',
+                expires: s.expiresIn ?? '',
+                lastSeen: s.activeSession
+                    ? 'Online'
+                    : s.lastPaymentDate
+                        ? `Last seen ${new Date(s.lastPaymentDate).toLocaleDateString()}`
+                        : 'Never',
+                ipAddress: s.activeSession?.ipAddress ?? '',
                 deviceType: 'Smartphone',
                 raw: s
             }));
@@ -64,12 +75,13 @@ const SubscriberTable = () => {
         }
     };
 
-    const fetchMetadata = async () => {
+    const fetchMetadata = async (): Promise<void> => {
         try {
             const [pkgsRes, routersRes] = await Promise.all([
-                axios.get('/api/v1/admin/packages'),
-                axios.get('/api/v1/admin/routers')
+                axios.get<Package[]>('/api/v1/admin/packages'),
+                axios.get<Router[]>('/api/v1/admin/routers')
             ]);
+
             setPackages(pkgsRes.data);
             setRouters(routersRes.data);
         } catch (error) {
@@ -78,11 +90,11 @@ const SubscriberTable = () => {
     };
 
     useEffect(() => {
-        fetchSubscribers();
-        fetchMetadata();
+        void fetchSubscribers();
+        void fetchMetadata();
     }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault();
         try {
             if (isEditing && currentSubscriber) {
@@ -91,45 +103,43 @@ const SubscriberTable = () => {
                 await axios.post('/api/v1/admin/subscribers', formData);
             }
             setIsModalOpen(false);
-            fetchSubscribers();
+            await fetchSubscribers();
         } catch (error) {
             console.error('Failed to save subscriber', error);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (window.confirm('Are you sure you want to delete this subscriber?')) {
-            try {
-                await axios.delete(`/api/v1/admin/subscribers/${id}`);
-                fetchSubscribers();
-            } catch (error) {
-                console.error('Failed to delete subscriber', error);
-            }
+    const handleDelete = async (id: string): Promise<void> => {
+        if (!window.confirm('Are you sure you want to delete this subscriber?')) return;
+
+        try {
+            await axios.delete(`/api/v1/admin/subscribers/${id}`);
+            await fetchSubscribers();
+        } catch (error) {
+            console.error('Failed to delete subscriber', error);
         }
     };
 
-    const openEditModal = (subscriber: Subscriber) => {
-        const s: ApiSubscriberRaw = subscriber.raw ?? {
-            id: subscriber.id,
-            name: subscriber.name,
-            phone: subscriber.phone,
-        };
+    const openEditModal = (subscriber: Subscriber): void => {
+        const s: ApiSubscriberRaw = subscriber.raw ?? { id: subscriber.id, name: subscriber.name, phone: subscriber.phone };
+
         setFormData({
-            name: s.name || '',
-            phoneNumber: s.phoneNumber || s.phone || '', // Check both fields
-            pppoeUsername: s.pppoeUsername || '',
-            pppoePassword: s.pppoePassword || '',
-            packageId: s.packageId || '',
-            routerId: s.routerId || '',
-            address: s.address || '',
-            notes: s.notes || ''
+            name: s.name ?? '',
+            phoneNumber: s.phoneNumber ?? s.phone ?? '',
+            pppoeUsername: s.pppoeUsername ?? '',
+            pppoePassword: s.pppoePassword ?? '',
+            packageId: s.packageId ?? '',
+            routerId: s.routerId ?? '',
+            address: s.address ?? '',
+            notes: s.notes ?? ''
         });
+
         setCurrentSubscriber(subscriber);
         setIsEditing(true);
         setIsModalOpen(true);
     };
 
-    const openAddModal = () => {
+    const openAddModal = (): void => {
         setFormData({
             name: '',
             phoneNumber: '',
@@ -140,25 +150,29 @@ const SubscriberTable = () => {
             address: '',
             notes: ''
         });
+
         setIsEditing(false);
+        setCurrentSubscriber(null);
         setIsModalOpen(true);
     };
 
-    const filteredAndSortedSubscribers = useMemo(() => {
-        const filtered = subscribers.filter(subscriber => {
-            const matchesSearch = subscriber.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const filteredAndSortedSubscribers = useMemo<Subscriber[]>(() => {
+        const filtered = subscribers.filter((subscriber) => {
+            const matchesSearch =
+                subscriber.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 subscriber.phone.includes(searchTerm) ||
                 subscriber.plan.toLowerCase().includes(searchTerm.toLowerCase());
 
-            const matchesStatus = statusFilter === 'all' || subscriber.status.toLowerCase() === statusFilter.toLowerCase();
+            const matchesStatus =
+                statusFilter === 'all' ||
+                subscriber.status.toLowerCase() === statusFilter.toLowerCase();
 
             return matchesSearch && matchesStatus;
         });
 
-        // Sort by selected field
-        filtered.sort((a, b) => {
-            let aValue: string | number;
-            let bValue: string | number;
+        return [...filtered].sort((a, b) => {
+            let aValue: string | number = '';
+            let bValue: string | number = '';
 
             switch (sortBy) {
                 case 'name':
@@ -174,12 +188,12 @@ const SubscriberTable = () => {
                     bValue = b.usage;
                     break;
                 case 'expires':
-                    aValue = a.expires || '';
-                    bValue = b.expires || '';
+                    aValue = a.expires ?? '';
+                    bValue = b.expires ?? '';
                     break;
                 case 'lastSeen':
-                    aValue = new Date(a.lastSeen || 0).getTime();
-                    bValue = new Date(b.lastSeen || 0).getTime();
+                    aValue = new Date(a.lastSeen ?? '').getTime();
+                    bValue = new Date(b.lastSeen ?? '').getTime();
                     break;
                 default:
                     aValue = a.name.toLowerCase();
@@ -190,25 +204,27 @@ const SubscriberTable = () => {
             if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
             return 0;
         });
-
-        return filtered;
     }, [subscribers, searchTerm, statusFilter, sortBy, sortOrder]);
 
-    const handleSort = (field: string) => {
+    const handleSort = (field: string): void => {
         if (sortBy === field) {
-            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+            setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
         } else {
             setSortBy(field);
             setSortOrder('desc');
         }
     };
 
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status: string): 'success' | 'warning' | 'destructive' | 'secondary' => {
         switch (status) {
-            case 'Active': return 'success';
-            case 'Warning': return 'warning';
-            case 'Expired': return 'destructive';
-            default: return 'secondary';
+            case 'Active':
+                return 'success';
+            case 'Warning':
+                return 'warning';
+            case 'Expired':
+                return 'destructive';
+            default:
+                return 'secondary';
         }
     };
 
@@ -240,7 +256,7 @@ const SubscriberTable = () => {
                         <Input
                             placeholder="Search users, phone numbers, or plans..."
                             value={searchTerm}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                             className="pl-10"
                         />
                     </div>
@@ -344,10 +360,9 @@ const SubscriberTable = () => {
                                             </div>
                                             <div className="w-full bg-muted rounded-full h-2">
                                                 <div
-                                                    className={`h-2 rounded-full transition-all ${subscriber.usage > 90 ? 'bg-destructive' : 'bg-primary'
-                                                        }`}
+                                                    className={`h-2 rounded-full transition-all ${subscriber.usage > 90 ? 'bg-destructive' : 'bg-primary'}`}
                                                     style={{ width: `${subscriber.usage}%` }}
-                                                ></div>
+                                                />
                                             </div>
                                         </div>
                                     </td>
@@ -370,7 +385,7 @@ const SubscriberTable = () => {
                                             <Button variant="ghost" size="sm" onClick={() => openEditModal(subscriber)}>
                                                 Edit
                                             </Button>
-                                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(subscriber.id)}>
+                                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => void handleDelete(subscriber.id)}>
                                                 Delete
                                             </Button>
                                         </div>
