@@ -30,8 +30,12 @@ const SuperAdminLogin = () => {
             const { token, user } = res.data;
             login(token, user);
             navigate('/superadmin');
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Login failed');
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err)) {
+                setError(err.response?.data?.error || 'Login failed');
+            } else {
+                setError('An unexpected error occurred');
+            }
         } finally {
             setLoading(false);
         }

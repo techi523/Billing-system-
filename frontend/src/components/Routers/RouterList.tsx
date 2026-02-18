@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Radio, Wifi, Activity, MoreVertical, Plus, Server } from 'lucide-react';
 import { motion } from 'framer-motion';
+import type { Router } from '../../types';
+import RouterModal from '../Modals/RouterModal';
 
-const RouterCard = ({ router, index }: any) => (
+const RouterCard = ({ router, index }: { router: Router; index: number }) => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -50,15 +52,13 @@ const RouterCard = ({ router, index }: any) => (
     </motion.div>
 );
 
-import RouterModal from '../Modals/RouterModal';
-
 const RouterList = () => {
     // Mock Data for Demo
-    const [routers] = useState([
-        { id: 1, name: 'Main Hub - Nairobi', ip: '192.168.88.1', status: 'online', cpuLoad: 12, activeUsers: 45 },
-        { id: 2, name: 'Backup Node - Westlands', ip: '10.0.0.1', status: 'online', cpuLoad: 8, activeUsers: 23 },
-        { id: 3, name: 'Kiosk Relay 4', ip: '10.0.50.1', status: 'offline', cpuLoad: 0, activeUsers: 0 },
-        { id: 4, name: 'Fiber Gateway', ip: '172.16.0.1', status: 'online', cpuLoad: 45, activeUsers: 128 },
+    const [routers] = useState<Router[]>([
+        { id: '1', name: 'Main Hub - Nairobi', ip: '192.168.88.1', status: 'online', cpuLoad: 12, activeUsers: 45 },
+        { id: '2', name: 'Backup Node - Westlands', ip: '10.0.0.1', status: 'online', cpuLoad: 8, activeUsers: 23 },
+        { id: '3', name: 'Kiosk Relay 4', ip: '10.0.50.1', status: 'offline', cpuLoad: 0, activeUsers: 0 },
+        { id: '4', name: 'Fiber Gateway', ip: '172.16.0.1', status: 'online', cpuLoad: 45, activeUsers: 128 },
     ]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 

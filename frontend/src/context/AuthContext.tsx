@@ -24,35 +24,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
+        const initAuth = async () => {
+            const storedToken = localStorage.getItem('token');
+            const storedUser = localStorage.getItem('user');
 
-        if (storedToken && storedUser) {
-            // CRITICAL FIX: Verify token with backend to ensure fresh tenant data
-            // This prevents stale localStorage from causing "new tenant" behavior
-            axios.get<{ user: User }>('/api/v1/auth/verify', {
-                headers: { Authorization: `Bearer ${storedToken}` }
-            })
-                .then(response => {
+            if (storedToken && storedUser) {
+                try {
+                    // CRITICAL FIX: Verify token with backend to ensure fresh tenant data
+                    // This prevents stale localStorage from causing "new tenant" behavior
+                    const response = await axios.get<{ user: User }>('/api/v1/auth/verify', {
+                        headers: { Authorization: `Bearer ${storedToken}` }
+                    });
+
                     const freshUser = response.data.user;
                     setToken(storedToken);
                     setUser(freshUser); // Use fresh data from backend
                     localStorage.setItem('user', JSON.stringify(freshUser)); // Update localStorage
                     axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-                })
-                .catch((error: unknown) => {
+                } catch (error: unknown) {
                     console.error('[AuthContext] Token verification failed:', error);
                     // Token invalid or expired, clear state
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
                     delete axios.defaults.headers.common['Authorization'];
-                })
-                .finally(() => {
+                } finally {
                     setLoading(false);
-                });
-        } else {
-            setLoading(false);
-        }
+                }
+            } else {
+                setLoading(false);
+            }
+        };
+
+        initAuth();
     }, []);
 
     const login = (newToken: string, newUser: User) => {
@@ -78,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (context === undefined) {

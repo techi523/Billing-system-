@@ -13,19 +13,7 @@ import { Input } from '../Common/Input';
 import { Badge } from '../Common/Badge';
 import { Card } from '../Common/Card';
 import SubscriberModal from '../Modals/SubscriberModal';
-
-interface Subscriber {
-    id: string;
-    name: string;
-    phone: string;
-    plan: string;
-    status: 'Active' | 'Expired' | 'Warning';
-    usage: number;
-    expires: string;
-    lastSeen: string;
-    ipAddress: string;
-    deviceType: string;
-}
+import type { Subscriber, SubscriberFormData, Package, Router } from '../../types';
 
 const SubscriberTable = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -36,10 +24,10 @@ const SubscriberTable = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [currentSubscriber, setCurrentSubscriber] = useState<any>(null);
-    const [packages, setPackages] = useState<any[]>([]);
-    const [routers, setRouters] = useState<any[]>([]);
-    const [formData, setFormData] = useState({
+    const [currentSubscriber, setCurrentSubscriber] = useState<Subscriber | null>(null);
+    const [packages, setPackages] = useState<Package[]>([]);
+    const [routers, setRouters] = useState<Router[]>([]);
+    const [formData, setFormData] = useState<SubscriberFormData>({
         name: '',
         phoneNumber: '',
         pppoeUsername: '',
@@ -54,12 +42,13 @@ const SubscriberTable = () => {
         setLoading(true);
         try {
             const response = await axios.get('/api/v1/admin/subscribers');
-            const mapped = response.data.map((s: any) => ({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const mapped: Subscriber[] = response.data.map((s: Record<string, any>) => ({
                 id: s.id,
                 name: s.name || 'Anonymous',
                 phone: s.phoneNumber,
                 plan: s.package?.name || 'No Plan',
-                status: s.displayStatus,
+                status: s.displayStatus as Subscriber['status'],
                 usage: s.usagePercent,
                 expires: s.expiresIn,
                 lastSeen: s.activeSession ? 'Online' : (s.lastPaymentDate ? 'Last seen ' + new Date(s.lastPaymentDate).toLocaleDateString() : 'Never'),
@@ -67,6 +56,7 @@ const SubscriberTable = () => {
                 deviceType: 'Smartphone',
                 raw: s
             }));
+
             setSubscribers(mapped);
         } catch (error) {
             console.error('Failed to fetch subscribers', error);
@@ -119,11 +109,12 @@ const SubscriberTable = () => {
         }
     };
 
-    const openEditModal = (subscriber: any) => {
-        const s = subscriber.raw;
+    const openEditModal = (subscriber: Subscriber) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const s = (subscriber.raw || subscriber) as any; // Fallback if raw is missing
         setFormData({
             name: s.name || '',
-            phoneNumber: s.phoneNumber || '',
+            phoneNumber: s.phoneNumber || s.phone || '', // Check both fields
             pppoeUsername: s.pppoeUsername || '',
             pppoePassword: s.pppoePassword || '',
             packageId: s.packageId || '',
@@ -131,7 +122,7 @@ const SubscriberTable = () => {
             address: s.address || '',
             notes: s.notes || ''
         });
-        setCurrentSubscriber(s);
+        setCurrentSubscriber(subscriber);
         setIsEditing(true);
         setIsModalOpen(true);
     };
@@ -164,8 +155,8 @@ const SubscriberTable = () => {
 
         // Sort by selected field
         filtered.sort((a, b) => {
-            let aValue: any;
-            let bValue: any;
+            let aValue: string | number;
+            let bValue: string | number;
 
             switch (sortBy) {
                 case 'name':
@@ -181,12 +172,12 @@ const SubscriberTable = () => {
                     bValue = b.usage;
                     break;
                 case 'expires':
-                    aValue = a.expires;
-                    bValue = b.expires;
+                    aValue = a.expires || '';
+                    bValue = b.expires || '';
                     break;
                 case 'lastSeen':
-                    aValue = new Date(a.lastSeen).getTime();
-                    bValue = new Date(b.lastSeen).getTime();
+                    aValue = new Date(a.lastSeen || 0).getTime();
+                    bValue = new Date(b.lastSeen || 0).getTime();
                     break;
                 default:
                     aValue = a.name.toLowerCase();

@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TrendingUp, Building2, CheckCircle2, Globe, AlertCircle, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import type { AdminStats } from '../../types';
 
 /**
  * Test component to verify Admin Dashboard rendering works in all scenarios
@@ -7,11 +8,11 @@ import { TrendingUp, Building2, CheckCircle2, Globe, AlertCircle, RefreshCw, Wif
  */
 const DashboardTest = () => {
     const [testMode, setTestMode] = useState<'success' | 'error' | 'timeout' | 'network'>('success');
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<AdminStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const runTest = async () => {
+    const runTest = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         setStats(null);
@@ -42,14 +43,25 @@ const DashboardTest = () => {
                 totalRevenue: 1250000,
                 activeTenants: 15,
                 totalTenants: 25,
-                totalPayments: 8947
+                totalPayments: 8947,
+                // Add missing properties from AdminStats to satisfy strict typing if needed, 
+                // or assume partial is fine if the type allows optional. 
+                // Checking AdminStats definition... it probably needs strict match. 
+                // I'll add dummy values for others.
+                systemHealth: 100,
+                activeUsers: 50,
+                networkLoad: 20
             });
             setIsLoading(false);
             console.log('DashboardTest: Success scenario completed');
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(`DashboardTest: ${testMode} scenario failed`, err);
-            setError(err.message || 'Test failed');
+            if (err instanceof Error) {
+                setError(err.message || 'Test failed');
+            } else {
+                setError('Test failed');
+            }
             setIsLoading(false);
 
             // Set fallback stats
@@ -57,14 +69,17 @@ const DashboardTest = () => {
                 totalRevenue: 0,
                 activeTenants: 0,
                 totalTenants: 0,
-                totalPayments: 0
+                totalPayments: 0,
+                systemHealth: 0,
+                activeUsers: 0,
+                networkLoad: 0
             });
         }
-    };
+    }, [testMode]);
 
     useEffect(() => {
         runTest();
-    }, [testMode]);
+    }, [runTest]);
 
     return (
         <div className="space-y-8 p-8">
@@ -165,7 +180,10 @@ const DashboardTest = () => {
                                         totalRevenue: 0,
                                         activeTenants: 0,
                                         totalTenants: 0,
-                                        totalPayments: 0
+                                        totalPayments: 0,
+                                        systemHealth: 0,
+                                        activeUsers: 0,
+                                        networkLoad: 0
                                     });
                                     setError(null);
                                     setIsLoading(false);

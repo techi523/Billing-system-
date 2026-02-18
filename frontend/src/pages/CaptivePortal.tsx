@@ -5,14 +5,25 @@ import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../assets/logo-main.png';
 import SupportFooter from '../components/Common/SupportFooter';
 
+import type { Package } from '../types';
+
+interface TenantConfig {
+    name: string;
+    logo?: string;
+    logoUrl?: string;
+    themeColor: string;
+    supportPhone: string;
+    termsUrl?: string;
+}
+
 const CaptivePortal = () => {
-    const [packages, setPackages] = useState<any[]>([]);
+    const [packages, setPackages] = useState<Package[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedPackage, setSelectedPackage] = useState<any>(null);
+    const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
     const [phoneNumber, setPhoneNumber] = useState('');
     const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'waiting_pin' | 'success' | 'failed'>('idle');
     const [errorMessage, setErrorMessage] = useState<string>('');
-    const [tenantConfig, setTenantConfig] = useState<any>(null);
+    const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null);
 
     useEffect(() => {
         const initPortal = async () => {
@@ -86,10 +97,14 @@ const CaptivePortal = () => {
             setPaymentStatus('waiting_pin');
             pollPaymentStatus(response.data.paymentId);
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Payment Error', error);
             setPaymentStatus('failed');
-            setErrorMessage(error.response?.data?.error || 'Payment initiation failed. Please check network.');
+            if (axios.isAxiosError(error)) {
+                setErrorMessage(error.response?.data?.error || 'Payment initiation failed. Please check network.');
+            } else {
+                setErrorMessage('Payment initiation failed. Please check network.');
+            }
         }
     };
 
@@ -225,7 +240,7 @@ const CaptivePortal = () => {
                                 <div className="flex justify-between items-center relative z-10">
                                     <div className="flex items-center gap-4">
                                         <div className={`p-3 rounded-2xl transition-all duration-500 ${selectedPackage?.id === pkg.id ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/40 rotate-6' : 'bg-slate-800 text-slate-500'}`}>
-                                            {pkg.durationMinutes < 1440 ? <Clock size={18} /> : <Zap size={18} />}
+                                            {(pkg.durationMinutes || 0) < 1440 ? <Clock size={18} /> : <Zap size={18} />}
                                         </div>
                                         <div>
                                             <p className={`font-black tracking-tight mb-1 text-sm transition-colors ${selectedPackage?.id === pkg.id ? 'text-white' : 'text-slate-300'}`}>

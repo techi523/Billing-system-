@@ -2,15 +2,16 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, Filter, MoreHorizontal, Smartphone, Clock, Shield, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import type { Subscriber } from '../../types';
 
-interface Subscriber {
-    id: string;
-    name: string;
-    phone: string;
-    plan: string;
-    status: 'Active' | 'Warning' | 'Expired';
-    usage: number;
-    expires: string;
+interface ApiSubscriber {
+    id: number | string;
+    name?: string;
+    phoneNumber?: string;
+    package?: { name: string };
+    displayStatus?: string;
+    usagePercent?: number;
+    expiresIn?: string;
 }
 
 const SubscriberList = () => {
@@ -21,12 +22,12 @@ const SubscriberList = () => {
         const fetchSubscribers = async () => {
             try {
                 const response = await axios.get('/api/v1/admin/subscribers');
-                const mapped: Subscriber[] = response.data.map((s: any) => ({
+                const mapped: Subscriber[] = response.data.map((s: ApiSubscriber) => ({
                     id: String(s.id),
                     name: s.name || 'Anonymous',
                     phone: s.phoneNumber || 'N/A',
                     plan: s.package?.name || 'No Plan',
-                    status: s.displayStatus || 'Active',
+                    status: s.displayStatus as Subscriber['status'],
                     usage: Number(s.usagePercent || 0),
                     expires: s.expiresIn || 'Never'
                 }));

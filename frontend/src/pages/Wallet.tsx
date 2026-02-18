@@ -47,7 +47,7 @@ interface TransactionTrace {
         gateway?: string;
         type?: string;
         reference: string;
-        rawPayload?: any;
+        rawPayload?: Record<string, unknown>;
     };
     auditTrail: AuditLog[];
 }

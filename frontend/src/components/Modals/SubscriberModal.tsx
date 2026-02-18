@@ -3,15 +3,17 @@ import { Modal } from '../Common/Modal';
 import { Button } from '../Common/Button';
 import { Input } from '../Common/Input';
 
+import type { SubscriberFormData, Package, Router } from '../../types';
+
 interface SubscriberModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (e: React.FormEvent) => void;
     isEditing: boolean;
-    formData: any;
-    setFormData: (data: any) => void;
-    packages: any[];
-    routers: any[];
+    formData: SubscriberFormData;
+    setFormData: (data: SubscriberFormData) => void;
+    packages: Package[];
+    routers: Router[];
 }
 
 const SubscriberModal: React.FC<SubscriberModalProps> = ({

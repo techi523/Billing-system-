@@ -70,15 +70,17 @@ const VoucherCard = ({ voucher, index }: { voucher: Voucher; index: number }) =>
 
 import VoucherModal from '../Modals/VoucherModal';
 
+const MOCK_VOUCHERS: Voucher[] = Array.from({ length: 9 }).map((_, i) => ({
+    id: i,
+    code: 'ABC-' + Math.random().toString(36).substring(2, 6).toUpperCase(), // Still random but runs once on load
+    price: 50,
+    plan: '24 Hours',
+    batch: 'A-202'
+}));
+
 const VoucherManager = () => {
-    // Generate Mock Vouchers
-    const vouchers: Voucher[] = Array.from({ length: 9 }).map((_, i) => ({
-        id: i,
-        code: `${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-        price: 50,
-        plan: '24 Hours',
-        batch: 'A-202'
-    }));
+    // Use static mock data
+    const vouchers = MOCK_VOUCHERS;
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleBatchSubmit = (e: React.FormEvent) => {

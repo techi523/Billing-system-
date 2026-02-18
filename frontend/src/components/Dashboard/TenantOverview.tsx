@@ -2,8 +2,18 @@ import { useState, useEffect } from 'react';
 import { Users, Radio, CreditCard, Ticket, ArrowUpRight, ArrowDownRight, Activity, TrendingUp } from 'lucide-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import type { TenantStats, Payment } from '../../types';
 
-const StatCard = ({ label, value, trend, icon: Icon, color, index }: any) => (
+interface StatCardProps {
+    label: string;
+    value: string | number;
+    trend: number;
+    icon: React.ElementType;
+    color: string;
+    index: number;
+}
+
+const StatCard = ({ label, value, trend, icon: Icon, color, index }: StatCardProps) => (
     <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -26,8 +36,8 @@ const StatCard = ({ label, value, trend, icon: Icon, color, index }: any) => (
 );
 
 const TenantOverview = () => {
-    const [stats, setStats] = useState<any>(null);
-    const [payments, setPayments] = useState<any[]>([]);
+    const [stats, setStats] = useState<TenantStats | null>(null);
+    const [payments, setPayments] = useState<Payment[]>([]);
 
     useEffect(() => {
         const fetchDashboard = async () => {

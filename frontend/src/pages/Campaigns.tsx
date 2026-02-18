@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import {
     Mail,
@@ -69,21 +69,7 @@ const Campaigns = () => {
         filterCriteria: { packageId: 'ALL' }
     });
 
-    useEffect(() => {
-        fetchCampaigns();
-        fetchTemplates();
-    }, []);
-
-    const fetchTemplates = async () => {
-        try {
-            const res = await axios.get<CampaignTemplate[]>('/api/v1/campaigns/templates');
-            setTemplates(res.data);
-        } catch (err: unknown) {
-            console.error('[Campaigns] Failed to fetch templates', err);
-        }
-    };
-
-    const fetchCampaigns = async () => {
+    const fetchCampaigns = useCallback(async () => {
         try {
             setIsLoading(true);
             const res = await axios.get<Campaign[]>('/api/v1/campaigns');
@@ -96,7 +82,21 @@ const Campaigns = () => {
         } finally {
             setIsLoading(false);
         }
+    }, [logout]);
+
+    const fetchTemplates = async () => {
+        try {
+            const res = await axios.get<CampaignTemplate[]>('/api/v1/campaigns/templates');
+            setTemplates(res.data);
+        } catch (err: unknown) {
+            console.error('[Campaigns] Failed to fetch templates', err);
+        }
     };
+
+    useEffect(() => {
+        fetchCampaigns();
+        fetchTemplates();
+    }, [fetchCampaigns]);
 
     const handleCreateCampaign = async (e: React.FormEvent) => {
         e.preventDefault();

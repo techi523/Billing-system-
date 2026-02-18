@@ -5,8 +5,10 @@ import { Button } from '../Common/Button';
 import { Badge } from '../Common/Badge';
 import { Progress } from '../Common/Progress';
 
+import type { AdminStats } from '../../types';
+
 const AdminDashboard = () => {
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<AdminStats | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -48,6 +50,8 @@ const AdminDashboard = () => {
             </div>
         );
     }
+
+    if (!stats) return null;
 
     const revenueCards = [
         {
@@ -225,7 +229,7 @@ const AdminDashboard = () => {
                                 {quickActions.map((action, index) => {
                                     const Icon = action.icon;
                                     return (
-                                        <Button key={index} variant={action.variant as any} className="w-full justify-start">
+                                        <Button key={index} variant={action.variant as "default" | "secondary" | "ghost" | "link" | "destructive" | "outline"} className="w-full justify-start">
                                             <Icon size={18} className="mr-2" />
                                             {action.label}
                                         </Button>

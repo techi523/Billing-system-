@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 const ThemeToggle: React.FC = () => {
     const { theme, setTheme } = useTheme();
 
-    const themes: { id: 'light' | 'dark' | 'system'; icon: any; label: string }[] = [
+    const themes: { id: 'light' | 'dark' | 'system'; icon: React.ElementType; label: string }[] = [
         { id: 'light', icon: Sun, label: 'Light' },
         { id: 'dark', icon: Moon, label: 'Dark' },
         { id: 'system', icon: Laptop, label: 'System' }
