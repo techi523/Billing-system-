@@ -1,21 +1,35 @@
 /** Raw API response shape from /api/v1/admin/subscribers */
 export interface ApiSubscriberRaw {
-    id: string | number;
-    name?: string;
-    phoneNumber?: string;
-    phone?: string;
-    package?: { name: string };
-    displayStatus?: string;
-    usagePercent?: number;
-    expiresIn?: string;
-    lastPaymentDate?: string;
-    activeSession?: { ipAddress?: string } | null;
-    pppoeUsername?: string;
-    pppoePassword?: string;
-    packageId?: string;
-    routerId?: string;
-    address?: string;
-    notes?: string;
+    id: string;
+    name?: string | null;
+    phoneNumber: string;
+    macAddress?: string | null;
+    pppoeUsername?: string | null;
+    pppoePassword?: string | null;
+    address?: string | null;
+    status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+    tenantId: string;
+    routerId?: string | null;
+    packageId?: number | string | null;
+    expiryDate?: string | null;
+    lastPaymentDate?: string | null;
+    email?: string | null;
+    notes?: string | null;
+    phone?: string; // Add back for legacy component compatibility
+    displayStatus?: string; // Add back for display compatibility
+    usagePercent?: number; // Add back for display compatibility
+    expiresIn?: string; // Add back for display compatibility
+    package?: {
+        id: number;
+        name: string;
+        price: number;
+    } | null;
+    activeSession?: {
+        ipAddress?: string;
+        bytesIn?: number;
+        bytesOut?: number;
+        startTime?: string;
+    } | null;
 }
 
 export interface Subscriber {
@@ -42,21 +56,23 @@ export interface SubscriberFormData {
     phoneNumber: string;
     pppoeUsername?: string;
     pppoePassword?: string;
-    packageId: string;
+    packageId: string | number;
     routerId: string;
     address?: string;
     notes?: string;
 }
 
 export interface Package {
-    id: string;
+    id: string | number;
     name: string;
     price: number;
     speed?: string;
-    type?: string;
+    type?: 'HOTSPOT' | 'ISP';
     duration?: number;
-    durationMinutes?: number;
-    speedLimit?: string;
+    durationMinutes?: number | null;
+    speedLimit?: string | null;
+    isEnabled: boolean;
+    tenantId?: string;
 }
 
 export interface AdminStats {
@@ -77,22 +93,31 @@ export interface TenantStats {
 }
 
 export interface Payment {
-    id?: string;
-    phoneNumber: string;
+    id: string;
     mpesaReceiptNumber?: string;
+    checkoutRequestId?: string;
     amount: number;
+    phoneNumber: string;
+    status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REVERSED';
+    packageId: number;
     package?: { name: string };
-    date?: string;
-    status?: string;
+    completedAt?: string;
+    date?: string; // For legacy UI compatibility
+    paymentMethod?: string;
+    paymentChannel?: string;
 }
 
 export interface Router {
-    id: string | number;
+    id: string;
     name: string;
-    ip: string;
-    host?: string;
-    location?: string;
-    status?: 'online' | 'offline';
+    host: string;
+    ip?: string; // Add back as alias/compatibility
+    port?: number;
+    location?: string | null;
+    isOnline: boolean;
+    lastSeen?: string | null;
+    status?: 'online' | 'offline'; // For legacy UI compatibility
     cpuLoad?: number;
     activeUsers?: number;
+    validationStatus?: 'PENDING' | 'VALIDATED' | 'FAILED';
 }

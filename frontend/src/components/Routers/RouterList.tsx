@@ -55,10 +55,10 @@ const RouterCard = ({ router, index }: { router: Router; index: number }) => (
 const RouterList = () => {
     // Mock Data for Demo
     const [routers] = useState<Router[]>([
-        { id: '1', name: 'Main Hub - Nairobi', ip: '192.168.88.1', status: 'online', cpuLoad: 12, activeUsers: 45 },
-        { id: '2', name: 'Backup Node - Westlands', ip: '10.0.0.1', status: 'online', cpuLoad: 8, activeUsers: 23 },
-        { id: '3', name: 'Kiosk Relay 4', ip: '10.0.50.1', status: 'offline', cpuLoad: 0, activeUsers: 0 },
-        { id: '4', name: 'Fiber Gateway', ip: '172.16.0.1', status: 'online', cpuLoad: 45, activeUsers: 128 },
+        { id: '1', name: 'Main Hub - Nairobi', host: '192.168.88.1', ip: '192.168.88.1', isOnline: true, status: 'online', cpuLoad: 12, activeUsers: 45 },
+        { id: '2', name: 'Backup Node - Westlands', host: '10.0.0.1', ip: '10.0.0.1', isOnline: true, status: 'online', cpuLoad: 8, activeUsers: 23 },
+        { id: '3', name: 'Kiosk Relay 4', host: '10.0.50.1', ip: '10.0.50.1', isOnline: false, status: 'offline', cpuLoad: 0, activeUsers: 0 },
+        { id: '4', name: 'Fiber Gateway', host: '172.16.0.1', ip: '172.16.0.1', isOnline: true, status: 'online', cpuLoad: 45, activeUsers: 128 },
     ]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 

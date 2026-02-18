@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, type ChangeEvent } from 'react';
+import React, { useState, useMemo, useEffect, type ChangeEvent } from 'react';
 import axios from 'axios';
 import {
     Smartphone,
@@ -121,7 +121,13 @@ const SubscriberTable = () => {
     };
 
     const openEditModal = (subscriber: Subscriber): void => {
-        const s: ApiSubscriberRaw = subscriber.raw ?? { id: subscriber.id, name: subscriber.name, phone: subscriber.phone };
+        const s: ApiSubscriberRaw = subscriber.raw ?? {
+            id: subscriber.id,
+            name: subscriber.name,
+            phoneNumber: subscriber.phone,
+            status: 'ACTIVE',
+            tenantId: ''
+        };
 
         setFormData({
             name: s.name ?? '',
@@ -215,7 +221,7 @@ const SubscriberTable = () => {
         }
     };
 
-    const getStatusColor = (status: string): 'success' | 'warning' | 'destructive' | 'secondary' => {
+    const getStatusColor = (status: string): "success" | "warning" | "destructive" | "default" | "secondary" | "outline" | undefined => {
         switch (status) {
             case 'Active':
                 return 'success';
