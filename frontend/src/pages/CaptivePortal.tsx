@@ -76,7 +76,12 @@ const CaptivePortal = () => {
             // Production: Fallback to detection if params missing (for captive portal environment)
             const mac = urlParams.get('mac') || urlParams.get('client_mac') || '00:00:00:00:00:00';
             const ip = urlParams.get('ip') || urlParams.get('client_ip') || '127.0.0.1';
-            const routerId = urlParams.get('routerId') || 'unknown';
+
+            // Explicitly ignore 'unknown' if it is passed in the URL
+            let routerId = urlParams.get('routerId') || undefined;
+            if (routerId === 'unknown') {
+                routerId = undefined;
+            }
 
             if (!tenantId) {
                 throw new Error('Invalid Portal Configuration: Tenant ID missing');
