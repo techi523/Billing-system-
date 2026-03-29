@@ -29,6 +29,8 @@ export class MikroTikAutoConfigService {
         await router.update({
             apiUser,
             apiPassword,
+            username: apiUser, // Use apiUser for future connections
+            password: apiPassword, // Use apiPassword for future connections
             autoConfigStatus: 'PENDING'
         });
 

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Package, Subscriber, Tenant, AuditLog, Payment, Session, Router as RouterModel, AdminUser } from '../models';
 import { authMiddleware } from '../middleware/auth';
+import { MikroTikAutoConfigService } from '../services/mikrotik-auto-config.service';
 import { TenantBootstrapService } from '../services/tenant-bootstrap.service';
 import logger from '../utils/logger';
 
@@ -308,7 +309,7 @@ router.post('/routers', async (req: any, res) => {
     try {
         const { name, host, port, username, password, location } = req.body;
         const routerObj = await RouterModel.create({
-            name, host, port, username, password, location,
+            name, host, port: port || 8728, username, password, location,
             tenantId: req.user.tenantId,
             validationStatus: 'PENDING'
         });
@@ -319,6 +320,92 @@ router.post('/routers', async (req: any, res) => {
         res.status(201).json(routerObj);
     } catch (error) {
         res.status(500).json({ error: 'Failed to add router' });
+    }
+});
+
+// Generate router setup command (For Wizard)
+router.post('/routers/generate-setup', async (req: any, res) => {
+    try {
+        const { name, host, port, version } = req.body;
+        let tenantId = req.user.tenantId;
+
+        // Allow Super Admins to specify a tenantId in the body
+        if (!tenantId && req.user.role === 'SUPER_ADMIN') {
+            tenantId = req.body.tenantId;
+        }
+
+        if (!tenantId) {
+            logger.error('Router generation failed: No tenant context found', { user: req.user });
+            return res.status(403).json({ 
+                error: 'Tenant context required',
+                message: 'Non-tenant users must provide a tenantId in the request body.'
+            });
+        }
+
+        if (!name || !host) {
+            return res.status(400).json({ error: 'Router name and host are required' });
+        }
+
+        // 1. Find or create router record
+        let routerObj = await RouterModel.findOne({
+            where: { host, tenantId }
+        });
+
+        if (!routerObj) {
+            // Create a new router record with placeholders for initial creds
+            // These will be auto-updated during script generation to the new apiUser/apiPassword
+            routerObj = await RouterModel.create({
+                name,
+                host,
+                port: port || 8728,
+                username: 'admin', // Default initial username
+                password: '', // Default initial password (blank)
+                tenantId,
+                validationStatus: 'PENDING'
+            });
+            
+            logger.info('New router created for wizard', { routerId: routerObj.id, host });
+        } else {
+            // Update name if it changed
+            if (name && routerObj.name !== name) {
+                routerObj.name = name;
+                await routerObj.save();
+            }
+        }
+
+        // 2. Load tenant info
+        const tenant = await Tenant.findByPk(tenantId);
+        if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+
+        // 3. Generate script
+        const script = await MikroTikAutoConfigService.generateAutoConfigScript(
+            routerObj,
+            tenant,
+            version || 'v7'
+        );
+
+        logger.info('Setup script generated for wizard', { 
+            routerId: routerObj.id, 
+            tenantId, 
+            version: version || 'v7' 
+        });
+
+        res.json({
+            success: true,
+            script,
+            router: {
+                id: routerObj.id,
+                name: routerObj.name,
+                host: routerObj.host
+            }
+        });
+
+    } catch (error: any) {
+        logger.error('Failed to generate router setup', { error: error.message });
+        res.status(500).json({ 
+            error: 'Failed to generate setup command',
+            message: error.message 
+        });
     }
 });
 

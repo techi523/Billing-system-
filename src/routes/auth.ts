@@ -86,8 +86,8 @@ router.post('/register', [
 });
 
 router.post('/login', [
-    validators.email,
-    validators.password,
+    validators.loginEmail,
+    validators.loginPassword,
     handleValidationErrors
 ], async (req: Request, res: Response) => {
     const { email, password } = req.body;

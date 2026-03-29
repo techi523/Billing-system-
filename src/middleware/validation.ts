@@ -25,6 +25,12 @@ export const validators = {
         .matches(/^(254|0)[17]\d{8}$/)
         .withMessage('Invalid phone number format'),
 
+    // Login Email validation (no normalization)
+    loginEmail: body('email')
+        .trim()
+        .isEmail()
+        .withMessage('Invalid email address'),
+
     // Email validation
     email: body('email')
         .trim()
@@ -67,6 +73,11 @@ export const validators = {
         .withMessage('Password must be at least 8 characters')
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
         .withMessage('Password must contain uppercase, lowercase, and number'),
+
+    // Login Password validation (presence check)
+    loginPassword: body('password')
+        .notEmpty()
+        .withMessage('Password is required'),
 
     // Tenant subdomain
     subdomain: body('subdomain')
