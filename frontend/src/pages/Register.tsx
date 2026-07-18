@@ -17,12 +17,14 @@ const Register = () => {
     const [subdomain, setSubdomain] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const [success, setSuccess] = useState(false);
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setFieldErrors({});
 
         try {
             await axios.post('/api/v1/auth/register', {
@@ -34,11 +36,24 @@ const Register = () => {
             setSuccess(true);
             setTimeout(() => navigate('/login'), 3000);
         } catch (err: unknown) {
-            let errorMsg = 'Registration failed. Please contact support.';
-            if (axios.isAxiosError(err) && err.response?.data?.error) {
-                errorMsg = err.response.data.error;
+            let errorMsg = 'Registration failed. Please try again.';
+            const newFieldErrors: Record<string, string> = {};
+            if (axios.isAxiosError(err) && err.response?.data) {
+                const data = err.response.data as any;
+                if (data.error) errorMsg = data.error;
+                if (data.details && Array.isArray(data.details)) {
+                    data.details.forEach((detail: any) => {
+                        if (detail.path && detail.msg) {
+                            newFieldErrors[detail.path] = detail.msg;
+                        }
+                    });
+                    if (Object.keys(newFieldErrors).length > 0) {
+                        errorMsg = Object.values(newFieldErrors).join('. ');
+                    }
+                }
             }
             setError(errorMsg);
+            setFieldErrors(newFieldErrors);
         } finally {
             setLoading(false);
         }
@@ -108,8 +123,9 @@ const Register = () => {
                                     placeholder="Business Name"
                                     value={tenantName}
                                     onChange={(e) => setTenantName(e.target.value)}
-                                    className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
+                                    className={`w-full bg-[var(--bg-surface-elevated)] border rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all ${fieldErrors.tenantName ? 'border-rose-500' : 'border-[var(--border-subtle)]'}`}
                                 />
+                                {fieldErrors.tenantName && <p className="text-rose-400 text-[10px] font-bold px-2">{fieldErrors.tenantName}</p>}
                             </div>
                             <div className="relative group">
                                 <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-sky-500 transition-colors">
@@ -121,9 +137,10 @@ const Register = () => {
                                     placeholder="Preferred Subdomain (e.g. fastwifi)"
                                     value={subdomain}
                                     onChange={(e) => setSubdomain(e.target.value)}
-                                    className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
+                                    className={`w-full bg-[var(--bg-surface-elevated)] border rounded-2xl py-4 pl-12 pr-20 text-[var(--text-primary)] text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all ${fieldErrors.subdomain ? 'border-rose-500' : 'border-[var(--border-subtle)]'}`}
                                 />
                                 <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] font-black text-[10px]">.surfbill.com</span>
+                                {fieldErrors.subdomain && <p className="text-rose-400 text-[10px] font-bold px-2">{fieldErrors.subdomain}</p>}
                             </div>
                         </div>
 
@@ -141,8 +158,9 @@ const Register = () => {
                                 placeholder="Admin Email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
+                                className={`w-full bg-[var(--bg-surface-elevated)] border rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all ${fieldErrors.email ? 'border-rose-500' : 'border-[var(--border-subtle)]'}`}
                             />
+                            {fieldErrors.email && <p className="text-rose-400 text-[10px] font-bold px-2">{fieldErrors.email}</p>}
                         </div>
 
                         <div className="relative group">
@@ -155,13 +173,41 @@ const Register = () => {
                                 placeholder="Secure Password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
+                                className={`w-full bg-[var(--bg-surface-elevated)] border rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all ${fieldErrors.password ? 'border-rose-500' : 'border-[var(--border-subtle)]'}`}
                             />
+                            {fieldErrors.password && <p className="text-rose-400 text-[10px] font-bold px-2">{fieldErrors.password}</p>}
                         </div>
 
+                        {password.length > 0 && (
+                            <div className="md:col-span-2 grid grid-cols-2 gap-2 px-2">
+                                {[
+                                    { label: '8+ characters', met: password.length >= 8 },
+                                    { label: 'Uppercase letter', met: /[A-Z]/.test(password) },
+                                    { label: 'Lowercase letter', met: /[a-z]/.test(password) },
+                                    { label: 'Number', met: /\d/.test(password) },
+                                ].map((req) => (
+                                    <div key={req.label} className={`flex items-center gap-1.5 text-[10px] font-bold ${req.met ? 'text-emerald-500' : 'text-[var(--text-muted)]'}`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${req.met ? 'bg-emerald-500' : 'bg-[var(--text-muted)] opacity-40'}`} />
+                                        {req.label}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
                         {error && (
-                            <div className="md:col-span-2 text-rose-400 text-xs font-bold text-center bg-rose-500/10 py-3 rounded-xl border border-rose-500/20">
-                                {error}
+                            <div className="md:col-span-2 text-rose-400 text-xs font-bold bg-rose-500/10 py-3 rounded-xl border border-rose-500/20 px-4">
+                                {Object.keys(fieldErrors).length > 0 ? (
+                                    <div className="space-y-1">
+                                        {Object.entries(fieldErrors).map(([field, msg]) => (
+                                            <div key={field} className="flex items-center gap-2">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                                                <span className="capitalize font-black">{field}:</span> {msg}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-center">{error}</p>
+                                )}
                             </div>
                         )}
 

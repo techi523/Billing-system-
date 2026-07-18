@@ -40,6 +40,13 @@ const Login = () => {
             let errorMsg = 'Invalid credentials. Please try again.';
             if (axios.isAxiosError(err) && err.response?.data?.error) {
                 errorMsg = err.response.data.error;
+                if (err.response.data.details && Array.isArray(err.response.data.details)) {
+                    errorMsg = err.response.data.details.map((d: any) => d.msg).join('. ');
+                }
+            } else if (axios.isAxiosError(err) && err.code === 'ERR_NETWORK') {
+                errorMsg = 'Network error. Please check your connection and try again.';
+            } else if (axios.isAxiosError(err) && err.response?.status === 429) {
+                errorMsg = 'Too many attempts. Please wait a moment and try again.';
             }
             setError(errorMsg);
         } finally {
