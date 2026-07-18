@@ -16,7 +16,7 @@ const sequelize = useMySQL
   )
   : new Sequelize({
     dialect: 'sqlite',
-    storage: './hotspot_db.sqlite',
+    storage: config.db.name === 'billing_system' ? './data/billing.sqlite' : './hotspot_db.sqlite',
     logging: false,
   });
 
