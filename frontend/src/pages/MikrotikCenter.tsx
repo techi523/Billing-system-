@@ -147,8 +147,8 @@ const MikrotikCenter: React.FC = () => {
                                     <label className="block text-xs font-black uppercase text-slate-400 mb-2">Router Name</label>
                                     <input
                                         type="text"
-                                        placeholder="e.g. Downtown Hotspot"
-                                        className="w-full bg-slate-50 border border-slate-200 py-4 px-6 rounded-2xl font-bold"
+                                        placeholder='e.g. "Main Office Router" or "Cafe WiFi"'
+                                        className="w-full bg-slate-50 border border-slate-200 py-4 px-6 rounded-2xl font-bold placeholder:text-slate-400"
                                         value={routerDetails.name}
                                         onChange={(e) => setRouterDetails({ ...routerDetails, name: e.target.value })}
                                     />
@@ -157,8 +157,8 @@ const MikrotikCenter: React.FC = () => {
                                     <label className="block text-xs font-black uppercase text-slate-400 mb-2">Host / IP / Domain</label>
                                     <input
                                         type="text"
-                                        placeholder="router.isp.com or 1.2.3.4"
-                                        className="w-full bg-slate-50 border border-slate-200 py-4 px-6 rounded-2xl font-bold"
+                                        placeholder='e.g. "192.168.1.1" (local) or "router.myisp.com" (remote)'
+                                        className="w-full bg-slate-50 border border-slate-200 py-4 px-6 rounded-2xl font-bold placeholder:text-slate-400"
                                         value={routerDetails.host}
                                         onChange={(e) => setRouterDetails({ ...routerDetails, host: e.target.value })}
                                     />

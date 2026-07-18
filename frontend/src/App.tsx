@@ -12,6 +12,7 @@ import Register from './pages/Register';
 import SuperAdminLogin from './pages/SuperAdminLogin';
 import PasswordResetRequest from './pages/PasswordResetRequest';
 import CaptivePortal from './pages/CaptivePortal';
+import SubscriberRegister from './pages/SubscriberRegister';
 
 // Protected Pages - Admin
 import AdminPortal from './pages/AdminPortal';
@@ -43,6 +44,7 @@ function App() {
                             <Route path="/register" element={<Register />} />
                             <Route path="/password-reset" element={<PasswordResetRequest />} />
                             <Route path="/captive-portal" element={<CaptivePortal />} />
+                            <Route path="/register-subscriber" element={<SubscriberRegister />} />
 
                             {/* Super Admin Login (Explicit) */}
                             <Route path="/superadmin/login" element={<SuperAdminLogin />} />
