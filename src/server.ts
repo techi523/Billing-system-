@@ -181,9 +181,6 @@ async function startServer() {
         await TemplateSeeder.seedDefaults();
 
         // Start Background Monitoring Services
-        // Start Background Monitoring Services
-        // Start Background Monitoring Services
-        // Start Background Monitoring Services
         console.log('[System Init] Environment Configuration: [OK]');
 
         TrafficMonitorService.start(30 * 1000); // Poll routers every 30 seconds
