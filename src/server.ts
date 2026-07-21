@@ -30,6 +30,9 @@ import { ErrorHandler } from './middleware/error-handler';
 
 const app = express();
 
+// Trust proxy (required behind Cloudflare tunnel / reverse proxy)
+app.set('trust proxy', 1);
+
 // SECURITY HARDENING
 app.use(helmet({
     contentSecurityPolicy: {

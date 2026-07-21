@@ -89,7 +89,7 @@ const LandingPage = () => {
                             onClick={() => navigate('/login')}
                             className="text-sm font-bold text-slate-700 hover:text-indigo-600 transition-colors px-4 py-2"
                         >
-                            Sign In
+                            Tenant Login
                         </button>
                         <button
                             onClick={() => navigate('/register')}

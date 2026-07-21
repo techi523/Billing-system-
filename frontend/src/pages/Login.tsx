@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -18,8 +18,11 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleLogin = useCallback(async () => {
+        if (!email || !password) {
+            setError('Please enter both email and password.');
+            return;
+        }
         setLoading(true);
         setError('');
 
@@ -52,7 +55,7 @@ const Login = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [email, password, login, navigate]);
 
     return (
         <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] flex items-center justify-center p-6 relative overflow-hidden font-sans transition-colors duration-300">
@@ -98,10 +101,10 @@ const Login = () => {
                             transition={{ delay: 0.4 }}
                             className="text-[var(--text-secondary)] text-sm font-medium mt-2"
                         >
-                            Sign in to your SurfBill Command Center
+                            Sign in to your SurfBill Dashboard
                         </motion.p>
 
-                        <form onSubmit={handleLogin} className="space-y-6">
+                        <div className="space-y-6">
                             <div className="space-y-4">
                                 <div className="relative group">
                                     <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors">
@@ -113,6 +116,7 @@ const Login = () => {
                                         placeholder="Account Email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                                         className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold placeholder:text-[var(--text-muted)] focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
                                     />
                                 </div>
@@ -126,6 +130,7 @@ const Login = () => {
                                         placeholder="Password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                                         className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold placeholder:text-[var(--text-muted)] focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
                                     />
                                 </div>
@@ -142,28 +147,23 @@ const Login = () => {
                             </div>
 
                             {error && (
-                                <motion.p
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    className="text-rose-400 text-xs font-bold text-center bg-rose-500/10 py-2 rounded-lg"
-                                >
+                                <div className="text-rose-400 text-xs font-bold text-center bg-rose-500/10 py-2 rounded-lg">
                                     {error}
-                                </motion.p>
+                                </div>
                             )}
 
-                            <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                type="submit"
+                            <button
+                                type="button"
+                                onClick={handleLogin}
                                 disabled={loading}
                                 className="w-full bg-sky-500 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-sky-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Authenticating...' : 'Sign In'}
                                 {!loading && <ArrowRight size={18} strokeWidth={3} />}
-                            </motion.button>
-                        </form>
+                            </button>
+                        </div>
 
-                        <div className="mt-8 text-center space-y-4">
+                            <div className="mt-8 text-center space-y-4">
                             <p className="text-[var(--text-secondary)] text-xs font-bold">
                                 Don't have an account?{' '}
                                 <button
