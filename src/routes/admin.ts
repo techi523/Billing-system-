@@ -444,9 +444,13 @@ router.post('/routers/:id/test', async (req: any, res) => {
             issues: compTest.issues
         });
 
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Router verification failed', { error });
-        res.status(500).json({ error: 'Verification failed' });
+        res.status(500).json({ 
+            success: false,
+            error: 'Verification failed',
+            message: error.message || 'Could not connect to the router. Ensure the API service is enabled on port 8728 and the firewall allows connections from this server.'
+        });
     }
 });
 

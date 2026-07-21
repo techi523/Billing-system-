@@ -32,6 +32,7 @@ const MikrotikCenter: React.FC = () => {
         version: 'v7'
     });
     const [generatedScript, setGeneratedScript] = useState('');
+    const [routerId, setRouterId] = useState('');
     const [verificationStatus, setVerificationStatus] = useState<'IDLE' | 'PENDING' | 'SUCCESS' | 'FAILED'>('IDLE');
     const [verificationError, setVerificationError] = useState('');
 
@@ -43,10 +44,11 @@ const MikrotikCenter: React.FC = () => {
 
         setLoading(true);
         try {
-            const response = await axios.post<{ script: string }>('/api/v1/admin/routers/generate-setup', {
+            const response = await axios.post<{ script: string; router: { id: string } }>('/api/v1/admin/routers/generate-setup', {
                 ...routerDetails
             });
             setGeneratedScript(response.data.script);
+            setRouterId(response.data.router?.id || '');
             setStep(3);
         } catch (error: unknown) {
             console.error('[Mikrotik] Generation failed', error);
@@ -64,9 +66,12 @@ const MikrotikCenter: React.FC = () => {
         setVerificationStatus('PENDING');
         setVerificationError('');
         try {
-            const response = await axios.post<{ success: boolean; message?: string }>('/api/v1/admin/routers/verify', {
-                host: routerDetails.host
-            });
+            if (!routerId) {
+                setVerificationStatus('FAILED');
+                setVerificationError('Router not found. Please go back and re-generate the script.');
+                return;
+            }
+            const response = await axios.post<{ success: boolean; message?: string; details?: any }>(`/api/v1/admin/routers/${routerId}/test`, {});
             if (response.data.success) {
                 setVerificationStatus('SUCCESS');
             } else {
@@ -75,9 +80,11 @@ const MikrotikCenter: React.FC = () => {
             }
         } catch (error: unknown) {
             setVerificationStatus('FAILED');
-            let errorMsg = 'Connection timeout';
+            let errorMsg = 'Connection failed. Please ensure the script was pasted and executed in Winbox terminal.';
             if (axios.isAxiosError(error) && error.response?.data?.message) {
                 errorMsg = error.response.data.message;
+            } else if (axios.isAxiosError(error) && error.response?.data?.error) {
+                errorMsg = error.response.data.error;
             }
             setVerificationError(errorMsg);
         }
