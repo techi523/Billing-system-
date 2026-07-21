@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { Router as RouterModel, Tenant, RouterConnectionLog } from '../models';
 import { MikroTikService } from './mikrotik.service';
 import logger from '../utils/logger';
+import http from 'http';
 
 export class MikroTikAutoConfigService {
     /**
@@ -14,6 +15,35 @@ export class MikroTikAutoConfigService {
     }
 
     /**
+     * Get the billing system's public IP for firewall rules.
+     * RouterOS src-address requires an IP, not a domain name.
+     */
+    private static async getBillingServerIP(): Promise<string> {
+        const appUrl = process.env.APP_URL || 'http://localhost:3010';
+        const hostname = new URL(appUrl).hostname;
+
+        if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+            return hostname;
+        }
+
+        try {
+            const dns = await import('dns');
+            const { promisify } = await import('util');
+            const resolve4 = promisify(dns.resolve4);
+            const addresses = await resolve4(hostname);
+            if (addresses.length > 0) return addresses[0];
+        } catch { }
+
+        return new Promise((resolve) => {
+            http.get('http://ifconfig.me', (res) => {
+                let data = '';
+                res.on('data', (chunk) => data += chunk);
+                res.on('end', () => resolve(data.trim()));
+            }).on('error', () => resolve('0.0.0.0'));
+        });
+    }
+
+    /**
      * Generate auto-configuration script for a router
      */
     static async generateAutoConfigScript(
@@ -22,25 +52,21 @@ export class MikroTikAutoConfigService {
         version: 'v6' | 'v7' = 'v7'
     ): Promise<string> {
         const { apiUser, apiPassword } = this.generateApiCredentials(tenant.id, router.id);
-        const billingSystemIP = process.env.APP_URL || 'http://localhost:3010';
-        const billingHost = new URL(billingSystemIP).hostname;
+        const billingHost = (await this.getBillingServerIP()).trim();
 
-        // Store credentials in router model
         await router.update({
             apiUser,
             apiPassword,
-            username: apiUser, // Use apiUser for future connections
-            password: apiPassword, // Use apiPassword for future connections
+            username: apiUser,
+            password: apiPassword,
             autoConfigStatus: 'PENDING'
         });
 
         const script = version === 'v7' ? this.generateV7Script(router, tenant, apiUser, apiPassword, billingHost)
             : this.generateV6Script(router, tenant, apiUser, apiPassword, billingHost);
 
-        // Store script in router
         await router.update({ autoConfigScript: script });
 
-        // Log the generation
         await RouterConnectionLog.create({
             routerId: router.id,
             tenantId: tenant.id,
@@ -54,7 +80,8 @@ export class MikroTikAutoConfigService {
     }
 
     /**
-     * Generate RouterOS v7 configuration script
+     * Generate RouterOS v7 configuration script.
+     * All commands are single-line for reliable paste into Winbox terminal.
      */
     private static generateV7Script(
         router: RouterModel,
@@ -66,79 +93,65 @@ export class MikroTikAutoConfigService {
         const tenantName = tenant.name.replace(/[^a-zA-Z0-9]/g, '_');
         const tenantSubdomain = tenant.subdomain || tenantName.toLowerCase();
 
-        return `# ========================================
-# SurfBill Auto-Configuration Script
-# RouterOS v7
-# ========================================
+        return `# ============================================================
+# SurfBill Auto-Configuration Script (RouterOS v7)
+# ============================================================
 # Tenant: ${tenant.name}
 # Router: ${router.name}
 # Generated: ${new Date().toISOString()}
-# ========================================
+# Server IP: ${billingHost}
+# ============================================================
+# INSTRUCTIONS:
+# 1. Open MikroTik Winbox
+# 2. Go to New Terminal
+# 3. Copy ALL commands below and paste, then press Enter
+# ============================================================
 
-# STEP 1: Create API User (Least Privilege)
-/user group add name=surfbill_api policy=api,read,write,test,!local,!telnet,!ssh,!ftp,!reboot,!policy,!password,!web,!winbox,!sensitive
-/user add name=${apiUser} password=${apiPassword} group=surfbill_api comment="SurfBill Billing System API Access"
+# STEP 1: Create API User Group (Least Privilege)
+/user group add name=surfbill_api policy=api,read,write,test comment="SurfBill API group"
 
-# STEP 2: Firewall Rules (Allow Billing System API Access)
-/ip firewall filter add chain=input protocol=tcp dst-port=8728 src-address=${billingHost} action=accept comment="SurfBill API Access" place-before=0
+# STEP 2: Create API User
+/user add name="${apiUser}" password="${apiPassword}" group=surfbill_api comment="SurfBill Billing System API"
 
-# STEP 3: Hotspot Profile Configuration
-/ip hotspot profile
-add name=SurfBill_${tenantSubdomain} \\
-    login-by=http-chap,http-pap,mac \\
-    use-radius=no \\
-    dns-name=${tenantSubdomain}.surfbill.link \\
-    hotspot-address=10.5.50.1 \\
-    smtp-server=0.0.0.0 \\
-    http-cookie-lifetime=1d \\
-    trial-uptime-limit=0s \\
-    trial-user-profile=default
+# STEP 3: Firewall - Allow API Access from Billing Server
+/ip firewall filter add chain=input protocol=tcp dst-port=8728 src-address=${billingHost} action=accept comment="SurfBill API Access"
 
-# STEP 4: Walled Garden (Payment Gateways & APIs)
-/ip hotspot walled-garden
-add dst-host=*.intasend.com comment="IntaSend Payment Gateway"
-add dst-host=*.safaricom.co.ke comment="M-Pesa Gateway"
-add dst-host=${billingHost} comment="SurfBill Billing System"
-add dst-host=*.googleapis.com comment="Google APIs"
-add dst-host=*.cloudflare.com comment="Cloudflare CDN"
+# STEP 4: Create Hotspot Profile
+/ip hotspot profile add name="SurfBill_${tenantSubdomain}" login-by=http-chap,http-pap,mac use-radius=no dns-name="${tenantSubdomain}.surfbill.link" hotspot-address=10.5.50.1
 
-# STEP 5: User Profile (Default Settings)
-/ip hotspot user profile
-set [ find default=yes ] shared-users=1 rate-limit=512k/512k
+# STEP 5: Walled Garden - Payment Gateways
+/ip hotspot walled-garden add dst-host="intasend.com" comment="IntaSend Payments"
+/ip hotspot walled-garden add dst-host="api.intasend.com" comment="IntaSend API"
+/ip hotspot walled-garden add dst-host="iframe.intasend.com" comment="IntaSend Checkout"
 
-# STEP 6: Scheduler - Sync with Billing System (Every 5 minutes)
-/system script
-add name=SurfBill_Sync_Script source={
-    :log info "SurfBill: Running sync with billing system"
-    # This script will be enhanced by the billing system via API
-    # to perform automated user cleanup and session management
-}
+# STEP 6: Walled Garden - M-Pesa
+/ip hotspot walled-garden add dst-host="safaricom.co.ke" comment="Safaricom M-Pesa"
+/ip hotspot walled-garden add dst-host="mpesa.co.ke" comment="M-Pesa Portal"
 
-/system scheduler
-add name=SurfBill_Sync interval=5m on-event=SurfBill_Sync_Script comment="SurfBill Auto-Sync"
+# STEP 7: Walled Garden - Billing System
+/ip hotspot walled-garden add dst-host="surfbill.net" comment="SurfBill Platform"
+/ip hotspot walled-garden add dst-host="surfbill.link" comment="SurfBill Hotspot Portal"
 
-# STEP 7: Scheduler - Cleanup Expired Users (Daily at 2 AM)
-/system script
-add name=SurfBill_Cleanup_Script source={
-    :log info "SurfBill: Cleaning up expired users"
-    # Cleanup logic will be managed by billing system
-}
+# STEP 8: Walled Garden - DNS & CDN
+/ip hotspot walled-garden add dst-host="googleapis.com" comment="Google APIs"
+/ip hotspot walled-garden add dst-host="cloudflare.com" comment="Cloudflare"
 
-/system scheduler
-add name=SurfBill_Cleanup interval=1d start-time=02:00:00 on-event=SurfBill_Cleanup_Script comment="SurfBill Daily Cleanup"
+# STEP 9: Create SurfBill Default User Profile
+/ip hotspot user profile add name="SurfBill_Default" shared-users=1 rate-limit=512k/512k status-autorefresh=1m
 
-# STEP 8: Set Router Identity
+# STEP 10: Scheduler Scripts
+/system script add name=SurfBill_Sync source=":log info \"SurfBill sync\""
+/system scheduler add name=SurfBill_Sync interval=5m on-event=SurfBill_Sync comment="SurfBill Auto-Sync"
+/system script add name=SurfBill_Cleanup source=":log info \"SurfBill cleanup\""
+/system scheduler add name=SurfBill_Cleanup interval=1d start-time=02:00:00 on-event=SurfBill_Cleanup comment="SurfBill Daily Cleanup"
+
+# STEP 11: Set Router Identity
 /system identity set name="SurfBill_${tenantName}_${router.name}"
 
-# ========================================
+# ============================================================
 # CONFIGURATION COMPLETE
-# ========================================
-# Next Steps:
-# 1. Verify connection in SurfBill dashboard
-# 2. Create your first package
-# 3. Start accepting payments!
-# ========================================
-`;
+# Next: Return to SurfBill dashboard and click "Verify Connection"
+# ============================================================`;
     }
 
     /**
@@ -154,42 +167,55 @@ add name=SurfBill_Cleanup interval=1d start-time=02:00:00 on-event=SurfBill_Clea
         const tenantName = tenant.name.replace(/[^a-zA-Z0-9]/g, '_');
         const tenantSubdomain = tenant.subdomain || tenantName.toLowerCase();
 
-        return `# ========================================
-# SurfBill Auto-Configuration Script
-# RouterOS v6 (Legacy)
-# ========================================
+        return `# ============================================================
+# SurfBill Auto-Configuration Script (RouterOS v6)
+# ============================================================
 # Tenant: ${tenant.name}
 # Router: ${router.name}
 # Generated: ${new Date().toISOString()}
-# ========================================
+# Server IP: ${billingHost}
+# ============================================================
+# INSTRUCTIONS:
+# 1. Open MikroTik Winbox
+# 2. Go to New Terminal
+# 3. Copy ALL commands below and paste, then press Enter
+# ============================================================
 
-# STEP 1: Create API User
-/user group add name=surfbill_api policy=api,read,write,test
-/user add name=${apiUser} password=${apiPassword} group=surfbill_api comment="SurfBill API"
+# STEP 1: Create API User Group
+/user group add name=surfbill_api policy=api,read,write,test comment="SurfBill API group"
 
-# STEP 2: Firewall Rules
-/ip firewall filter add chain=input protocol=tcp dst-port=8728 src-address=${billingHost} action=accept comment="SurfBill API" place-before=0
+# STEP 2: Create API User
+/user add name="${apiUser}" password="${apiPassword}" group=surfbill_api comment="SurfBill API"
 
-# STEP 3: Hotspot Profile
-/ip hotspot profile add name=SurfBill_${tenantSubdomain} login-by=http-chap,http-pap,mac use-radius=no dns-name=${tenantSubdomain}.surfbill.link hotspot-address=10.5.50.1
+# STEP 3: Firewall - Allow API Access
+/ip firewall filter add chain=input protocol=tcp dst-port=8728 src-address=${billingHost} action=accept comment="SurfBill API Access" place-before=0
 
-# STEP 4: Walled Garden
-/ip hotspot walled-garden add dst-host=*.intasend.com comment="Payment Gateway"
-/ip hotspot walled-garden add dst-host=*.safaricom.co.ke comment="M-Pesa"
-/ip hotspot walled-garden add dst-host=${billingHost} comment="SurfBill"
+# STEP 4: Create Hotspot Profile
+/ip hotspot profile add name="SurfBill_${tenantSubdomain}" login-by=http-chap,http-pap,mac use-radius=no dns-name="${tenantSubdomain}.surfbill.link" hotspot-address=10.5.50.1
 
-# STEP 5: User Profile
-/ip hotspot user profile set [ find default=yes ] shared-users=1
+# STEP 5: Walled Garden - Payment Gateways
+/ip hotspot walled-garden add dst-host="intasend.com" comment="IntaSend"
+/ip hotspot walled-garden add dst-host="api.intasend.com" comment="IntaSend API"
 
-# STEP 6: Scheduler Scripts
-/system script add name=SurfBill_Sync_Script source=":log info \\"SurfBill Sync\\""
-/system scheduler add name=SurfBill_Sync interval=5m on-event=SurfBill_Sync_Script
+# STEP 6: Walled Garden - M-Pesa
+/ip hotspot walled-garden add dst-host="safaricom.co.ke" comment="M-Pesa"
 
-# STEP 7: Set Identity
+# STEP 7: Walled Garden - Billing System
+/ip hotspot walled-garden add dst-host="surfbill.net" comment="SurfBill"
+
+# STEP 8: Create SurfBill Default User Profile
+/ip hotspot user profile add name="SurfBill_Default" shared-users=1 rate-limit=512k/512k status-autorefresh=1m
+
+# STEP 9: Scheduler Scripts
+/system script add name=SurfBill_Sync source=":log info \"SurfBill sync\""
+/system scheduler add name=SurfBill_Sync interval=5m on-event=SurfBill_Sync comment="SurfBill Auto-Sync"
+
+# STEP 10: Set Identity
 /system identity set name="SurfBill_${tenantName}_${router.name}"
 
-# Configuration Complete
-`;
+# ============================================================
+# CONFIGURATION COMPLETE
+# ============================================================`;
     }
 
     /**
@@ -201,7 +227,6 @@ add name=SurfBill_Cleanup interval=1d start-time=02:00:00 on-event=SurfBill_Clea
         details?: any;
     }> {
         try {
-            // Test connection with API credentials
             const testResult = await MikroTikService.testConnection(router);
 
             if (!testResult.status) {
@@ -225,7 +250,6 @@ add name=SurfBill_Cleanup interval=1d start-time=02:00:00 on-event=SurfBill_Clea
                 };
             }
 
-            // Update router with system info
             await router.update({
                 autoConfigStatus: 'CONFIGURED',
                 isOnline: true,
@@ -235,7 +259,6 @@ add name=SurfBill_Cleanup interval=1d start-time=02:00:00 on-event=SurfBill_Clea
                 autoConfigError: null
             });
 
-            // Check capabilities
             const capabilities = await this.detectCapabilities(router);
             await router.update({
                 capabilities: JSON.stringify(capabilities)
@@ -293,7 +316,7 @@ add name=SurfBill_Cleanup interval=1d start-time=02:00:00 on-event=SurfBill_Clea
     }
 
     /**
-     * Detect router capabilities (hotspot, pppoe, etc.)
+     * Detect router capabilities
      */
     private static async detectCapabilities(router: RouterModel): Promise<{
         hotspot: boolean;
@@ -303,20 +326,14 @@ add name=SurfBill_Cleanup interval=1d start-time=02:00:00 on-event=SurfBill_Clea
     }> {
         try {
             const compatibility = await MikroTikService.validateCompatibility(router);
-
             return {
                 hotspot: !compatibility.issues.includes('No Hotspot server configured'),
-                pppoe: true, // Assume PPPoE is available
+                pppoe: true,
                 radius: !compatibility.issues.includes('RADIUS client not configured'),
-                queues: true // Assume queue support
+                queues: true
             };
-        } catch (error) {
-            return {
-                hotspot: false,
-                pppoe: false,
-                radius: false,
-                queues: false
-            };
+        } catch {
+            return { hotspot: false, pppoe: false, radius: false, queues: false };
         }
     }
 
@@ -326,14 +343,17 @@ add name=SurfBill_Cleanup interval=1d start-time=02:00:00 on-event=SurfBill_Clea
     static async generateRollbackScript(router: RouterModel): Promise<string> {
         const apiUser = router.apiUser || 'surfbill_api';
 
-        return `# ========================================
+        return `# ============================================================
 # SurfBill Rollback Script
-# ========================================
-# This script removes SurfBill configuration
-# ========================================
+# ============================================================
+# This removes all SurfBill configuration from the router.
+# ============================================================
 
 # Remove API User
 /user remove [find name="${apiUser}"]
+
+# Remove API User Group
+/user group remove [find name="surfbill_api"]
 
 # Remove Firewall Rules
 /ip firewall filter remove [find comment="SurfBill API Access"]
@@ -349,9 +369,14 @@ add name=SurfBill_Cleanup interval=1d start-time=02:00:00 on-event=SurfBill_Clea
 # Remove Scripts
 /system script remove [find name~"SurfBill"]
 
+# Remove Hotspot Profile
+/ip hotspot profile remove [find name~"SurfBill"]
+
+# Remove User Profile
+/ip hotspot user profile remove [find name~"SurfBill"]
+
 # Configuration Removed
-:log info "SurfBill configuration has been removed"
-`;
+:log info "SurfBill configuration has been removed"`;
     }
 
     /**
@@ -364,7 +389,6 @@ add name=SurfBill_Cleanup interval=1d start-time=02:00:00 on-event=SurfBill_Clea
         password: string
     ): Promise<{ success: boolean; message: string; version?: string; identity?: string }> {
         try {
-            // Create temporary router object for testing
             const tempRouter = {
                 host,
                 port,
