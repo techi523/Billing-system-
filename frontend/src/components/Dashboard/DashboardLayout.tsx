@@ -82,12 +82,7 @@ const MENU_SECTIONS: MenuSection[] = [
             { id: 'notifications', label: 'Notifications', icon: BellRing, path: '/tenant/profile' },
         ]
     },
-    {
-        label: 'Developer',
-        items: [
-            { id: 'testing', label: 'Testing Dashboard', icon: Terminal, path: '/tenant/testing' },
-        ]
-    },
+
 ];
 
 // ─── Breadcrumb Mapping ─────────────────────────────────────────
@@ -100,7 +95,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
     '/tenant/communication': 'SMS Credits',
     '/tenant/wallet': 'Wallet & Treasury',
     '/tenant/profile': 'Profile & Settings',
-    '/tenant/testing': 'Testing Dashboard',
+
 };
 
 // ─── Component ──────────────────────────────────────────────────

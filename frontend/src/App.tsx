@@ -15,7 +15,6 @@ import CaptivePortal from './pages/CaptivePortal';
 
 // Protected Pages - Admin
 import AdminPortal from './pages/AdminPortal';
-import DemoAdmin from './pages/DemoAdmin';
 
 // Protected Pages - Super Admin
 import SuperAdminPortal from './pages/SuperAdminPortal';
@@ -33,7 +32,6 @@ import CustomerPortal from './pages/CustomerPortal';
 import SMSCredits from './pages/SMSCredits';
 import ProfilePage from './pages/Profile';
 
-import { StagingDashboard } from './pages/StagingDashboard';
 
 function App() {
     return (
@@ -48,7 +46,6 @@ function App() {
                             <Route path="/register" element={<Register />} />
                             <Route path="/password-reset" element={<PasswordResetRequest />} />
                             <Route path="/captive-portal" element={<CaptivePortal />} />
-                            <Route path="/staging" element={<StagingDashboard />} />
 
                             {/* Super Admin Login (Explicit) */}
                             <Route path="/superadmin/login" element={<SuperAdminLogin />} />
@@ -120,11 +117,6 @@ function App() {
                                     </ProtectedRoute>
                                 } />
 
-                                <Route path="/tenant/testing" element={
-                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
-                                        <StagingDashboard />
-                                    </ProtectedRoute>
-                                } />
                             </Route>
 
                             {/* Legacy / Admin Routes */}
@@ -134,13 +126,8 @@ function App() {
                                 </ProtectedRoute>
                             } />
 
-                            <Route path="/demo" element={<DemoAdmin />} />
-
                             {/* Customer Portal */}
                             <Route path="/customer/*" element={<CustomerPortal />} />
-
-                            {/* Legacy redirect */}
-                            <Route path="/testing" element={<Navigate to="/tenant/testing" replace />} />
 
                             {/* Fallback */}
                             <Route path="*" element={<Navigate to="/" replace />} />

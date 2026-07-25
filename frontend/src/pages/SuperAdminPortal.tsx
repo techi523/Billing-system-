@@ -3,16 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import SuperAdminDashboard from '../components/SuperAdmin/SuperAdminDashboard';
 import PlatformSettings from '../components/SuperAdmin/PlatformSettings';
 import SmsGatewayManager from '../components/SuperAdmin/SmsGatewayManager';
-import { StagingDashboard } from './StagingDashboard';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/Common/BackButton';
 import ThemeToggle from '../components/Common/ThemeToggle';
-import { LayoutDashboard, Settings as SettingsIcon, MessageSquare, Terminal } from 'lucide-react';
+import { LayoutDashboard, Settings as SettingsIcon, MessageSquare } from 'lucide-react';
 
 const SuperAdminPortal = () => {
     const navigate = useNavigate();
     const { logout, loading: authLoading } = useAuth();
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'settings' | 'sms' | 'staging'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'settings' | 'sms'>('dashboard');
 
     if (authLoading) {
         return (
@@ -64,16 +63,6 @@ const SuperAdminPortal = () => {
                                     <MessageSquare size={16} />
                                     SMS Gateway
                                 </button>
-                                <button
-                                    onClick={() => setActiveTab('staging')}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'staging'
-                                        ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
-                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                                        }`}
-                                >
-                                    <Terminal size={16} />
-                                    Staging &amp; Testing Dashboard
-                                </button>
                             </div>
                             <div className="flex items-center gap-6">
                                 <button
@@ -102,7 +91,6 @@ const SuperAdminPortal = () => {
                 {activeTab === 'dashboard' && <SuperAdminDashboard />}
                 {activeTab === 'settings' && <PlatformSettings />}
                 {activeTab === 'sms' && <SmsGatewayManager />}
-                {activeTab === 'staging' && <StagingDashboard />}
             </div>
         </div>
     );

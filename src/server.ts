@@ -20,7 +20,6 @@ import routerControlRoutes from './routes/router-control.routes';
 import campaignRoutes from './routes/campaigns';
 import smsGatewayRoutes from './routes/sms-gateway.routes';
 import smsRoutes from './routes/sms.routes';
-import stagingRoutes from './routes/staging.routes';
 import profileRoutes from './routes/profile.routes';
 import { IspService } from './services/isp.service';
 import { SettlementEngine } from './services/settlement-engine';
@@ -123,7 +122,6 @@ app.use('/api/v1/campaigns', authMiddleware, TenantResolver.resolveTenant, campa
 
 app.use('/api/v1/superadmin', authMiddleware, superAdminLimiter, superadminRoutes);
 app.use('/api/v1/superadmin/sms', authMiddleware, superAdminLimiter, smsGatewayRoutes);
-app.use('/api/v1/staging', authMiddleware, superAdminLimiter, stagingRoutes);
 app.use('/api/v1/sms', authMiddleware, TenantResolver.resolveTenant, smsRoutes);
 
 // WEBHOOK RATE LIMITING (Prevent webhook flooding)
@@ -185,12 +183,8 @@ async function startServer() {
             logger.info('DEVELOPMENT MODE: Database schema synced.');
         }
 
-        // Auto-seed templates and staging test data on startup
+        // Auto-seed templates on startup
         await TemplateSeeder.seedDefaults();
-        if (process.env.NODE_ENV !== 'production') {
-            const { StagingDbService } = require('./services/staging-db.service');
-            await StagingDbService.seedStagingData();
-        }
 
         // Start Background Monitoring Services
         // Start Background Monitoring Services

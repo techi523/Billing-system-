@@ -25,5 +25,4 @@ dist-ssr
 
 # Linting and Error Logs
 *.txt
-*.json
 *.cjs

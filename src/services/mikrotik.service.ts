@@ -13,10 +13,7 @@ export class MikroTikService {
     /**
      * Get a connection to a MikroTik router
      */
-    private static async getConnection(router: RouterModel): Promise<RouterOSClient | null> {
-        if (process.env.NODE_ENV === 'staging' || router.host === 'simulator') {
-            return null; // Signals to use simulator
-        }
+    private static async getConnection(router: RouterModel): Promise<RouterOSClient> {
         return new RouterOSClient({
             host: router.host,
             user: router.username,
@@ -68,15 +65,6 @@ export class MikroTikService {
         try {
             return await this.executeWithRetry(async () => {
                 const client = await this.getConnection(router);
-                if (!client) {
-                    const sim = await require('./mikrotik-simulator.service').MikrotikSimulatorService.pingRouter(router.host, router.port || 8728);
-                    return {
-                        status: sim.success,
-                        message: 'Simulated connection successful',
-                        version: sim.version,
-                        identity: sim.identity
-                    };
-                }
 
                 const api = await client.connect();
                 const identity = await api.menu('/system/identity').get();
@@ -181,13 +169,6 @@ export class MikroTikService {
         try {
             await this.executeWithRetry(async () => {
                 const client = await this.getConnection(router);
-                if (!client) {
-                    await require('./mikrotik-simulator.service').MikrotikSimulatorService.createHotspotUser({
-                        username, password, profile, comment
-                    });
-                    await this.logRouterAction(router.id, router.tenantId, 'CREATE_USER', 'SUCCESS', `User ${username} created (simulated)`);
-                    return;
-                }
 
                 const api = await client.connect();
 
@@ -256,19 +237,6 @@ export class MikroTikService {
         try {
             return await this.executeWithRetry(async () => {
                 const client = await this.getConnection(router);
-                if (!client) {
-                    const simUsers = await require('./mikrotik-simulator.service').MikrotikSimulatorService.getHotspotUsers();
-                    return simUsers.map((u: any) => ({
-                        id: u.id,
-                        username: u.username,
-                        ipAddress: u.ipAddress,
-                        macAddress: u.macAddress,
-                        uptime: u.uptime,
-                        bytesIn: u.bytesIn,
-                        bytesOut: u.bytesOut,
-                        sessionTime: 'unlimited'
-                    }));
-                }
 
                 const api = await client.connect();
                 const sessions = await api.menu('/ip/hotspot/active').get();
