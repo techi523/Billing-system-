@@ -1,1 +1,0 @@
-src/services/agent.service.ts(21,27): error TS2367: This comparison appears to be unintentional because the types '"SUPER_ADMIN" | "TENANT" | "STAFF"' and '"AGENT"' have no overlap.

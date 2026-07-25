@@ -16,7 +16,7 @@ const sequelize = useMySQL
   )
   : new Sequelize({
     dialect: 'sqlite',
-    storage: config.db.name === 'billing_system' ? './data/billing.sqlite' : './hotspot_db.sqlite',
+    storage: './hotspot_db.sqlite',
     logging: false,
   });
 
@@ -72,6 +72,27 @@ export class Tenant extends Model {
   public productionReadyAt!: Date | null;
   public lastSanitizedAt!: Date | null;
   public themePreference!: 'light' | 'dark' | 'system';
+  // Additional Profile & Business Attributes
+  public tradingName!: string | null;
+  public businessLogoUrl!: string | null;
+  public vatNumber!: string | null;
+  public website!: string | null;
+  public businessEmail!: string | null;
+  public businessAddress!: string | null;
+  public supportEmail!: string | null;
+  public supportPhone!: string | null;
+  // Branding Details
+  public loginLogoUrl!: string | null;
+  public portalLogoUrl!: string | null;
+  public faviconUrl!: string | null;
+  public themeColor!: string | null;
+  public secondaryColor!: string | null;
+  // Withdrawal Accounts
+  public mpesaWithdrawalName!: string | null;
+  public mpesaWithdrawalNumber!: string | null;
+  public bankIban!: string | null;
+  public defaultWithdrawalMethod!: 'MPESA' | 'BANK';
+  public notificationPreferences!: string | null; // JSON String
 }
 Tenant.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -116,6 +137,24 @@ Tenant.init({
   isGoLiveChecked: { type: DataTypes.BOOLEAN, defaultValue: false },
   productionReadyAt: { type: DataTypes.DATE },
   lastSanitizedAt: { type: DataTypes.DATE },
+  tradingName: { type: DataTypes.STRING },
+  businessLogoUrl: { type: DataTypes.TEXT },
+  vatNumber: { type: DataTypes.STRING },
+  website: { type: DataTypes.STRING },
+  businessEmail: { type: DataTypes.STRING },
+  businessAddress: { type: DataTypes.TEXT },
+  supportEmail: { type: DataTypes.STRING },
+  supportPhone: { type: DataTypes.STRING },
+  loginLogoUrl: { type: DataTypes.TEXT },
+  portalLogoUrl: { type: DataTypes.TEXT },
+  faviconUrl: { type: DataTypes.TEXT },
+  themeColor: { type: DataTypes.STRING, defaultValue: '#0f172a' },
+  secondaryColor: { type: DataTypes.STRING, defaultValue: '#38bdf8' },
+  mpesaWithdrawalName: { type: DataTypes.STRING },
+  mpesaWithdrawalNumber: { type: DataTypes.STRING },
+  bankIban: { type: DataTypes.STRING },
+  defaultWithdrawalMethod: { type: DataTypes.STRING, defaultValue: 'MPESA' },
+  notificationPreferences: { type: DataTypes.TEXT },
 }, { sequelize, modelName: 'tenant' });
 
 export class AdminUser extends Model {
@@ -126,6 +165,24 @@ export class AdminUser extends Model {
   public tenantId!: string | null;
   public themePreference!: 'light' | 'dark' | 'system';
   public commissionRate!: number; // Percentage (e.g., 0.1 for 10%)
+  // Personal Information
+  public firstName!: string | null;
+  public lastName!: string | null;
+  public displayName!: string | null;
+  public username!: string | null;
+  public phone!: string | null;
+  public altPhone!: string | null;
+  public preferredLanguage!: string;
+  public timeZone!: string;
+  public country!: string;
+  public countyState!: string | null;
+  public city!: string | null;
+  public postalCode!: string | null;
+  public physicalAddress!: string | null;
+  public profilePhotoUrl!: string | null;
+  public twoFactorEnabled!: boolean;
+  public twoFactorMethod!: 'EMAIL' | 'SMS' | 'AUTHENTICATOR';
+  public lastPasswordChange!: Date | null;
 }
 AdminUser.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -141,6 +198,23 @@ AdminUser.init({
     onUpdate: 'CASCADE'
   },
   commissionRate: { type: DataTypes.FLOAT, defaultValue: 0.0 },
+  firstName: { type: DataTypes.STRING },
+  lastName: { type: DataTypes.STRING },
+  displayName: { type: DataTypes.STRING },
+  username: { type: DataTypes.STRING },
+  phone: { type: DataTypes.STRING },
+  altPhone: { type: DataTypes.STRING },
+  preferredLanguage: { type: DataTypes.STRING, defaultValue: 'en' },
+  timeZone: { type: DataTypes.STRING, defaultValue: 'Africa/Nairobi' },
+  country: { type: DataTypes.STRING, defaultValue: 'Kenya' },
+  countyState: { type: DataTypes.STRING },
+  city: { type: DataTypes.STRING },
+  postalCode: { type: DataTypes.STRING },
+  physicalAddress: { type: DataTypes.TEXT },
+  profilePhotoUrl: { type: DataTypes.TEXT },
+  twoFactorEnabled: { type: DataTypes.BOOLEAN, defaultValue: false },
+  twoFactorMethod: { type: DataTypes.STRING, defaultValue: 'EMAIL' },
+  lastPasswordChange: { type: DataTypes.DATE },
 }, {
   sequelize,
   modelName: 'admin_user',
@@ -381,7 +455,14 @@ AuditLog.init({
   action: { type: DataTypes.STRING, allowNull: false },
   details: { type: DataTypes.TEXT },
   ipAddress: { type: DataTypes.STRING },
-}, { sequelize, modelName: 'auditLog' });
+}, { 
+  sequelize, 
+  modelName: 'auditLog',
+  indexes: [
+    { fields: ['tenantId'] },
+    { fields: ['userId'] }
+  ]
+});
 
 export class PlatformSetting extends Model {
   public key!: string;
@@ -454,7 +535,17 @@ Payment.init({
   intasendCheckoutId: { type: DataTypes.STRING },
   intasendTrackingId: { type: DataTypes.STRING },
   intasendState: { type: DataTypes.STRING },
-}, { sequelize, modelName: 'payment' });
+}, { 
+  sequelize, 
+  modelName: 'payment',
+  indexes: [
+    { fields: ['tenantId'] },
+    { fields: ['phoneNumber'] },
+    { fields: ['status'] },
+    { fields: ['checkoutRequestId'] },
+    { fields: ['mpesaReceiptNumber'] }
+  ]
+});
 
 export class Session extends Model {
   public id!: string;
@@ -490,7 +581,15 @@ Session.init({
   bytesIn: { type: DataTypes.BIGINT, defaultValue: 0 },
   bytesOut: { type: DataTypes.BIGINT, defaultValue: 0 },
   lastUpdated: { type: DataTypes.DATE },
-}, { sequelize, modelName: 'session' });
+}, { 
+  sequelize, 
+  modelName: 'session',
+  indexes: [
+    { fields: ['tenantId'] },
+    { fields: ['macAddress'] },
+    { fields: ['status'] }
+  ]
+});
 
 export class AdminSession extends Model {
   public id!: string;
@@ -689,7 +788,14 @@ WalletTransaction.init({
   createdBy: { type: DataTypes.UUID },
   metadata: { type: DataTypes.TEXT },
   tenantId: { type: DataTypes.UUID, allowNull: false },
-}, { sequelize, modelName: 'walletTransaction' });
+}, { 
+  sequelize, 
+  modelName: 'walletTransaction',
+  indexes: [
+    { fields: ['walletId'] },
+    { fields: ['tenantId'] }
+  ]
+});
 
 export class TieredFee extends Model {
   public id!: string;
@@ -882,5 +988,345 @@ MessageTemplate.belongsTo(Tenant, { foreignKey: 'tenantId' });
 
 Campaign.belongsTo(MessageTemplate, { foreignKey: 'templateId' });
 MessageTemplate.hasMany(Campaign, { foreignKey: 'templateId' });
+
+// ============================================================
+// SMS CREDITS PURCHASE SYSTEM
+// ============================================================
+
+export class SmsGateway extends Model {
+  public id!: string;
+  public name!: string;
+  public provider!: 'AFRICASTALKING' | 'INFOBIP' | 'VONAGE' | 'TWILIO' | 'GENERIC';
+  public apiBaseUrl!: string | null;
+  public apiKeyEncrypted!: string | null;   // AES-256-GCM encrypted
+  public apiSecretEncrypted!: string | null; // AES-256-GCM encrypted
+  public senderId!: string | null;
+  public callbackUrl!: string | null;
+  public isActive!: boolean;
+  public supportedCountries!: string | null; // JSON array
+  public supportedCurrencies!: string | null; // JSON array
+  public taxRate!: number; // percentage e.g. 16 for 16%
+  public minPurchaseAmount!: number; // in cents
+  public maxPurchaseAmount!: number; // in cents
+  public metadata!: string | null; // JSON
+}
+SmsGateway.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  name: { type: DataTypes.STRING, allowNull: false },
+  provider: { type: DataTypes.ENUM('AFRICASTALKING', 'INFOBIP', 'VONAGE', 'TWILIO', 'GENERIC'), defaultValue: 'AFRICASTALKING' },
+  apiBaseUrl: { type: DataTypes.STRING },
+  apiKeyEncrypted: { type: DataTypes.TEXT },
+  apiSecretEncrypted: { type: DataTypes.TEXT },
+  senderId: { type: DataTypes.STRING },
+  callbackUrl: { type: DataTypes.STRING },
+  isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
+  supportedCountries: { type: DataTypes.TEXT }, // JSON
+  supportedCurrencies: { type: DataTypes.TEXT }, // JSON
+  taxRate: { type: DataTypes.FLOAT, defaultValue: 0 },
+  minPurchaseAmount: { type: DataTypes.BIGINT, defaultValue: 10000 }, // 100.00 KES
+  maxPurchaseAmount: { type: DataTypes.BIGINT, defaultValue: 1000000 }, // 10,000.00 KES
+  metadata: { type: DataTypes.TEXT },
+}, { sequelize, modelName: 'sms_gateway' });
+
+export class SmsPackage extends Model {
+  public id!: string;
+  public name!: string;
+  public smsCount!: number;
+  public sellingPrice!: number; // in cents
+  public costPrice!: number;    // in cents (super admin only)
+  public status!: 'ACTIVE' | 'INACTIVE';
+  public description!: string | null;
+  public isCustom!: boolean;
+  public sortOrder!: number;
+}
+SmsPackage.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  name: { type: DataTypes.STRING, allowNull: false },
+  smsCount: { type: DataTypes.INTEGER, allowNull: false },
+  sellingPrice: { type: DataTypes.BIGINT, allowNull: false },
+  costPrice: { type: DataTypes.BIGINT, defaultValue: 0 },
+  status: { type: DataTypes.ENUM('ACTIVE', 'INACTIVE'), defaultValue: 'ACTIVE' },
+  description: { type: DataTypes.TEXT },
+  isCustom: { type: DataTypes.BOOLEAN, defaultValue: false },
+  sortOrder: { type: DataTypes.INTEGER, defaultValue: 0 },
+}, { sequelize, modelName: 'sms_package' });
+
+export class TenantSmsWallet extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public balance!: number;       // SMS credits remaining
+  public usedCredits!: number;
+  public purchasedCredits!: number;
+  public lastPurchaseAt!: Date | null;
+  public lastPurchasePackageId!: string | null;
+  public lowBalanceThreshold!: number;
+  public lowBalanceNotified!: boolean;
+}
+TenantSmsWallet.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false, unique: true },
+  balance: { type: DataTypes.INTEGER, defaultValue: 0 },
+  usedCredits: { type: DataTypes.INTEGER, defaultValue: 0 },
+  purchasedCredits: { type: DataTypes.INTEGER, defaultValue: 0 },
+  lastPurchaseAt: { type: DataTypes.DATE },
+  lastPurchasePackageId: { type: DataTypes.UUID },
+  lowBalanceThreshold: { type: DataTypes.INTEGER, defaultValue: 50 },
+  lowBalanceNotified: { type: DataTypes.BOOLEAN, defaultValue: false },
+}, { sequelize, modelName: 'tenant_sms_wallet' });
+
+export class SmsTransaction extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public packageId!: string | null;
+  public creditsAdded!: number;
+  public amount!: number; // in cents
+  public paymentMethod!: 'WALLET' | 'INTASEND' | 'MPESA';
+  public paymentReference!: string | null;
+  public idempotencyKey!: string | null;
+  public status!: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+  public invoiceNumber!: string | null;
+  public metadata!: string | null;
+  public completedAt!: Date | null;
+  public failureReason!: string | null;
+  // IntaSend tracking
+  public intasendCheckoutId!: string | null;
+  public intasendTrackingId!: string | null;
+}
+SmsTransaction.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  packageId: { type: DataTypes.UUID, allowNull: true },
+  creditsAdded: { type: DataTypes.INTEGER, allowNull: false },
+  amount: { type: DataTypes.BIGINT, allowNull: false },
+  paymentMethod: { type: DataTypes.ENUM('WALLET', 'INTASEND', 'MPESA'), allowNull: false },
+  paymentReference: { type: DataTypes.STRING },
+  idempotencyKey: { type: DataTypes.STRING, unique: true },
+  status: { type: DataTypes.ENUM('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'), defaultValue: 'PENDING' },
+  invoiceNumber: { type: DataTypes.STRING, unique: true },
+  metadata: { type: DataTypes.TEXT },
+  completedAt: { type: DataTypes.DATE },
+  failureReason: { type: DataTypes.STRING },
+  intasendCheckoutId: { type: DataTypes.STRING },
+  intasendTrackingId: { type: DataTypes.STRING },
+}, { sequelize, modelName: 'sms_transaction' });
+
+export class SmsCampaignMessage extends Model {
+  public id!: string;
+  public campaignId!: string;
+  public tenantId!: string;
+  public phoneNumber!: string;
+  public message!: string;
+  public status!: 'PENDING' | 'SENT' | 'DELIVERED' | 'FAILED';
+  public providerReference!: string | null;
+  public retries!: number;
+  public scheduledAt!: Date | null;
+  public sentAt!: Date | null;
+  public errorMessage!: string | null;
+  public creditsCost!: number;
+}
+SmsCampaignMessage.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  campaignId: { type: DataTypes.UUID, allowNull: false },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  phoneNumber: { type: DataTypes.STRING, allowNull: false },
+  message: { type: DataTypes.TEXT, allowNull: false },
+  status: { type: DataTypes.ENUM('PENDING', 'SENT', 'DELIVERED', 'FAILED'), defaultValue: 'PENDING' },
+  providerReference: { type: DataTypes.STRING },
+  retries: { type: DataTypes.INTEGER, defaultValue: 0 },
+  scheduledAt: { type: DataTypes.DATE },
+  sentAt: { type: DataTypes.DATE },
+  errorMessage: { type: DataTypes.TEXT },
+  creditsCost: { type: DataTypes.INTEGER, defaultValue: 1 },
+}, { sequelize, modelName: 'sms_campaign_message' });
+
+// SMS System Relationships
+Tenant.hasOne(TenantSmsWallet, { foreignKey: 'tenantId' });
+TenantSmsWallet.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Tenant.hasMany(SmsTransaction, { foreignKey: 'tenantId' });
+SmsTransaction.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+SmsPackage.hasMany(SmsTransaction, { foreignKey: 'packageId' });
+SmsTransaction.belongsTo(SmsPackage, { foreignKey: 'packageId' });
+
+Campaign.hasMany(SmsCampaignMessage, { foreignKey: 'campaignId' });
+SmsCampaignMessage.belongsTo(Campaign, { foreignKey: 'campaignId' });
+
+Tenant.hasMany(SmsCampaignMessage, { foreignKey: 'tenantId' });
+SmsCampaignMessage.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+// ============================================================
+// STAGING & TESTING ENVIRONMENT MODELS
+// ============================================================
+
+export class FeatureFlag extends Model {
+  public id!: string;
+  public key!: string;
+  public description!: string | null;
+  public isEnabledGlobal!: boolean;
+  public isEnabledStaging!: boolean;
+  public enabledTenants!: string | null; // JSON array of tenant IDs
+  public enabledAdmins!: string | null;  // JSON array of user IDs
+}
+FeatureFlag.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  key: { type: DataTypes.STRING, unique: true, allowNull: false },
+  description: { type: DataTypes.TEXT },
+  isEnabledGlobal: { type: DataTypes.BOOLEAN, defaultValue: false },
+  isEnabledStaging: { type: DataTypes.BOOLEAN, defaultValue: true },
+  enabledTenants: { type: DataTypes.TEXT }, // JSON string
+  enabledAdmins: { type: DataTypes.TEXT },  // JSON string
+}, { sequelize, modelName: 'feature_flag' });
+
+export class StagingErrorLog extends Model {
+  public id!: string;
+  public severity!: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
+  public source!: 'FRONTEND' | 'BACKEND' | 'API' | 'PAYMENT' | 'DATABASE' | 'ROUTER' | 'EMAIL' | 'SMS' | 'WHATSAPP';
+  public message!: string;
+  public stackTrace!: string | null;
+  public requestPath!: string | null;
+  public userId!: string | null;
+  public tenantId!: string | null;
+  public suggestedFix!: string | null;
+  public metadata!: string | null;
+}
+StagingErrorLog.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  severity: { type: DataTypes.ENUM('INFO', 'WARNING', 'ERROR', 'CRITICAL'), defaultValue: 'ERROR' },
+  source: { type: DataTypes.ENUM('FRONTEND', 'BACKEND', 'API', 'PAYMENT', 'DATABASE', 'ROUTER', 'EMAIL', 'SMS', 'WHATSAPP'), defaultValue: 'BACKEND' },
+  message: { type: DataTypes.TEXT, allowNull: false },
+  stackTrace: { type: DataTypes.TEXT },
+  requestPath: { type: DataTypes.STRING },
+  userId: { type: DataTypes.UUID },
+  tenantId: { type: DataTypes.UUID },
+  suggestedFix: { type: DataTypes.TEXT },
+  metadata: { type: DataTypes.TEXT },
+}, { sequelize, modelName: 'staging_error_log' });
+
+export class SandboxMessageLog extends Model {
+  public id!: string;
+  public channel!: 'EMAIL' | 'SMS' | 'WHATSAPP';
+  public recipient!: string;
+  public subject!: string | null;
+  public content!: string;
+  public gateway!: string | null;
+  public status!: 'CAPTURED' | 'SIMULATED' | 'FAILED';
+  public cost!: number; // Simulated cost in cents
+  public metadata!: string | null;
+  public tenantId!: string | null;
+}
+SandboxMessageLog.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  channel: { type: DataTypes.ENUM('EMAIL', 'SMS', 'WHATSAPP'), allowNull: false },
+  recipient: { type: DataTypes.STRING, allowNull: false },
+  subject: { type: DataTypes.STRING },
+  content: { type: DataTypes.TEXT, allowNull: false },
+  gateway: { type: DataTypes.STRING },
+  status: { type: DataTypes.ENUM('CAPTURED', 'SIMULATED', 'FAILED'), defaultValue: 'CAPTURED' },
+  cost: { type: DataTypes.BIGINT, defaultValue: 0 },
+  metadata: { type: DataTypes.TEXT },
+  tenantId: { type: DataTypes.UUID },
+}, { sequelize, modelName: 'sandbox_message_log' });
+
+export class SandboxPaymentLog extends Model {
+  public id!: string;
+  public provider!: 'WALLET' | 'INTASEND' | 'MPESA';
+  public transactionType!: 'PAYMENT' | 'REFUND' | 'CREDIT_PURCHASE';
+  public reference!: string;
+  public amount!: number; // in cents
+  public phoneNumber!: string | null;
+  public status!: 'SUCCESS' | 'FAILED' | 'TIMEOUT' | 'DUPLICATE';
+  public failureReason!: string | null;
+  public retryCount!: number;
+  public tenantId!: string;
+  public metadata!: string | null;
+}
+SandboxPaymentLog.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  provider: { type: DataTypes.ENUM('WALLET', 'INTASEND', 'MPESA'), allowNull: false },
+  transactionType: { type: DataTypes.ENUM('PAYMENT', 'REFUND', 'CREDIT_PURCHASE'), defaultValue: 'PAYMENT' },
+  reference: { type: DataTypes.STRING, allowNull: false },
+  amount: { type: DataTypes.BIGINT, allowNull: false },
+  phoneNumber: { type: DataTypes.STRING },
+  status: { type: DataTypes.ENUM('SUCCESS', 'FAILED', 'TIMEOUT', 'DUPLICATE'), defaultValue: 'SUCCESS' },
+  failureReason: { type: DataTypes.STRING },
+  retryCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  metadata: { type: DataTypes.TEXT },
+}, { sequelize, modelName: 'sandbox_payment_log' });
+
+export class TestAccountSeed extends Model {
+  public id!: string;
+  public role!: 'SUPER_ADMIN' | 'TENANT' | 'STAFF' | 'AGENT' | 'CUSTOMER';
+  public email!: string;
+  public phoneNumber!: string | null;
+  public tenantId!: string | null;
+  public description!: string;
+}
+TestAccountSeed.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  role: { type: DataTypes.ENUM('SUPER_ADMIN', 'TENANT', 'STAFF', 'AGENT', 'CUSTOMER'), allowNull: false },
+  email: { type: DataTypes.STRING, allowNull: false },
+  phoneNumber: { type: DataTypes.STRING },
+  tenantId: { type: DataTypes.UUID },
+  description: { type: DataTypes.STRING, allowNull: false },
+}, { sequelize, modelName: 'test_account_seed' });
+
+// Profile & Account Management Models
+export class TenantDocument extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public docType!: 'BUSINESS_CERT' | 'TAX_PIN_CERT' | 'NATIONAL_ID' | 'BANK_LETTER' | 'UTILITY_BILL';
+  public fileName!: string;
+  public fileUrl!: string;
+  public fileType!: string;
+  public fileSize!: number;
+  public status!: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  public notes!: string | null;
+}
+TenantDocument.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  docType: { type: DataTypes.ENUM('BUSINESS_CERT', 'TAX_PIN_CERT', 'NATIONAL_ID', 'BANK_LETTER', 'UTILITY_BILL'), allowNull: false },
+  fileName: { type: DataTypes.STRING, allowNull: false },
+  fileUrl: { type: DataTypes.TEXT, allowNull: false },
+  fileType: { type: DataTypes.STRING, allowNull: false },
+  fileSize: { type: DataTypes.INTEGER, defaultValue: 0 },
+  status: { type: DataTypes.ENUM('PENDING', 'VERIFIED', 'REJECTED'), defaultValue: 'PENDING' },
+  notes: { type: DataTypes.TEXT },
+}, { sequelize, modelName: 'tenant_document' });
+
+export class TenantWithdrawal extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public amount!: number; // stored in cents (e.g. 10000 = KES 100.00)
+  public method!: 'MPESA' | 'BANK';
+  public recipientDetails!: string; // JSON: name, phone, bankName, accountNumber, branch, etc.
+  public status!: 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'REJECTED';
+  public referenceId!: string | null;
+  public failureReason!: string | null;
+  public requestedBy!: string | null;
+  public requestedAt!: Date;
+  public completedAt!: Date | null;
+}
+TenantWithdrawal.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  amount: { type: DataTypes.BIGINT, allowNull: false },
+  method: { type: DataTypes.ENUM('MPESA', 'BANK'), defaultValue: 'MPESA' },
+  recipientDetails: { type: DataTypes.TEXT, allowNull: false },
+  status: { type: DataTypes.ENUM('PENDING', 'COMPLETED', 'CANCELLED', 'REJECTED'), defaultValue: 'PENDING' },
+  referenceId: { type: DataTypes.STRING },
+  failureReason: { type: DataTypes.TEXT },
+  requestedBy: { type: DataTypes.UUID },
+  requestedAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  completedAt: { type: DataTypes.DATE },
+}, { sequelize, modelName: 'tenant_withdrawal' });
+
+Tenant.hasMany(TenantDocument, { foreignKey: 'tenantId' });
+TenantDocument.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Tenant.hasMany(TenantWithdrawal, { foreignKey: 'tenantId' });
+TenantWithdrawal.belongsTo(Tenant, { foreignKey: 'tenantId' });
 
 export { sequelize };

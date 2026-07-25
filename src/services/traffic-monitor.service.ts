@@ -36,9 +36,7 @@ export class TrafficMonitorService {
      */
     private static async monitorAllRouters() {
         try {
-            const routers = await RouterModel.findAll({
-                where: { autoConfigStatus: 'CONFIGURED' }
-            });
+            const routers = await RouterModel.findAll();
 
             for (const router of routers) {
                 try {

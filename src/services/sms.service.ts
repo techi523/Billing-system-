@@ -2,16 +2,17 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import logger from '../utils/logger';
 import { SMSLog, AuditLog } from '../models';
+import { SmsCreditsService } from './sms-credits.service';
 
 dotenv.config();
 
 /**
- * Production-grade SMS Service
+ * Production-grade SMS Service (Credit-Aware)
  * Supports generic HTTP gateways or service-specific integrations
  */
 export class SMSService {
     /**
-     * Send a single SMS
+     * Send a single SMS (credit-aware)
      */
     static async sendSMS({ to, message, tenantId, userId, action }: {
         to: string;
@@ -20,6 +21,12 @@ export class SMSService {
         userId?: string;
         action?: string;
     }) {
+        // 1. Credit-aware check & deduction
+        const creditDeducted = await SmsCreditsService.deductCredits(tenantId, 1);
+        if (!creditDeducted) {
+            throw new Error('INSUFFICIENT_CREDITS: Tenant has insufficient SMS credits to send message.');
+        }
+
         try {
             // Configuration from .env
             const username = process.env.SMS_USERNAME;

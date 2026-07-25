@@ -191,39 +191,24 @@ const Packages = () => {
     const totalUsers = packages.reduce((sum, pkg) => sum + (pkg.stats?.activeUsers || 0), 0);
 
     return (
-        <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] font-sans pb-20 transition-colors duration-300">
-            {/* Ambient Background Glows */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px]"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[50%] bg-sky-500/5 rounded-full blur-[100px]"></div>
+        <div className="space-y-6">
+            {/* Page Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-xl font-bold flex items-center gap-2 text-[var(--text-primary)]">
+                        <Zap className="w-5 h-5 text-sky-500" /> Billing Packages
+                    </h1>
+                    <p className="text-[var(--text-secondary)] text-sm mt-0.5">Control revenue streams and bandwidth profiles</p>
+                </div>
+                <button
+                    onClick={() => { setIsAdding(true); setEditingPackage(null); setFormData(initialFormData); }}
+                    className="btn-primary"
+                >
+                    <Plus className="w-4 h-4" /> Create Package
+                </button>
             </div>
 
-            <header className="relative z-10 px-8 pt-12 pb-16 bg-[var(--bg-surface)] backdrop-blur-3xl border-b border-[var(--border-subtle)] transition-colors duration-300">
-                <div className="absolute top-8 left-8">
-                    <BackButton to="/tenant" variant="light" label="Dashboard" />
-                </div>
-
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div>
-                        <div className="flex items-center gap-4 mb-3">
-                            <div className="w-12 h-12 bg-sky-500 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-500/20">
-                                <Zap className="text-white w-7 h-7" />
-                            </div>
-                            <h1 className="text-4xl font-black text-[var(--text-primary)] tracking-tight">Billing <span className="text-sky-400">Packages</span></h1>
-                        </div>
-                        <p className="text-[var(--text-secondary)] font-medium text-lg">Directly control your revenue streams and bandwidth profiles.</p>
-                    </div>
-
-                    <button
-                        onClick={() => { setIsAdding(true); setEditingPackage(null); setFormData(initialFormData); }}
-                        className="bg-sky-500 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 hover:bg-sky-600 transition-all transform hover:scale-105 shadow-2xl shadow-sky-500/20"
-                    >
-                        <Plus className="w-6 h-6 border-2 border-current rounded-lg p-0.5" /> Create New Package
-                    </button>
-                </div>
-            </header>
-
-            <main className="max-w-7xl mx-auto px-8 relative z-20 -mt-10">
+            <div className="space-y-6">
                 {/* Global Analytics Bar */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
                     {[
@@ -493,7 +478,7 @@ const Packages = () => {
                         </table>
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     );
 };

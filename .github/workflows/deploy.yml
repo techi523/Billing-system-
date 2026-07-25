@@ -1,0 +1,41 @@
+name: Deploy to Production Server
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Execute Remote SSH Commands to Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST || '129.212.228.90' }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            echo "=== Pulling latest changes on production server ==="
+            cd /root/Billing-System-
+            git pull origin main
+            
+            if [ -d "frontend" ]; then
+              echo "=== Building frontend ==="
+              cd frontend
+              npm install
+              npm run build
+              mkdir -p /var/www/app
+              cp -r dist/* /var/www/app/
+              cd ..
+            fi
+            
+            echo "=== Restarting PM2 process ==="
+            pm2 restart billing-system || pm2 start /root/Billing-System-/src/server.ts --interpreter ts-node --name billing-system
+            pm2 save
+            pm2 status

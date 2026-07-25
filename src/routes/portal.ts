@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { Package, Payment, Tenant, Router as RouterModel, PlatformSetting, Subscriber } from '../models';
+import { Package, Payment, Tenant, Router as RouterModel, PlatformSetting } from '../models';
 import { AggregatorService } from '../services/aggregator.service';
-import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/logger';
+import { body, validationResult } from 'express-validator';
+import { handleValidationErrors } from '../middleware/validation';
 
 const router = Router();
 
@@ -43,105 +44,20 @@ router.get('/:tenantId/packages', async (req: any, res) => {
     }
 });
 
-// 1b. Subscriber Self-Registration (Public)
-router.post('/:tenantId/register', async (req, res) => {
-    const { name, phoneNumber, email, packageId } = req.body;
-    const tenantId = req.params.tenantId;
-
-    try {
-        if (!phoneNumber) {
-            return res.status(400).json({ error: 'Phone number is required' });
-        }
-
-        if (!packageId) {
-            return res.status(400).json({ error: 'Please select a package' });
-        }
-
-        const phoneRegex = /^(?:254|\+254|0)?(7(?:(?:[0-9][0-9])|(?:[0-9][0-9]))[0-9]{6})$/;
-        if (!phoneRegex.test(phoneNumber.toString().replace(/\s/g, ''))) {
-            return res.status(400).json({ error: 'Invalid phone number format' });
-        }
-
-        const tenant = await Tenant.findByPk(tenantId);
-        if (!tenant) return res.status(404).json({ error: 'Network provider not found' });
-
-        const pkg = await Package.findByPk(packageId);
-        if (!pkg || pkg.tenantId !== tenantId || !pkg.isEnabled) {
-            return res.status(400).json({ error: 'Invalid package selected' });
-        }
-
-        const normalizedPhone = phoneNumber.replace(/^0/, '254').replace(/^\+/, '').replace(/\s/g, '');
-
-        const existingSubscriber = await Subscriber.findOne({
-            where: { phoneNumber: normalizedPhone, tenantId }
-        });
-
-        if (existingSubscriber) {
-            return res.status(400).json({
-                error: 'An account with this phone number already exists. Please contact support.',
-                subscriberId: existingSubscriber.id
-            });
-        }
-
-        const pppoeUsername = `SUB-${normalizedPhone.slice(-8)}`;
-        const pppoePassword = Math.random().toString(36).slice(-8);
-
-        const subscriber = await Subscriber.create({
-            name: name || `Subscriber ${normalizedPhone.slice(-4)}`,
-            phoneNumber: normalizedPhone,
-            email: email || null,
-            pppoeUsername,
-            pppoePassword,
-            packageId,
-            tenantId,
-            status: 'INACTIVE'
-        });
-
-        logger.info('Subscriber self-registered', {
-            subscriberId: subscriber.id,
-            tenantId,
-            phone: normalizedPhone.substring(0, 4) + '****'
-        });
-
-        res.status(201).json({
-            message: 'Registration successful. Please complete payment to activate your account.',
-            subscriber: {
-                id: subscriber.id,
-                name: subscriber.name,
-                phoneNumber: subscriber.phoneNumber,
-                pppoeUsername: subscriber.pppoeUsername,
-                package: { id: pkg.id, name: pkg.name, price: pkg.price, durationMinutes: pkg.durationMinutes }
-            }
-        });
-    } catch (error: any) {
-        logger.error('Subscriber registration failed', { error: error.message, tenantId });
-        res.status(500).json({ error: 'Registration failed. Please try again.' });
-    }
-});
-
-// 1c. Get available routers for a tenant (public)
-router.get('/:tenantId/routers', async (req, res) => {
-    try {
-        const routers = await RouterModel.findAll({
-            where: { tenantId: req.params.tenantId },
-            attributes: ['id', 'name', 'host']
-        });
-        res.json(routers);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 // 2. Initiate Payment (Hotspot or ISP)
-router.post('/:tenantId/pay', async (req, res) => {
+router.post('/:tenantId/pay', [
+    body('phone').isString().matches(/^(?:254|\+254|0)?(7(?:(?:[0-9][0-9])|(?:[0-9][0-9]))[0-9]{6})$/).withMessage('Invalid phone number format'),
+    body('packageId').isUUID().withMessage('Invalid package ID'),
+    body('mac').optional().matches(/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/).withMessage('Invalid MAC address'),
+    body('ip').optional().isIP().withMessage('Invalid IP address'),
+    body('routerId').optional().isUUID().withMessage('Invalid router ID'),
+    body('subscriberId').optional().isUUID().withMessage('Invalid subscriber ID'),
+    handleValidationErrors
+], async (req: any, res: any) => {
     const { phone, packageId, mac, ip, routerId, subscriberId } = req.body;
     const tenantId = req.params.tenantId;
 
-    // Validate phone format (Basic Kenya/Intl format)
-    const phoneRegex = /^(?:254|\+254|0)?(7(?:(?:[0-9][0-9])|(?:[0-9][0-9]))[0-9]{6})$/;
-    if (!phone || !phoneRegex.test(phone.toString().replace(/\s/g, ''))) {
-        return res.status(400).json({ error: 'Invalid phone number format' });
-    }
+
 
     // Rate limiting: Prevent spam attacks (5 requests per minute per phone)
 
@@ -243,7 +159,13 @@ router.post('/:tenantId/pay', async (req, res) => {
 import { VoucherService } from '../services/voucher.service';
 
 // 4. Redeem Voucher
-router.post('/:tenantId/voucher/redeem', async (req, res) => {
+router.post('/:tenantId/voucher/redeem', [
+    body('code').isString().isLength({ min: 4, max: 20 }).withMessage('Invalid voucher code'),
+    body('mac').optional().matches(/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/).withMessage('Invalid MAC address'),
+    body('ip').optional().isIP().withMessage('Invalid IP address'),
+    body('routerId').isUUID().withMessage('Invalid router ID'),
+    handleValidationErrors
+], async (req: any, res: any) => {
     const { code, mac, ip, routerId } = req.body;
     try {
         const session = await VoucherService.redeemVoucher(code, routerId, mac, ip);

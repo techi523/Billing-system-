@@ -2,7 +2,7 @@
 # Run this in your own PowerShell terminal
 # It will prompt for the server password when needed
 
-$SERVER = "root@129.212.228.90"
+$SERVER = "root@154.154.252.228"
 $PROJECT_DIR = "/root/Billing-System-"
 
 Write-Host "=== SurfBill Production Deployment ===" -ForegroundColor Cyan
@@ -38,4 +38,4 @@ pm2 status
 
 Write-Host ""
 Write-Host "=== Deployment Complete ===" -ForegroundColor Cyan
-Write-Host "Visit http://129.212.228.90 to verify the application is running." -ForegroundColor White
+Write-Host "Visit http://154.154.252.228 to verify the application is running." -ForegroundColor White

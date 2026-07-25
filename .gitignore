@@ -1,8 +1,21 @@
 node_modules/
 .env
 *.sqlite
+*.sqlite*
 server_log.txt
 dist/
 logs/
 
-tsc_errors_*.txt
+*.log
+*.pid
+*.bak
+*.tar.gz
+tsc_errors*.txt
+tsc_output*.txt
+routes_output.txt
+login.json
+register.json
+hotspot_db.sqlite-journal
+hotspot_db.sqlite.bak
+deploy_assets.tar.gz
+

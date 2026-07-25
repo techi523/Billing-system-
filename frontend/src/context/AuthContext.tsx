@@ -66,12 +66,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     };
 
-    const logout = () => {
-        setToken(null);
-        setUser(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        delete axios.defaults.headers.common['Authorization'];
+    const logout = async () => {
+        try {
+            // Invalidate on the backend
+            if (token) {
+                await axios.post('/api/v1/auth/logout', {}, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            }
+        } catch (error) {
+            console.error('[AuthContext] Backend logout failed:', error);
+        } finally {
+            // Always clear local state regardless of backend success
+            setToken(null);
+            setUser(null);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            delete axios.defaults.headers.common['Authorization'];
+        }
     };
 
     return (

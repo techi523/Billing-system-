@@ -150,10 +150,8 @@ const SuperAdminLogin = () => {
                         </motion.button>
                     </form>
 
-                    <div className="mt-8 text-center">
-                        <div className="text-xs font-bold text-red-500/60">
-                            Restricted Platform Access Only
-                        </div>
+                    <div className="mt-8 text-center text-xs font-bold text-red-500/60">
+                        Restricted Platform Access Only
                     </div>
                 </div>
             </motion.div>

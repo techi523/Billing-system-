@@ -47,10 +47,12 @@ async function verifyUpgrade() {
 
         // 3. Verify MikroTik Script Generation
         console.log('\n--- Verify MikroTik Scripts ---');
-        const { MikroTikService } = require('./src/services/mikrotik.service');
-        const script = await MikroTikService.generateConfigScript('HOTSPOT', 'v7');
+        const { MikroTikAutoConfigService } = require('./src/services/mikrotik-auto-config.service');
+        const mockRouterModel: any = { id: 'r-101', name: 'Main Router', host: '192.168.1.1', port: 8728, update: async () => {} };
+        const mockTenantModel: any = { id: 't-101', name: 'Test Provider' };
+        const script = await MikroTikAutoConfigService.generateAutoConfigScript(mockRouterModel, mockTenantModel, 'v7');
 
-        if (script.includes('/ip hotspot') && script.includes('SurfBill')) {
+        if (script.includes('/ip hotspot') && script.includes('surfbill')) {
             console.log('✅ MikroTik script generation (v7): PASSED');
         } else {
             console.error('❌ MikroTik script generation (v7): FAILED');

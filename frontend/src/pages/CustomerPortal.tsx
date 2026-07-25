@@ -75,8 +75,22 @@ const CustomerPortal = () => {
                     navigate('/login');
                 }
             } else {
-                // No token, redirect to login
-                navigate('/login');
+                // Show sample subscriber dashboard for guest preview
+                setIsAuthenticated(true);
+                setCustomerData({
+                    name: 'Client / Subscriber View',
+                    email: 'subscriber@surfbill.com',
+                    currentPlan: 'Daily WiFi Unlimited Pass',
+                    balance: 1500,
+                    dataUsed: 35,
+                    dataLimit: 100,
+                    expires: '5 Days',
+                    recentActivity: [
+                        { action: 'M-Pesa STK Push Payment', date: 'Yesterday', amount: '+KES 500' },
+                        { action: 'Daily WiFi Unlimited Renewed', date: '2 days ago', amount: '+KES 1,000' },
+                        { action: 'Voucher STG-9921 Claimed', date: '1 week ago', amount: '+KES 200' }
+                    ]
+                });
             }
             setIsLoading(false);
         };
@@ -111,20 +125,32 @@ const CustomerPortal = () => {
                                 <h1 className="text-2xl font-black text-[var(--text-primary)]">Welcome, {customerData?.name || 'Customer'}</h1>
                                 <p className="text-[var(--text-secondary)] font-bold">Your personal internet service dashboard</p>
                             </div>
-                            <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-3">
                                 <ThemeToggle />
                                 <span className="px-3 py-1 bg-emerald-500/20 text-emerald-600 text-[10px] font-black rounded-full uppercase tracking-widest">
-                                    CUSTOMER
+                                    CLIENT PORTAL
                                 </span>
+                                <button
+                                    onClick={() => navigate('/tenant')}
+                                    className="px-3 py-1.5 bg-sky-500/10 text-sky-600 font-bold rounded-xl hover:bg-sky-500 hover:text-white border border-sky-500/20 transition-all text-xs"
+                                >
+                                    🏢 Tenant Portal
+                                </button>
+                                <button
+                                    onClick={() => navigate('/captive-portal')}
+                                    className="px-3 py-1.5 bg-purple-500/10 text-purple-600 font-bold rounded-xl hover:bg-purple-500 hover:text-white border border-purple-500/20 transition-all text-xs"
+                                >
+                                    📶 Captive Portal
+                                </button>
                                 <button
                                     onClick={() => {
                                         localStorage.removeItem('token');
                                         localStorage.removeItem('user');
                                         navigate('/login');
                                     }}
-                                    className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
+                                    className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors text-xs"
                                 >
-                                    Logout
+                                    Sign In / Switch
                                 </button>
                             </div>
                         </div>

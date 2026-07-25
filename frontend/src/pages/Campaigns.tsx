@@ -135,30 +135,22 @@ const Campaigns = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] transition-colors duration-300">
-            {/* Header */}
-            <div className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                        <BackButton to="/tenant" label="Dashboard" variant="dark" />
-                        <div>
-                            <h1 className="text-2xl font-black">Campaign Center</h1>
-                            <p className="text-[var(--text-secondary)] font-bold text-sm">Real-time Marketing & Notifications</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <ThemeToggle />
-                        <button
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-xl font-black flex items-center gap-2 transition-all shadow-lg shadow-sky-200"
-                        >
-                            <Plus className="w-5 h-5" /> New Campaign
-                        </button>
-                    </div>
+        <div className="space-y-6">
+            {/* Page Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-xl font-bold text-[var(--text-primary)]">Campaign Center</h1>
+                    <p className="text-[var(--text-secondary)] text-sm mt-0.5">Real-time Marketing & Notifications</p>
                 </div>
+                <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="btn-primary"
+                >
+                    <Plus className="w-4 h-4" /> New Campaign
+                </button>
             </div>
 
-            <div className="max-w-7xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Campaigns List */}
                 <div className="lg:col-span-2 space-y-6">
                     <div className="flex items-center justify-between mb-4">

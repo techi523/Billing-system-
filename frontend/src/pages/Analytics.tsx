@@ -91,42 +91,36 @@ const Analytics: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-[var(--bg-main)] font-sans selection:bg-sky-500 transition-colors duration-300">
-            {/* Header */}
-            <header className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] sticky top-0 z-40 px-8 py-6 transition-colors duration-300">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="flex flex-col md:flex-row items-center gap-6">
-                        <BackButton to="/tenant" variant="dark" />
-                        <div>
-                            <div className="flex items-center gap-3 mb-1">
-                                <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tighter">Real-time <span className="text-sky-500">Insights</span></h1>
-                                <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 text-[10px] font-black rounded-full flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                                    LIVE STREAMING
-                                </div>
-                            </div>
-                            <p className="text-[var(--text-secondary)] font-bold text-sm tracking-tight">ISP-Grade Analytics & Revenue Monitoring</p>
+        <div className="space-y-6">
+            {/* Page Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <div className="flex items-center gap-3 mb-1">
+                        <h1 className="text-xl font-bold text-[var(--text-primary)]">Real-time <span className="text-sky-500">Insights</span></h1>
+                        <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 text-[10px] font-semibold rounded-full flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                            LIVE
                         </div>
                     </div>
-
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={fetchData}
-                            disabled={refreshing}
-                            className="p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl text-[var(--text-secondary)] hover:bg-[var(--bg-surface-elevated)] transition-all flex items-center gap-2 group shadow-sm"
-                        >
-                            <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
-                            <span className="text-sm font-black uppercase tracking-widest">Refresh</span>
-                        </button>
-                        <button className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2">
-                            <Filter className="w-4 h-4" />
-                            Filters
-                        </button>
-                    </div>
+                    <p className="text-[var(--text-secondary)] text-sm">ISP-Grade Analytics & Revenue Monitoring</p>
                 </div>
-            </header>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={fetchData}
+                        disabled={refreshing}
+                        className="btn-secondary !py-2"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </button>
+                    <button className="btn-secondary !py-2">
+                        <Filter className="w-4 h-4" />
+                        Filters
+                    </button>
+                </div>
+            </div>
 
-            <main className="max-w-7xl mx-auto px-8 py-10 space-y-10">
+            <div className="space-y-6">
                 {/* KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <KPICard
@@ -242,10 +236,6 @@ const Analytics: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </main>
-
-            <div className="mt-12">
-                <SupportFooter />
             </div>
         </div>
     );

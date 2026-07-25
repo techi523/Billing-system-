@@ -102,5 +102,6 @@ export const config = {
         username: process.env.SMS_USERNAME,
         apiKey: process.env.SMS_API_KEY,
         senderId: process.env.SMS_SENDER_ID,
+        encryptionKey: process.env.SMS_ENCRYPTION_KEY,
     }
 } as const;

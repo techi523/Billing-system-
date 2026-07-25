@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import SubscriberTable from '../components/Modern/SubscriberTable';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import BackButton from '../components/Common/BackButton';
-import SupportFooter from '../components/Common/SupportFooter';
-import SupportSection from '../components/Common/SupportSection';
-import { Shield, Zap, ArrowRight } from 'lucide-react';
-import ThemeToggle from '../components/Common/ThemeToggle';
+import {
+    Shield, Zap, ArrowRight, ArrowUpRight, ArrowDownRight,
+    Users, Wifi, Wallet, MessageSquare, Package, Send,
+    CreditCard, TrendingUp, Activity, Clock, DollarSign,
+    BarChart3, Globe, Mail, Plus, RefreshCw
+} from 'lucide-react';
 
 interface TenantDashboardData {
     tenantName: string;
@@ -28,20 +29,18 @@ const TenantPortal = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [tenantData, setTenantData] = useState<TenantDashboardData | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [smsBalance, setSmsBalance] = useState(0);
 
     const fetchDashboardData = useCallback(async () => {
         try {
             setIsLoading(true);
-            // Check if tenant needs initialization
             const initStatusRes = await axios.get<{ isBootstrapped: boolean }>('/api/v1/admin/initialize/status');
             const isBootstrapped = initStatusRes.data.isBootstrapped;
-
-            // If not bootstrapped, initialize the tenant
             if (!isBootstrapped) {
                 await axios.post('/api/v1/admin/initialize');
             }
 
-            const [statsRes, walletRes] = await Promise.all([
+            const [statsRes, walletRes, smsRes] = await Promise.all([
                 axios.get<{
                     tenantName: string;
                     tenantLogo?: string;
@@ -51,7 +50,8 @@ const TenantPortal = () => {
                     pendingPayments: number;
                     plan: string;
                 }>('/api/v1/admin/dashboard-summary'),
-                axios.get<{ balance: number; settledBalance: number }>('/api/v1/wallet/balance')
+                axios.get<{ balance: number; settledBalance: number }>('/api/v1/wallet/balance'),
+                axios.get<{ balance: number }>('/api/v1/sms/balance').catch(() => ({ data: { balance: 0 } })),
             ]);
 
             setTenantData({
@@ -66,21 +66,14 @@ const TenantPortal = () => {
                 plan: statsRes.data.plan || 'Standard',
                 isNewTenant: !isBootstrapped
             });
+            setSmsBalance(smsRes.data.balance || 0);
         } catch (err: unknown) {
             console.error('Failed to fetch tenant data', err);
             if (axios.isAxiosError(err)) {
-                if (err.response?.status === 401) {
-                    // Session expired or invalid
-                    logout();
-                    return;
-                }
-                if (err.response?.status === 404) {
-                    setError('Tenant not found. Please contact support.');
-                } else if (err.response?.status === 403) {
-                    setError('Access denied. Please check your permissions.');
-                } else {
-                    setError('Failed to load tenant data. Please try again.');
-                }
+                if (err.response?.status === 401) { logout(); return; }
+                if (err.response?.status === 404) { setError('Tenant not found. Please contact support.'); }
+                else if (err.response?.status === 403) { setError('Access denied. Please check your permissions.'); }
+                else { setError('Failed to load tenant data. Please try again.'); }
             } else {
                 setError('An unexpected error occurred.');
             }
@@ -95,10 +88,10 @@ const TenantPortal = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-50 flex items-center justify-center">
+            <div className="flex items-center justify-center py-32">
                 <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-slate-200 border-t-sky-500 rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-600 font-bold">Loading Tenant Portal...</p>
+                    <RefreshCw className="w-10 h-10 text-sky-500 animate-spin mx-auto mb-3" />
+                    <p className="text-[var(--text-muted)] font-semibold text-sm">Loading dashboard...</p>
                 </div>
             </div>
         );
@@ -106,41 +99,24 @@ const TenantPortal = () => {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-50 flex items-center justify-center">
-                <div className="text-center max-w-md p-8 bg-white rounded-3xl shadow-xl border border-slate-100">
-                    <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Shield className="w-10 h-10 text-rose-500" />
+            <div className="flex items-center justify-center py-32">
+                <div className="text-center max-w-md p-8 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-subtle)] shadow-[var(--shadow-md)]">
+                    <div className="w-14 h-14 bg-rose-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <Shield className="w-7 h-7 text-rose-500" />
                     </div>
-                    <h2 className="text-2xl font-black text-slate-900 mb-2">Workspace Access Issue</h2>
-                    <p className="text-slate-600 font-medium mb-6 leading-relaxed">
+                    <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">Workspace Access Issue</h2>
+                    <p className="text-[var(--text-secondary)] text-sm mb-6">
                         {error === 'No tenant assigned to your account'
                             ? "You don't have an active workspace yet. Let's get you set up."
                             : error}
                     </p>
-
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                         {(!user?.tenantId || error === 'No tenant assigned to your account') && (
-                            <button
-                                onClick={() => navigate('/tenant/setup')}
-                                className="w-full px-6 py-4 bg-sky-500 text-white font-black rounded-2xl hover:bg-sky-600 transition-all shadow-lg shadow-sky-200 flex items-center justify-center gap-2 group"
-                            >
-                                Setup Your Workspace <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            <button onClick={() => navigate('/tenant/setup')} className="btn-primary w-full">
+                                Setup Your Workspace <ArrowRight className="w-4 h-4" />
                             </button>
                         )}
-
-                        {user?.role === 'SUPER_ADMIN' && (
-                            <button
-                                onClick={() => navigate('/superadmin')}
-                                className="w-full px-6 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all"
-                            >
-                                Go to Command Center
-                            </button>
-                        )}
-
-                        <button
-                            onClick={logout}
-                            className="w-full px-6 py-4 bg-slate-100 text-slate-700 font-black rounded-2xl hover:bg-slate-200 transition-all"
-                        >
+                        <button onClick={logout} className="btn-secondary w-full">
                             Logout & Switch Account
                         </button>
                     </div>
@@ -149,240 +125,225 @@ const TenantPortal = () => {
         );
     }
 
+    // ─── Quick Action Items ─────────────────────────
+    const quickActions = [
+        { label: 'Create Package', icon: Package, path: '/tenant/packages', color: 'text-sky-500', bg: 'bg-sky-500/10' },
+        { label: 'Add Subscriber', icon: Users, path: '/tenant', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { label: 'Connect Router', icon: Wifi, path: '/tenant/mikrotik', color: 'text-violet-500', bg: 'bg-violet-500/10' },
+        { label: 'Send Campaign', icon: Send, path: '/tenant/campaigns', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { label: 'Buy SMS', icon: CreditCard, path: '/tenant/communication', color: 'text-rose-500', bg: 'bg-rose-500/10' },
+        { label: 'View Wallet', icon: Wallet, path: '/tenant/wallet', color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    ];
+
     return (
-        <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] transition-colors duration-300">
-            {/* Tenant Header */}
-            <div className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] sticky top-0 z-50 transition-colors duration-300">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center gap-6">
-                        <BackButton to="/" label="Home" variant="dark" />
-                        <div className="flex-1 flex items-center justify-between">
-                            <div>
-                                <h1 className="text-2xl font-black text-[var(--text-primary)]">{tenantData?.tenantName || 'Tenant'} Portal</h1>
-                                <p className="text-[var(--text-secondary)] font-bold">Subscriber Management & Analytics</p>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <ThemeToggle />
-                                <span className="px-3 py-1 bg-sky-500/20 text-sky-600 text-xs font-black rounded-full text-center">
-                                    {user?.role}
-                                </span>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => navigate('/tenant')}
-                                        className={`px-4 py-2 font-bold rounded-lg transition-colors ${window.location.pathname === '/tenant' ? 'bg-sky-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-                                    >
-                                        Dashboard
-                                    </button>
-                                    <button
-                                        onClick={() => navigate('/tenant/packages')}
-                                        className={`px-4 py-2 font-bold rounded-lg transition-colors ${window.location.pathname === '/tenant/packages' ? 'bg-sky-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-                                    >
-                                        Packages
-                                    </button>
-                                    <button
-                                        onClick={() => navigate('/tenant/analytics')}
-                                        className={`px-4 py-2 font-bold rounded-lg transition-colors ${window.location.pathname === '/tenant/analytics' ? 'bg-sky-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-                                    >
-                                        Analytics
-                                    </button>
-                                    <button
-                                        onClick={() => navigate('/tenant/mikrotik')}
-                                        className={`px-4 py-2 font-bold rounded-lg transition-colors ${window.location.pathname === '/tenant/mikrotik' ? 'bg-sky-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-                                    >
-                                        Routers
-                                    </button>
-                                    <button
-                                        onClick={() => navigate('/tenant/campaigns')}
-                                        className={`px-4 py-2 font-bold rounded-lg transition-colors ${window.location.pathname === '/tenant/campaigns' ? 'bg-sky-500 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-                                    >
-                                        Campaigns
-                                    </button>
-                                    <div className="w-px h-6 bg-slate-200 mx-2"></div>
-                                    <button
-                                        onClick={() => navigate('/tenant/wallet')}
-                                        className="px-4 py-2 bg-sky-100 text-sky-700 font-bold rounded-lg hover:bg-sky-200 transition-colors"
-                                    >
-                                        Wallet
-                                    </button>
-                                    <button
-                                        onClick={logout}
-                                        className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors"
-                                    >
-                                        Logout
-                                    </button>
-                                </div>
+        <div className="space-y-6">
+            {/* ─── Welcome & New Tenant Banner ─────────────── */}
+            {tenantData?.isNewTenant && (
+                <div className="premium-card border-l-4 border-l-emerald-500 !p-5">
+                    <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 flex-shrink-0">
+                            <Zap className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">Welcome to Your New Portal!</h3>
+                            <p className="text-[var(--text-secondary)] text-xs mb-3">
+                                Your workspace is initialized. Complete setup by creating packages and connecting your router.
+                            </p>
+                            <div className="flex gap-2">
+                                <button onClick={() => navigate('/tenant/packages')} className="btn-primary !py-2 !px-4 !text-xs">
+                                    Create Packages
+                                </button>
+                                <button onClick={() => navigate('/tenant/mikrotik')} className="btn-secondary !py-2 !px-4 !text-xs">
+                                    Setup Router
+                                </button>
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* ─── KPI Cards Row ──────────────────────────────── */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <KPICard
+                    label="Active Users"
+                    value={tenantData?.activeUsers || 0}
+                    icon={<Users className="w-4 h-4" />}
+                    color="sky"
+                />
+                <KPICard
+                    label="Subscribers"
+                    value={tenantData?.subscriberCount || 0}
+                    icon={<Activity className="w-4 h-4" />}
+                    color="emerald"
+                />
+                <KPICard
+                    label="Wallet Balance"
+                    value={`KES ${((tenantData?.walletBalance || 0) / 100).toLocaleString()}`}
+                    icon={<Wallet className="w-4 h-4" />}
+                    color="violet"
+                    onClick={() => navigate('/tenant/wallet')}
+                />
+                <KPICard
+                    label="SMS Credits"
+                    value={smsBalance}
+                    icon={<MessageSquare className="w-4 h-4" />}
+                    color="amber"
+                    onClick={() => navigate('/tenant/communication')}
+                />
+                <KPICard
+                    label="Pending Payments"
+                    value={tenantData?.pendingPayments || 0}
+                    icon={<Clock className="w-4 h-4" />}
+                    color="rose"
+                />
+            </div>
+
+            {/* ─── Quick Actions Grid ─────────────────────────── */}
+            <div className="premium-card !p-5">
+                <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Quick Actions</h3>
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                    {quickActions.map((action) => (
+                        <button
+                            key={action.label}
+                            onClick={() => navigate(action.path)}
+                            className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[var(--bg-surface-elevated)] transition-all group text-center"
+                        >
+                            <div className={`p-2.5 rounded-lg ${action.bg} ${action.color} group-hover:scale-110 transition-transform`}>
+                                <action.icon className="w-4 h-4" />
+                            </div>
+                            <span className="text-[11px] font-semibold text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors leading-tight">
+                                {action.label}
+                            </span>
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto p-8 space-y-8">
-                {/* Welcome Message for New Tenants - FIXED: Packages no longer auto-created */}
-                {tenantData?.isNewTenant && (
-                    <div className="premium-card bg-emerald-50 border border-emerald-200">
-                        <div className="p-6">
-                            <div className="flex items-start gap-4">
-                                <div className="p-3 rounded-full bg-emerald-100 text-emerald-600">
-                                    <Zap className="w-6 h-6 text-emerald-600" />
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="text-lg font-black text-slate-900 mb-2">Welcome to Your New Tenant Portal!</h3>
-                                    <p className="text-slate-600 font-bold mb-3">
-                                        Your account has been initialized. You are now in **Setup Mode**.
-                                    </p>
-                                    <ul className="text-slate-600 font-bold space-y-1 mb-4">
-                                        <li className="flex items-center gap-2">
-                                            <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                                            Wallet created and ready for payments
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <span className="w-2 h-2 bg-rose-500 rounded-full"></span>
-                                            <span className="text-rose-600">Manual Package creation required</span>
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <span className="w-2 h-2 bg-rose-500 rounded-full"></span>
-                                            <span className="text-rose-600">Router configuration required</span>
-                                        </li>
-                                    </ul>
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={() => navigate('/tenant/packages')}
-                                            className="px-4 py-2 bg-sky-500 text-white font-bold rounded-lg hover:bg-sky-600 transition-colors text-sm"
-                                        >
-                                            Create Packages
-                                        </button>
-                                        <button
-                                            onClick={() => navigate('/tenant/mikrotik')}
-                                            className="px-4 py-2 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors text-sm"
-                                        >
-                                            Setup Router
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Tenant Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="premium-card bg-white">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-xs font-black text-slate-400 uppercase mb-2">Active Users</p>
-                                <h3 className="text-2xl font-black text-slate-900">{tenantData?.activeUsers || 0}</h3>
-                            </div>
-                            <div className="p-3 rounded-2xl bg-sky-50 text-sky-600">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="premium-card bg-white">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-xs font-black text-slate-400 uppercase mb-2">Current Plan</p>
-                                <h3 className="text-2xl font-black text-slate-900">{tenantData?.plan || '---'}</h3>
-                            </div>
-                            <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600">
-                                <Shield className="w-6 h-6 text-emerald-600" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        onClick={() => navigate('/tenant/wallet')}
-                        className="premium-card bg-white cursor-pointer hover:border-sky-200 transition-all border-l-4 border-sky-500"
-                    >
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-xs font-black text-slate-400 uppercase mb-2">Wallet Balance</p>
-                                <h3 className="text-2xl font-black text-slate-900">KES {tenantData?.walletBalance?.toLocaleString() || '0'}</h3>
-                                <p className="text-[10px] font-bold text-slate-400 mt-1">Click to manage & withdraw</p>
-                            </div>
-                            <div className="p-3 rounded-2xl bg-sky-50 text-sky-600">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* New Feature Shortcuts */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div
-                        onClick={() => navigate('/tenant/analytics')}
-                        className="premium-card bg-slate-900 border-none cursor-pointer group overflow-hidden relative"
-                    >
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
-                        <div className="flex items-center gap-6 p-2 relative z-10 text-white">
-                            <div className="p-4 bg-sky-500 rounded-2xl">
-                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black mb-1">Real-time Analytics</h3>
-                                <p className="text-white/60 text-[10px] font-black uppercase tracking-widest">Live Revenue Stream</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        onClick={() => navigate('/tenant/packages')}
-                        className="premium-card bg-sky-500 border-none cursor-pointer group overflow-hidden relative"
-                    >
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
-                        <div className="flex items-center gap-6 p-2 relative z-10 text-white">
-                            <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-md">
-                                <Zap className="w-8 h-8 text-white" />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black mb-1">Billing Packages</h3>
-                                <p className="text-white/80 text-[10px] font-black uppercase tracking-widest">Pricing & Speed Sync</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        onClick={() => navigate('/tenant/mikrotik')}
-                        className="premium-card bg-white border-2 border-slate-900 cursor-pointer group relative"
-                    >
-                        <div className="flex items-center gap-6 p-2 text-slate-900">
-                            <div className="p-4 bg-slate-900 text-white rounded-2xl">
-                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black mb-1 text-slate-900">MikroTik Center</h3>
-                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Router Management</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Subscriber Management */}
-                <div className="premium-card bg-white">
-                    <div className="p-6 border-b border-slate-100">
-                        <h2 className="text-xl font-black text-slate-900">Subscriber Management</h2>
-                        <p className="text-slate-600 font-bold mt-1">Live session monitoring and user control</p>
-                    </div>
-                    <SubscriberTable />
-                </div>
-
-                {/* Scaling & Support CTA */}
-                <SupportSection title="Technical Scaling & Support" />
+            {/* ─── Feature Navigation Cards ───────────────────── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <FeatureCard
+                    title="Real-time Analytics"
+                    subtitle="Revenue & Traffic"
+                    icon={<BarChart3 className="w-5 h-5" />}
+                    onClick={() => navigate('/tenant/analytics')}
+                    variant="dark"
+                />
+                <FeatureCard
+                    title="Billing Packages"
+                    subtitle="Plans & Pricing"
+                    icon={<Zap className="w-5 h-5" />}
+                    onClick={() => navigate('/tenant/packages')}
+                    variant="primary"
+                />
+                <FeatureCard
+                    title="MikroTik Center"
+                    subtitle="Router Management"
+                    icon={<Wifi className="w-5 h-5" />}
+                    onClick={() => navigate('/tenant/mikrotik')}
+                    variant="outlined"
+                />
+                <FeatureCard
+                    title="SMS & Campaigns"
+                    subtitle="Communication Hub"
+                    icon={<MessageSquare className="w-5 h-5" />}
+                    onClick={() => navigate('/tenant/communication')}
+                    variant="gradient"
+                />
             </div>
 
-            <div className="mt-12">
-                <SupportFooter />
+            {/* ─── Subscriber Management Table ────────────────── */}
+            <div className="premium-card !p-0 overflow-hidden">
+                <div className="p-5 border-b border-[var(--border-subtle)]">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-base font-bold text-[var(--text-primary)]">Subscriber Management</h2>
+                            <p className="text-[var(--text-secondary)] text-xs mt-0.5">Live session monitoring and user control</p>
+                        </div>
+                        <button onClick={fetchDashboardData} className="btn-ghost !py-2 !px-3 !text-xs">
+                            <RefreshCw className="w-3.5 h-3.5" /> Refresh
+                        </button>
+                    </div>
+                </div>
+                <SubscriberTable />
             </div>
         </div>
+    );
+};
+
+// ─── Sub-components ─────────────────────────────────────────────
+
+interface KPICardProps {
+    label: string;
+    value: string | number;
+    icon: React.ReactNode;
+    color: string;
+    onClick?: () => void;
+}
+
+const KPICard: React.FC<KPICardProps> = ({ label, value, icon, color, onClick }) => {
+    const colorMap: Record<string, { bg: string; text: string }> = {
+        sky: { bg: 'bg-sky-500/10', text: 'text-sky-500' },
+        emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-500' },
+        violet: { bg: 'bg-violet-500/10', text: 'text-violet-500' },
+        amber: { bg: 'bg-amber-500/10', text: 'text-amber-500' },
+        rose: { bg: 'bg-rose-500/10', text: 'text-rose-500' },
+    };
+    const c = colorMap[color] || colorMap.sky;
+
+    return (
+        <div
+            onClick={onClick}
+            className={`stat-card ${onClick ? 'cursor-pointer hover:border-[var(--border-strong)]' : ''}`}
+        >
+            <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{label}</p>
+                <div className={`p-1.5 rounded-lg ${c.bg} ${c.text}`}>
+                    {icon}
+                </div>
+            </div>
+            <p className="text-xl font-bold text-[var(--text-primary)]">{value}</p>
+        </div>
+    );
+};
+
+interface FeatureCardProps {
+    title: string;
+    subtitle: string;
+    icon: React.ReactNode;
+    onClick: () => void;
+    variant: 'dark' | 'primary' | 'outlined' | 'gradient';
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({ title, subtitle, icon, onClick, variant }) => {
+    const styles: Record<string, string> = {
+        dark: 'bg-slate-900 text-white border-transparent dark:bg-slate-800',
+        primary: 'bg-sky-500 text-white border-transparent',
+        outlined: 'bg-[var(--bg-surface)] text-[var(--text-primary)] border-2 border-[var(--border-strong)]',
+        gradient: 'bg-gradient-to-br from-sky-600 to-indigo-700 text-white border-transparent',
+    };
+
+    const iconBg: Record<string, string> = {
+        dark: 'bg-sky-500',
+        primary: 'bg-white/20',
+        outlined: 'bg-slate-900 text-white dark:bg-sky-500',
+        gradient: 'bg-white/20',
+    };
+
+    return (
+        <button
+            onClick={onClick}
+            className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer group overflow-hidden relative transition-all duration-300 hover:shadow-lg text-left ${styles[variant]}`}
+        >
+            <div className={`p-3 rounded-xl ${iconBg[variant]} flex-shrink-0`}>
+                {icon}
+            </div>
+            <div>
+                <h3 className="text-sm font-bold mb-0.5">{title}</h3>
+                <p className={`text-[10px] font-semibold uppercase tracking-widest ${variant === 'outlined' ? 'text-[var(--text-muted)]' : 'opacity-70'}`}>
+                    {subtitle}
+                </p>
+            </div>
+        </button>
     );
 };
 

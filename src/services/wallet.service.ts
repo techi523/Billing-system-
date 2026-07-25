@@ -8,8 +8,9 @@ export class WalletService {
     /**
      * Initialize tenant wallet on creation
      */
-    static async initializeTenantWallet(tenantId: string): Promise<Wallet> {
-        const transaction = await sequelize.transaction();
+    static async initializeTenantWallet(tenantId: string, externalTx?: Transaction): Promise<Wallet> {
+        const transaction = externalTx || await sequelize.transaction();
+        const isManagedTx = !!externalTx;
 
         try {
             // Create tenant wallet
@@ -39,13 +40,16 @@ export class WalletService {
                 tenantId: tenantId
             }, { transaction });
 
-            await transaction.commit();
-
-            await AuditService.log('WALLET_INITIALIZED', `Tenant wallet initialized: ${tenantId}`, tenantId, undefined);
+            if (!isManagedTx) {
+                await transaction.commit();
+                await AuditService.log('WALLET_INITIALIZED', `Tenant wallet initialized: ${tenantId}`, tenantId, undefined);
+            }
 
             return wallet;
         } catch (error) {
-            await transaction.rollback();
+            if (!isManagedTx && transaction) {
+                await transaction.rollback();
+            }
             logger.error('Failed to initialize tenant wallet', { error: error instanceof Error ? error.message : String(error), tenantId });
             throw new Error('Failed to initialize wallet');
         }

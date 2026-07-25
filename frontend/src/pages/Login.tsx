@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -18,44 +18,41 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handleLogin = useCallback(async () => {
-        if (!email || !password) {
-            setError('Please enter both email and password.');
-            return;
-        }
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
         setLoading(true);
         setError('');
 
         try {
-            const res = await axios.post<{ token: string; user: User }>('/api/v1/auth/login', { email, password });
+            const res = await axios.post<{ token: string; user: User }>('/api/v1/auth/login', { email: email.trim().toLowerCase(), password });
             const { token, user } = res.data;
 
             login(token, user);
 
             if (user.role === 'SUPER_ADMIN') {
-                navigate('/superadmin');
+                setError('Security restriction: SuperAdmin accounts are not allowed to log in via the Tenant login portal. Please use the secure administrator endpoint.');
+                return;
             } else if (user.role === 'TENANT') {
                 navigate('/tenant');
             } else if (user.role === 'STAFF') {
                 navigate('/admin');
+            } else {
+                navigate('/tenant');
             }
         } catch (err: unknown) {
             let errorMsg = 'Invalid credentials. Please try again.';
-            if (axios.isAxiosError(err) && err.response?.data?.error) {
-                errorMsg = err.response.data.error;
-                if (err.response.data.details && Array.isArray(err.response.data.details)) {
+            if (axios.isAxiosError(err)) {
+                if (err.response?.data?.details && Array.isArray(err.response.data.details)) {
                     errorMsg = err.response.data.details.map((d: any) => d.msg).join('. ');
+                } else if (err.response?.data?.error) {
+                    errorMsg = err.response.data.error;
                 }
-            } else if (axios.isAxiosError(err) && err.code === 'ERR_NETWORK') {
-                errorMsg = 'Network error. Please check your connection and try again.';
-            } else if (axios.isAxiosError(err) && err.response?.status === 429) {
-                errorMsg = 'Too many attempts. Please wait a moment and try again.';
             }
             setError(errorMsg);
         } finally {
             setLoading(false);
         }
-    }, [email, password, login, navigate]);
+    };
 
     return (
         <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] flex items-center justify-center p-6 relative overflow-hidden font-sans transition-colors duration-300">
@@ -93,7 +90,7 @@ const Login = () => {
                             transition={{ delay: 0.3 }}
                             className="text-3xl font-black text-[var(--text-primary)] tracking-tight"
                         >
-                            Welcome Back
+                            Tenant Sign In
                         </motion.h1>
                         <motion.p
                             initial={{ y: -10, opacity: 0 }}
@@ -101,91 +98,94 @@ const Login = () => {
                             transition={{ delay: 0.4 }}
                             className="text-[var(--text-secondary)] text-sm font-medium mt-2"
                         >
-                            Sign in to your SurfBill Dashboard
+                            Sign in to your WiFi Tenant Workspace
                         </motion.p>
+                    </div>
 
-                        <div className="space-y-6">
-                            <div className="space-y-4">
-                                <div className="relative group">
-                                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors">
-                                        <Mail size={18} />
-                                    </div>
-                                    <input
-                                        type="email"
-                                        required
-                                        placeholder="Account Email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                                        className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold placeholder:text-[var(--text-muted)] focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
-                                    />
+                    <form onSubmit={handleLogin} className="space-y-6">
+                        <div className="space-y-4">
+                            <div className="relative group">
+                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors">
+                                    <Mail size={18} />
                                 </div>
-                                <div className="relative group">
-                                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors">
-                                        <Lock size={18} />
-                                    </div>
-                                    <input
-                                        type="password"
-                                        required
-                                        placeholder="Password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                                        className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold placeholder:text-[var(--text-muted)] focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
-                                    />
-                                </div>
+                                <input
+                                    type="email"
+                                    required
+                                    placeholder="Tenant Account Email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold placeholder:text-[var(--text-muted)] focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
+                                />
                             </div>
-
-                            <div className="text-right">
-                                <button
-                                    type="button"
-                                    onClick={() => navigate('/password-reset')}
-                                    className="text-sky-400 hover:text-sky-300 text-xs font-bold transition-colors"
-                                >
-                                    Forgot Password?
-                                </button>
-                            </div>
-
-                            {error && (
-                                <div className="text-rose-400 text-xs font-bold text-center bg-rose-500/10 py-2 rounded-lg">
-                                    {error}
+                            <div className="relative group">
+                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors">
+                                    <Lock size={18} />
                                 </div>
-                            )}
+                                <input
+                                    type="password"
+                                    required
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-2xl py-4 pl-12 pr-6 text-[var(--text-primary)] text-sm font-semibold placeholder:text-[var(--text-muted)] focus:outline-none focus:border-sky-500 focus:bg-[var(--bg-surface)] transition-all"
+                                />
+                            </div>
+                        </div>
 
+                        <div className="text-right">
                             <button
                                 type="button"
-                                onClick={handleLogin}
-                                disabled={loading}
-                                className="w-full bg-sky-500 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-sky-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() => navigate('/password-reset')}
+                                className="text-sky-400 hover:text-sky-300 text-xs font-bold transition-colors"
                             >
-                                {loading ? 'Authenticating...' : 'Sign In'}
-                                {!loading && <ArrowRight size={18} strokeWidth={3} />}
+                                Forgot Password?
                             </button>
                         </div>
 
-                            <div className="mt-8 text-center space-y-4">
-                            <p className="text-[var(--text-secondary)] text-xs font-bold">
-                                Don't have an account?{' '}
-                                <button
-                                    onClick={() => navigate('/register')}
-                                    className="text-sky-500 hover:text-sky-400 underline transition-colors"
-                                >
-                                    Register Tenant
-                                </button>
-                            </p>
+                        {error && (
+                            <motion.p
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                className="text-rose-400 text-xs font-bold text-center bg-rose-500/10 p-3 rounded-xl border border-rose-500/20"
+                            >
+                                {error}
+                            </motion.p>
+                        )}
 
-                            <div className="pt-6 border-t border-[var(--border-subtle)]">
-                                <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest mb-3">Scaling Support & Technical Help</p>
-                                <div className="flex justify-center gap-4">
-                                    <a href={OFFICIAL_SUPPORT.whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 text-xs font-bold flex items-center gap-1.5 transition-colors">
-                                        WhatsApp: {OFFICIAL_SUPPORT.whatsapp}
-                                    </a>
-                                </div>
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-sky-500 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-sky-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-sky-500/20 text-sm"
+                        >
+                            {loading ? 'Authenticating Tenant Account...' : 'Sign In to Tenant Workspace'}
+                            {!loading && <ArrowRight size={18} strokeWidth={3} />}
+                        </motion.button>
+                    </form>
+
+                    <div className="mt-8 text-center space-y-4">
+                        <p className="text-[var(--text-secondary)] text-xs font-bold">
+                            Don't have a tenant account yet?{' '}
+                            <button
+                                onClick={() => navigate('/register')}
+                                className="text-sky-500 hover:text-sky-400 underline transition-colors"
+                            >
+                                Register Tenant
+                            </button>
+                        </p>
+
+                        <div className="pt-6 border-t border-[var(--border-subtle)]">
+                            <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest mb-3">Scaling Support & Technical Help</p>
+                            <div className="flex justify-center gap-4">
+                                <a href={OFFICIAL_SUPPORT.whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 text-xs font-bold flex items-center gap-1.5 transition-colors">
+                                    WhatsApp: {OFFICIAL_SUPPORT.whatsapp}
+                                </a>
                             </div>
-                            <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest pt-2">
-                                SurfBill Production Cloud v3.0
-                            </p>
                         </div>
+                        <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest pt-2">
+                            SurfBill Production Cloud v3.0
+                        </p>
                     </div>
                 </div>
             </motion.div>

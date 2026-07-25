@@ -6,7 +6,7 @@ import { AuditService } from '../services/audit.service';
 
 const router = Router();
 router.use(authMiddleware);
-router.use(authorize(['TENANT', 'STAFF']));
+router.use(authorize(['TENANT', 'TENANT_ADMIN', 'STAFF']));
 
 // 1. List Campaigns
 router.get('/', async (req: any, res) => {

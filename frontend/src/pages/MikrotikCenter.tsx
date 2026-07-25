@@ -32,7 +32,6 @@ const MikrotikCenter: React.FC = () => {
         version: 'v7'
     });
     const [generatedScript, setGeneratedScript] = useState('');
-    const [routerId, setRouterId] = useState('');
     const [verificationStatus, setVerificationStatus] = useState<'IDLE' | 'PENDING' | 'SUCCESS' | 'FAILED'>('IDLE');
     const [verificationError, setVerificationError] = useState('');
 
@@ -44,11 +43,10 @@ const MikrotikCenter: React.FC = () => {
 
         setLoading(true);
         try {
-            const response = await axios.post<{ script: string; router: { id: string } }>('/api/v1/admin/routers/generate-setup', {
+            const response = await axios.post<{ script: string }>('/api/v1/admin/routers/generate-setup', {
                 ...routerDetails
             });
             setGeneratedScript(response.data.script);
-            setRouterId(response.data.router?.id || '');
             setStep(3);
         } catch (error: unknown) {
             console.error('[Mikrotik] Generation failed', error);
@@ -66,12 +64,9 @@ const MikrotikCenter: React.FC = () => {
         setVerificationStatus('PENDING');
         setVerificationError('');
         try {
-            if (!routerId) {
-                setVerificationStatus('FAILED');
-                setVerificationError('Router not found. Please go back and re-generate the script.');
-                return;
-            }
-            const response = await axios.post<{ success: boolean; message?: string; details?: any }>(`/api/v1/admin/routers/${routerId}/test`, {});
+            const response = await axios.post<{ success: boolean; message?: string }>('/api/v1/admin/routers/verify', {
+                host: routerDetails.host
+            });
             if (response.data.success) {
                 setVerificationStatus('SUCCESS');
             } else {
@@ -80,11 +75,9 @@ const MikrotikCenter: React.FC = () => {
             }
         } catch (error: unknown) {
             setVerificationStatus('FAILED');
-            let errorMsg = 'Connection failed. Please ensure the script was pasted and executed in Winbox terminal.';
+            let errorMsg = 'Connection timeout';
             if (axios.isAxiosError(error) && error.response?.data?.message) {
                 errorMsg = error.response.data.message;
-            } else if (axios.isAxiosError(error) && error.response?.data?.error) {
-                errorMsg = error.response.data.error;
             }
             setVerificationError(errorMsg);
         }
@@ -96,21 +89,16 @@ const MikrotikCenter: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[var(--bg-main)] font-sans transition-colors duration-300">
-            <header className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] text-[var(--text-primary)] px-8 py-10 rounded-b-[4rem] shadow-2xl relative overflow-hidden transition-colors duration-300">
-                <div className="absolute top-8 left-8 z-50">
-                    <BackButton to="/tenant" variant="dark" label="Back" />
-                </div>
-                <div className="max-w-7xl mx-auto relative z-10">
-                    <div className="flex items-center gap-3 mb-2">
-                        <Terminal className="text-sky-400 w-8 h-8" />
-                        <h1 className="text-4xl font-black tracking-tighter text-[var(--text-primary)]">MikroTik <span className="text-sky-400">Setup Wizard</span></h1>
-                    </div>
-                    <p className="text-[var(--text-secondary)] font-bold text-lg">Easily connect your router to SurfBill in minutes.</p>
-                </div>
-            </header>
+        <div className="space-y-6 max-w-4xl mx-auto">
+            {/* Page Header */}
+            <div>
+                <h1 className="text-xl font-bold flex items-center gap-2 text-[var(--text-primary)]">
+                    <Zap className="w-5 h-5 text-sky-500" /> MikroTik Setup Wizard
+                </h1>
+                <p className="text-[var(--text-secondary)] text-sm mt-0.5">Easily connect your router to SurfBill in minutes.</p>
+            </div>
 
-            <main className="max-w-4xl mx-auto px-8 py-12">
+            <div className="pt-4">
                 {/* Progress Bar */}
                 <div className="flex items-center justify-between mb-12 relative">
                     <div className="absolute top-1/2 left-0 w-full h-1 bg-[var(--border-subtle)] -translate-y-1/2 -z-10 rounded-full"></div>
@@ -151,21 +139,21 @@ const MikrotikCenter: React.FC = () => {
                             <h2 className="text-3xl font-black mb-6">Step 2: Router Details</h2>
                             <div className="space-y-6">
                                 <div>
-                                    <label className="block text-xs font-black uppercase text-slate-400 mb-2">Router Name</label>
+                                    <label className="block text-xs font-black uppercase text-[var(--text-muted)] mb-2">Router Name</label>
                                     <input
                                         type="text"
-                                        placeholder='e.g. "Main Office Router" or "Cafe WiFi"'
-                                        className="w-full bg-slate-50 border border-slate-200 py-4 px-6 rounded-2xl font-bold placeholder:text-slate-400"
+                                        placeholder="e.g. Downtown Hotspot"
+                                        className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] py-4 px-6 rounded-2xl font-bold focus:outline-none focus:border-sky-500 transition-colors"
                                         value={routerDetails.name}
                                         onChange={(e) => setRouterDetails({ ...routerDetails, name: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-black uppercase text-slate-400 mb-2">Host / IP / Domain</label>
+                                    <label className="block text-xs font-black uppercase text-[var(--text-muted)] mb-2">Host / IP / Domain</label>
                                     <input
                                         type="text"
-                                        placeholder='e.g. "192.168.1.1" (local) or "router.myisp.com" (remote)'
-                                        className="w-full bg-slate-50 border border-slate-200 py-4 px-6 rounded-2xl font-bold placeholder:text-slate-400"
+                                        placeholder="router.isp.com or 1.2.3.4"
+                                        className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] py-4 px-6 rounded-2xl font-bold focus:outline-none focus:border-sky-500 transition-colors"
                                         value={routerDetails.host}
                                         onChange={(e) => setRouterDetails({ ...routerDetails, host: e.target.value })}
                                     />
@@ -266,9 +254,7 @@ const MikrotikCenter: React.FC = () => {
                         </div>
                     )}
                 </div>
-            </main>
-
-            <SupportFooter />
+            </div>
         </div>
     );
 };

@@ -18,6 +18,10 @@ import aggregatorCallbackRoutes from './routes/aggregator-callback.routes';
 import routerRoutes from './routes/router.routes';
 import routerControlRoutes from './routes/router-control.routes';
 import campaignRoutes from './routes/campaigns';
+import smsGatewayRoutes from './routes/sms-gateway.routes';
+import smsRoutes from './routes/sms.routes';
+import stagingRoutes from './routes/staging.routes';
+import profileRoutes from './routes/profile.routes';
 import { IspService } from './services/isp.service';
 import { SettlementEngine } from './services/settlement-engine';
 import { TrafficMonitorService } from './services/traffic-monitor.service';
@@ -29,9 +33,6 @@ import { TenantResolver } from './middleware/tenant-resolver';
 import { ErrorHandler } from './middleware/error-handler';
 
 const app = express();
-
-// Trust proxy (required behind Cloudflare tunnel / reverse proxy)
-app.set('trust proxy', 1);
 
 // SECURITY HARDENING
 app.use(helmet({
@@ -114,12 +115,16 @@ app.use('/api/v1/portal', portalRoutes); // Public portal handle its own resolut
 app.use('/api/v1/portal/:tenantId/pay', strictLimiter, portalRoutes);
 
 // Authenticated Routes with Tenant Resolution
+app.use('/api/v1/admin/profile', authMiddleware, TenantResolver.resolveTenant, profileRoutes);
 app.use('/api/v1/admin', authMiddleware, TenantResolver.resolveTenant, adminRoutes);
 app.use('/api/v1/agent', authMiddleware, TenantResolver.resolveTenant, agentRoutes);
 app.use('/api/v1/wallet', authMiddleware, TenantResolver.resolveTenant, walletRoutes);
 app.use('/api/v1/campaigns', authMiddleware, TenantResolver.resolveTenant, campaignRoutes);
 
 app.use('/api/v1/superadmin', authMiddleware, superAdminLimiter, superadminRoutes);
+app.use('/api/v1/superadmin/sms', authMiddleware, superAdminLimiter, smsGatewayRoutes);
+app.use('/api/v1/staging', authMiddleware, superAdminLimiter, stagingRoutes);
+app.use('/api/v1/sms', authMiddleware, TenantResolver.resolveTenant, smsRoutes);
 
 // WEBHOOK RATE LIMITING (Prevent webhook flooding)
 const webhookLimiter = rateLimit({
@@ -180,9 +185,16 @@ async function startServer() {
             logger.info('DEVELOPMENT MODE: Database schema synced.');
         }
 
-        // Auto-seed templates on startup
+        // Auto-seed templates and staging test data on startup
         await TemplateSeeder.seedDefaults();
+        if (process.env.NODE_ENV !== 'production') {
+            const { StagingDbService } = require('./services/staging-db.service');
+            await StagingDbService.seedStagingData();
+        }
 
+        // Start Background Monitoring Services
+        // Start Background Monitoring Services
+        // Start Background Monitoring Services
         // Start Background Monitoring Services
         console.log('[System Init] Environment Configuration: [OK]');
 

@@ -1,14 +1,18 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SuperAdminDashboard from '../components/SuperAdmin/SuperAdminDashboard';
 import PlatformSettings from '../components/SuperAdmin/PlatformSettings';
+import SmsGatewayManager from '../components/SuperAdmin/SmsGatewayManager';
+import { StagingDashboard } from './StagingDashboard';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/Common/BackButton';
 import ThemeToggle from '../components/Common/ThemeToggle';
-import { LayoutDashboard, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, Settings as SettingsIcon, MessageSquare, Terminal } from 'lucide-react';
 
 const SuperAdminPortal = () => {
+    const navigate = useNavigate();
     const { logout, loading: authLoading } = useAuth();
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'settings'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'settings' | 'sms' | 'staging'>('dashboard');
 
     if (authLoading) {
         return (
@@ -50,8 +54,34 @@ const SuperAdminPortal = () => {
                                     <SettingsIcon size={16} />
                                     Settings
                                 </button>
+                                <button
+                                    onClick={() => setActiveTab('sms')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'sms'
+                                        ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                                        }`}
+                                >
+                                    <MessageSquare size={16} />
+                                    SMS Gateway
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('staging')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'staging'
+                                        ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                                        }`}
+                                >
+                                    <Terminal size={16} />
+                                    Staging &amp; Testing Dashboard
+                                </button>
                             </div>
                             <div className="flex items-center gap-6">
+                                <button
+                                    onClick={() => navigate('/tenant')}
+                                    className="px-4 py-2 bg-sky-500/10 text-sky-400 font-bold rounded-xl hover:bg-sky-500 hover:text-white border border-sky-500/20 transition-all text-xs flex items-center gap-2"
+                                >
+                                    🏢 Tenant Portal
+                                </button>
                                 <ThemeToggle />
                                 <span className="px-3 py-1 bg-sky-500 text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-sky-500/20">
                                     SUPER ADMIN
@@ -69,10 +99,14 @@ const SuperAdminPortal = () => {
             </div>
 
             <div className="max-w-7xl mx-auto p-8 space-y-8">
-                {activeTab === 'dashboard' ? <SuperAdminDashboard /> : <PlatformSettings />}
+                {activeTab === 'dashboard' && <SuperAdminDashboard />}
+                {activeTab === 'settings' && <PlatformSettings />}
+                {activeTab === 'sms' && <SmsGatewayManager />}
+                {activeTab === 'staging' && <StagingDashboard />}
             </div>
         </div>
     );
 };
 
 export default SuperAdminPortal;
+

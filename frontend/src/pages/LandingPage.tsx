@@ -80,7 +80,8 @@ const LandingPage = () => {
 
                     <div className="hidden md:flex items-center gap-8">
                         <a href="#features" className="text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">Features</a>
-                        <a href="#scaling" className="text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">Scaling</a>
+                        <button onClick={() => navigate('/customer')} className="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors">Client Portal</button>
+                        <button onClick={() => navigate('/captive-portal')} className="text-sm font-bold text-sky-600 hover:text-sky-800 transition-colors">Captive WiFi Portal</button>
                         <a href="#support" className="text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">Support</a>
                     </div>
 
@@ -89,7 +90,7 @@ const LandingPage = () => {
                             onClick={() => navigate('/login')}
                             className="text-sm font-bold text-slate-700 hover:text-indigo-600 transition-colors px-4 py-2"
                         >
-                            Tenant Login
+                            Sign In
                         </button>
                         <button
                             onClick={() => navigate('/register')}

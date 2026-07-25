@@ -176,40 +176,28 @@ const WalletPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] transition-colors duration-300">
-            {/* Header */}
-            <div className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                        <BackButton to="/tenant" label="Dashboard" variant="dark" />
-                        <div>
-                            <h1 className="text-2xl font-black flex items-center gap-2">
-                                <WalletIcon className="w-6 h-6 text-sky-500" /> My Treasury
-                            </h1>
-                            <p className="text-[var(--text-secondary)] font-bold text-sm">Auditable Funds & Real-time Ledger</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <ThemeToggle />
-                        <button
-                            onClick={() => { setShowWithdrawModal(true); setStep('REQUEST'); setMessage(''); }}
-                            className="flex items-center gap-2 px-6 py-2.5 bg-sky-600 text-white rounded-xl font-bold text-sm hover:bg-sky-500 transition-all active:scale-95 shadow-lg shadow-sky-500/20"
-                        >
-                            <Download className="w-4 h-4" /> Withdraw Funds
-                        </button>
-                        <button
-                            onClick={handleReconcile}
-                            disabled={isReconciling}
-                            className={`flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl font-bold text-sm transition-all ${isReconciling ? 'opacity-50' : 'hover:bg-slate-800 active:scale-95'}`}
-                        >
-                            <RefreshCw className={`w-4 h-4 ${isReconciling ? 'animate-spin' : ''}`} />
-                            {isReconciling ? 'Verifying Ledger...' : 'Audit Now'}
-                        </button>
-                    </div>
+        <div className="space-y-6">
+            {/* Page Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-xl font-bold flex items-center gap-2 text-[var(--text-primary)]">
+                        <WalletIcon className="w-5 h-5 text-sky-500" /> My Treasury
+                    </h1>
+                    <p className="text-[var(--text-secondary)] text-sm mt-0.5">Auditable Funds & Real-time Ledger</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => { setShowWithdrawModal(true); setStep('REQUEST'); setMessage(''); }}
+                        className="btn-primary"
+                    >
+                        <Download className="w-4 h-4" /> Withdraw Funds
+                    </button>
+                    <button onClick={handleReconcile} disabled={isReconciling} className="btn-secondary">
+                        <ShieldCheck className="w-4 h-4" /> {isReconciling ? 'Checking...' : 'Reconcile'}
+                    </button>
                 </div>
             </div>
-
-            <div className="max-w-7xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Balance Cards */}
                 <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div className="p-8 bg-slate-900 text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden group">

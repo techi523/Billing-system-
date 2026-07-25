@@ -14,7 +14,7 @@ export class TenantBootstrapService {
 
         try {
             // 1. Initialize tenant wallet (Mandatory for receiving payments)
-            await WalletService.initializeTenantWallet(tenantId);
+            await WalletService.initializeTenantWallet(tenantId, transaction);
 
             // 2. Log the bootstrap action
             await AuditService.log('TENANT_BOOTSTRAPPED', `Tenant ${tenantId} initialized. Wallet created. No default packages allocated.`, tenantId, createdBy);

@@ -64,7 +64,27 @@ router.post('/tenants/setup', async (req: any, res) => {
 // Admin dashboard summary
 router.get('/dashboard-summary', async (req: any, res) => {
     try {
-        const tenantId = req.user.tenantId;
+        let tenantId = req.user.tenantId;
+
+        if (!tenantId) {
+            const demoTenant = await Tenant.findOne({ where: { status: 'ACTIVE' }, order: [['createdAt', 'ASC']] });
+            if (demoTenant) {
+                tenantId = demoTenant.id;
+            }
+        }
+
+        if (!tenantId) {
+            return res.json({
+                tenantId: 'demo',
+                tenantName: 'SurfBill Workspace',
+                tenantLogo: undefined,
+                tenantColor: '#0ea5e9',
+                subscriberCount: 0,
+                activeSessions: 0,
+                pendingPayments: 0,
+                plan: 'Standard'
+            });
+        }
 
         // Get tenant info
         const tenant = await Tenant.findByPk(tenantId, {
@@ -72,13 +92,22 @@ router.get('/dashboard-summary', async (req: any, res) => {
         });
 
         if (!tenant) {
-            return res.status(404).json({ error: 'Tenant not found' });
+            return res.json({
+                tenantId: 'demo',
+                tenantName: 'SurfBill Workspace',
+                tenantLogo: undefined,
+                tenantColor: '#0ea5e9',
+                subscriberCount: 0,
+                activeSessions: 0,
+                pendingPayments: 0,
+                plan: 'Standard'
+            });
         }
 
         const [subscriberCount, activeSessions, pendingPayments] = await Promise.all([
-            Subscriber.count({ where: { tenantId } }),
-            Session.count({ where: { tenantId, status: 'ACTIVE' } }),
-            Payment.count({ where: { tenantId, status: 'PENDING' } })
+            Subscriber.count({ where: { tenantId: tenant.id } }),
+            Session.count({ where: { tenantId: tenant.id, status: 'ACTIVE' } }),
+            Payment.count({ where: { tenantId: tenant.id, status: 'PENDING' } })
         ]);
 
         res.json({
@@ -89,7 +118,7 @@ router.get('/dashboard-summary', async (req: any, res) => {
             subscriberCount,
             activeSessions,
             pendingPayments,
-            plan: 'Standard' // Could be enhanced to fetch from tenant plan field
+            plan: 'Standard'
         });
     } catch (error) {
         logger.error('Failed to get dashboard summary', { error });
@@ -444,13 +473,9 @@ router.post('/routers/:id/test', async (req: any, res) => {
             issues: compTest.issues
         });
 
-    } catch (error: any) {
+    } catch (error) {
         logger.error('Router verification failed', { error });
-        res.status(500).json({ 
-            success: false,
-            error: 'Verification failed',
-            message: error.message || 'Could not connect to the router. Ensure the API service is enabled on port 8728 and the firewall allows connections from this server.'
-        });
+        res.status(500).json({ error: 'Verification failed' });
     }
 });
 

@@ -13,7 +13,10 @@ export class MikroTikService {
     /**
      * Get a connection to a MikroTik router
      */
-    private static async getConnection(router: RouterModel): Promise<RouterOSClient> {
+    private static async getConnection(router: RouterModel): Promise<RouterOSClient | null> {
+        if (process.env.NODE_ENV === 'staging' || router.host === 'simulator') {
+            return null; // Signals to use simulator
+        }
         return new RouterOSClient({
             host: router.host,
             user: router.username,
@@ -21,6 +24,36 @@ export class MikroTikService {
             port: router.port || 8728,
             timeout: 10 // 10 seconds timeout
         });
+    }
+
+    private static async executeWithRetry<T>(
+        operation: () => Promise<T>,
+        retries: number = 3,
+        delayMs: number = 1500
+    ): Promise<T> {
+        let lastError: unknown;
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                return await operation();
+            } catch (error: unknown) {
+                lastError = error;
+                if (attempt < retries) {
+                    logger.warn(`MikroTik operation failed, retrying (${attempt}/${retries})...`, { error: this.parseError(error) });
+                    await new Promise(resolve => setTimeout(resolve, delayMs * attempt)); // Exponential backoff
+                }
+            }
+        }
+        throw lastError;
+    }
+
+    private static parseError(error: unknown): string {
+        if (error instanceof Error) {
+            return error.message || error.toString();
+        }
+        if (typeof error === 'object' && error !== null) {
+            return (error as any).message || JSON.stringify(error);
+        }
+        return String(error);
     }
 
     /**
@@ -32,25 +65,33 @@ export class MikroTikService {
         version?: string;
         identity?: string;
     }> {
-        const client = await this.getConnection(router);
         try {
-            const api = await client.connect();
+            return await this.executeWithRetry(async () => {
+                const client = await this.getConnection(router);
+                if (!client) {
+                    const sim = await require('./mikrotik-simulator.service').MikrotikSimulatorService.pingRouter(router.host, router.port || 8728);
+                    return {
+                        status: sim.success,
+                        message: 'Simulated connection successful',
+                        version: sim.version,
+                        identity: sim.identity
+                    };
+                }
 
-            // Get system info
-            const identity = await api.menu('/system/identity').get();
-            const resource = await api.menu('/system/resource').get();
+                const api = await client.connect();
+                const identity = await api.menu('/system/identity').get();
+                const resource = await api.menu('/system/resource').get();
+                await client.close();
 
-            await client.close();
-
-            return {
-                status: true,
-                message: 'Router connected successfully',
-                version: resource[0]?.version || 'Unknown',
-                identity: identity[0]?.name || 'Unknown'
-            };
-
+                return {
+                    status: true,
+                    message: 'Router connected successfully',
+                    version: resource[0]?.version || 'Unknown',
+                    identity: identity[0]?.name || 'Unknown'
+                };
+            });
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Connection failed';
+            const errorMessage = this.parseError(error);
             logger.error('MikroTik connection test failed', { host: router.host, error: errorMessage });
             return {
                 status: false,
@@ -67,50 +108,57 @@ export class MikroTikService {
         issues: string[];
         capabilities: MikroTikCapabilities;
     }> {
-        const client = await this.getConnection(router);
         try {
-            const api = await client.connect();
-
-            const issues: string[] = [];
-            const capabilities: MikroTikCapabilities = {
-                hotspot: false,
-                radius: false,
-                queues: true
-            };
-
-            // Check for hotspot server
-            try {
-                const hotspotServers = await api.menu('/ip/hotspot').get();
-                capabilities.hotspot = hotspotServers.length > 0;
-                if (!capabilities.hotspot) {
-                    issues.push('No Hotspot server configured');
+            return await this.executeWithRetry(async () => {
+                const client = await this.getConnection(router);
+                if (!client) {
+                    return {
+                        compatible: true,
+                        issues: [],
+                        capabilities: { hotspot: true, radius: true, queues: true }
+                    };
                 }
-            } catch (error) {
-                issues.push('Cannot access hotspot configuration');
-                capabilities.hotspot = false;
-            }
 
-            // Check for RADIUS client
-            try {
-                const radiusClients = await api.menu('/radius').get();
-                capabilities.radius = radiusClients.length > 0;
-            } catch (error) {
-                capabilities.radius = false;
-            }
+                const api = await client.connect();
 
-            // Check for queue support (usually always true)
-            capabilities.queues = true;
+                const issues: string[] = [];
+                const capabilities: MikroTikCapabilities = {
+                    hotspot: false,
+                    radius: false,
+                    queues: true
+                };
 
-            await client.close();
+                // Check for hotspot server
+                try {
+                    const hotspotServers = await api.menu('/ip/hotspot').get();
+                    capabilities.hotspot = hotspotServers.length > 0;
+                    if (!capabilities.hotspot) {
+                        issues.push('No Hotspot server configured');
+                    }
+                } catch (error) {
+                    issues.push('Cannot access hotspot configuration');
+                    capabilities.hotspot = false;
+                }
 
-            return {
-                compatible: issues.length === 0,
-                issues,
-                capabilities
-            };
+                // Check for RADIUS client
+                try {
+                    const radiusClients = await api.menu('/radius').get();
+                    capabilities.radius = radiusClients.length > 0;
+                } catch (error) {
+                    capabilities.radius = false;
+                }
 
+                capabilities.queues = true;
+                await client.close();
+
+                return {
+                    compatible: issues.length === 0,
+                    issues,
+                    capabilities
+                };
+            });
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = this.parseError(error);
             return {
                 compatible: false,
                 issues: ['Cannot connect to router: ' + errorMessage],
@@ -130,27 +178,37 @@ export class MikroTikService {
         profile: string = 'default',
         comment: string = 'Created by SurfBill'
     ): Promise<void> {
-        const client = await this.getConnection(router);
         try {
-            const api = await client.connect();
+            await this.executeWithRetry(async () => {
+                const client = await this.getConnection(router);
+                if (!client) {
+                    await require('./mikrotik-simulator.service').MikrotikSimulatorService.createHotspotUser({
+                        username, password, profile, comment
+                    });
+                    await this.logRouterAction(router.id, router.tenantId, 'CREATE_USER', 'SUCCESS', `User ${username} created (simulated)`);
+                    return;
+                }
 
-            const userData: MikroTikUserData = {
-                name: username,
-                password: password,
-                profile: profile,
-                comment: comment
-            };
+                const api = await client.connect();
 
-            if (macAddress) {
-                userData['mac-address'] = macAddress;
-            }
+                const userData: MikroTikUserData = {
+                    name: username,
+                    password: password,
+                    profile: profile,
+                    comment: comment
+                };
 
-            await api.menu('/ip/hotspot/user').add(userData as any);
-            await client.close();
+                if (macAddress) {
+                    userData['mac-address'] = macAddress;
+                }
 
-            await this.logRouterAction(router.id, router.tenantId, 'CREATE_USER', 'SUCCESS', `User ${username} created`);
+                await api.menu('/ip/hotspot/user').add(userData as any);
+                await client.close();
+
+                await this.logRouterAction(router.id, router.tenantId, 'CREATE_USER', 'SUCCESS', `User ${username} created`);
+            });
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = this.parseError(error);
             logger.error('Failed to create hotspot user', { routerId: router.id, username, error: errorMessage });
             await this.logRouterAction(router.id, router.tenantId, 'CREATE_USER', 'FAILED', `Failed to create user ${username}: ${errorMessage}`);
             throw error;
@@ -164,23 +222,30 @@ export class MikroTikService {
         router: RouterModel,
         username: string
     ): Promise<void> {
-        const client = await this.getConnection(router);
         try {
-            const api = await client.connect();
+            await this.executeWithRetry(async () => {
+                const client = await this.getConnection(router);
+                if (!client) {
+                    await this.logRouterAction(router.id, router.tenantId, 'DISCONNECT_USER', 'SUCCESS', `User ${username} disconnected (simulated)`);
+                    return;
+                }
 
-            const activeMenu = api.menu('/ip/hotspot/active');
-            const activeUsers = await activeMenu.where({ user: username }).get();
+                const api = await client.connect();
 
-            for (const session of activeUsers) {
-                await activeMenu.remove(session['.id']);
-            }
+                const activeMenu = api.menu('/ip/hotspot/active');
+                const activeUsers = await activeMenu.where({ user: username }).get();
 
-            await client.close();
-            await this.logRouterAction(router.id, router.tenantId, 'DISCONNECT_USER', 'SUCCESS', `User ${username} disconnected`);
+                for (const session of activeUsers) {
+                    await activeMenu.remove(session['.id']);
+                }
+
+                await client.close();
+                await this.logRouterAction(router.id, router.tenantId, 'DISCONNECT_USER', 'SUCCESS', `User ${username} disconnected`);
+            });
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = this.parseError(error);
             logger.error('Failed to disconnect user', { routerId: router.id, username, error: errorMessage });
-            throw error;
+            throw new Error(errorMessage);
         }
     }
 
@@ -188,26 +253,42 @@ export class MikroTikService {
      * Get active hotspot sessions
      */
     static async getActiveHotspotSessions(router: RouterModel): Promise<MikroTikSession[]> {
-        const client = await this.getConnection(router);
         try {
-            const api = await client.connect();
-            const sessions = await api.menu('/ip/hotspot/active').get();
-            await client.close();
+            return await this.executeWithRetry(async () => {
+                const client = await this.getConnection(router);
+                if (!client) {
+                    const simUsers = await require('./mikrotik-simulator.service').MikrotikSimulatorService.getHotspotUsers();
+                    return simUsers.map((u: any) => ({
+                        id: u.id,
+                        username: u.username,
+                        ipAddress: u.ipAddress,
+                        macAddress: u.macAddress,
+                        uptime: u.uptime,
+                        bytesIn: u.bytesIn,
+                        bytesOut: u.bytesOut,
+                        sessionTime: 'unlimited'
+                    }));
+                }
 
-            return sessions.map((s: any): MikroTikSession => ({
-                id: s['.id'],
-                username: s.user,
-                ipAddress: s.address,
-                macAddress: s['mac-address'],
-                uptime: s.uptime,
-                bytesIn: s['bytes-in'],
-                bytesOut: s['bytes-out'],
-                sessionTime: s['session-time-left']
-            }));
+                const api = await client.connect();
+                const sessions = await api.menu('/ip/hotspot/active').get();
+                await client.close();
+
+                return sessions.map((s: any): MikroTikSession => ({
+                    id: s['.id'],
+                    username: s.user,
+                    ipAddress: s.address,
+                    macAddress: s['mac-address'],
+                    uptime: s.uptime,
+                    bytesIn: s['bytes-in'],
+                    bytesOut: s['bytes-out'],
+                    sessionTime: s['session-time-left']
+                }));
+            });
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = this.parseError(error);
             logger.error('Failed to get hotspot sessions', { routerId: router.id, error: errorMessage });
-            throw error;
+            throw new Error(errorMessage);
         }
     }
 
@@ -215,22 +296,29 @@ export class MikroTikService {
      * Enable/disable hotspot user
      */
     static async toggleHotspotUser(router: RouterModel, username: string, enabled: boolean): Promise<void> {
-        const client = await this.getConnection(router);
         try {
-            const api = await client.connect();
-            const userMenu = api.menu('/ip/hotspot/user');
-            const users = await userMenu.where({ name: username }).get();
+            await this.executeWithRetry(async () => {
+                const client = await this.getConnection(router);
+                if (!client) {
+                    await this.logRouterAction(router.id, router.tenantId, 'TOGGLE_USER', 'SUCCESS', `User ${username} ${enabled ? 'enabled' : 'disabled'} (simulated)`);
+                    return;
+                }
 
-            if (users.length > 0) {
-                await userMenu.set({ disabled: !enabled }, users[0]['.id']);
-            }
+                const api = await client.connect();
+                const userMenu = api.menu('/ip/hotspot/user');
+                const users = await userMenu.where({ name: username }).get();
 
-            await client.close();
-            await this.logRouterAction(router.id, router.tenantId, 'TOGGLE_USER', 'SUCCESS', `User ${username} ${enabled ? 'enabled' : 'disabled'}`);
+                if (users.length > 0) {
+                    await userMenu.set({ disabled: !enabled }, users[0]['.id']);
+                }
+
+                await client.close();
+                await this.logRouterAction(router.id, router.tenantId, 'TOGGLE_USER', 'SUCCESS', `User ${username} ${enabled ? 'enabled' : 'disabled'}`);
+            });
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = this.parseError(error);
             logger.error('Failed to toggle user', { routerId: router.id, username, error: errorMessage });
-            throw error;
+            throw new Error(errorMessage);
         }
     }
 
@@ -238,39 +326,51 @@ export class MikroTikService {
      * Get router system resources
      */
     static async getSystemResources(router: RouterModel): Promise<MikroTikResource> {
-        const client = await this.getConnection(router);
         try {
-            const api = await client.connect();
-            const resource = await api.menu('/system/resource').get();
-            let temperature: number | null = null;
+            return await this.executeWithRetry(async () => {
+                const client = await this.getConnection(router);
+                if (!client) {
+                    return {
+                        cpuUsage: Math.floor(Math.random() * 20) + 1,
+                        memoryUsage: Math.floor(Math.random() * 30) + 10,
+                        diskUsage: 15,
+                        uptime: '14d 02:44:10',
+                        temperature: 42
+                    };
+                }
 
-            try {
-                const health = await api.menu('/system/health').get();
-                const tempObj = health.find((h: any) => h.name === 'temperature' || h.label === 'temperature');
-                temperature = tempObj ? parseInt(tempObj.value) : null;
-            } catch (e) {
-                // Health info might not be available on all models
-            }
+                const api = await client.connect();
+                const resource = await api.menu('/system/resource').get();
+                let temperature: number | null = null;
 
-            await client.close();
+                try {
+                    const health = await api.menu('/system/health').get();
+                    const tempObj = health.find((h: any) => h.name === 'temperature' || h.label === 'temperature');
+                    temperature = tempObj ? parseInt(tempObj.value) : null;
+                } catch (e) {
+                    // Health info might not be available on all models
+                }
 
-            const r = resource[0];
-            const totalMemory = parseInt(r['total-memory']);
-            const freeMemory = parseInt(r['free-memory']);
-            const totalHdd = parseInt(r['total-hdd-space']);
-            const freeHdd = parseInt(r['free-hdd-space']);
+                await client.close();
 
-            return {
-                cpuUsage: parseInt(r['cpu-load']),
-                memoryUsage: Math.round(((totalMemory - freeMemory) / totalMemory) * 100),
-                diskUsage: Math.round(((totalHdd - freeHdd) / totalHdd) * 100),
-                uptime: r.uptime,
-                temperature
-            };
+                const r = resource[0];
+                const totalMemory = parseInt(r['total-memory']);
+                const freeMemory = parseInt(r['free-memory']);
+                const totalHdd = parseInt(r['total-hdd-space']);
+                const freeHdd = parseInt(r['free-hdd-space']);
+
+                return {
+                    cpuUsage: parseInt(r['cpu-load']),
+                    memoryUsage: Math.round(((totalMemory - freeMemory) / totalMemory) * 100),
+                    diskUsage: Math.round(((totalHdd - freeHdd) / totalHdd) * 100),
+                    uptime: r.uptime,
+                    temperature
+                };
+            });
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = this.parseError(error);
             logger.error('Failed to get system resources', { routerId: router.id, error: errorMessage });
-            throw error;
+            throw new Error(errorMessage);
         }
     }
 
@@ -286,43 +386,50 @@ export class MikroTikService {
             transparentProxy?: boolean;
         }
     ): Promise<void> {
-        const client = await this.getConnection(router);
         try {
-            const api = await client.connect();
-            const profileMenu = api.menu('/ip/hotspot/user/profile');
+            await this.executeWithRetry(async () => {
+                const client = await this.getConnection(router);
+                if (!client) {
+                    await this.logRouterAction(router.id, router.tenantId, 'SYNC_PROFILE', 'SUCCESS', `Profile ${profileName} synced (simulated)`);
+                    return;
+                }
 
-            // Check if exists
-            const existing = await profileMenu.where({ name: profileName }).get();
+                const api = await client.connect();
+                const profileMenu = api.menu('/ip/hotspot/user/profile');
 
-            const profileData: any = {
-                name: profileName,
-                'shared-users': settings.sharedUsers?.toString() || '1',
-                // Default hotspot profile settings
-                'status-autorefresh': '1m',
-                'transparent-proxy': settings.transparentProxy ? 'yes' : 'no'
-            };
+                // Check if exists
+                const existing = await profileMenu.where({ name: profileName }).get();
 
-            if (settings.rateLimit) {
-                profileData['rate-limit'] = settings.rateLimit;
-            }
+                const profileData: any = {
+                    name: profileName,
+                    'shared-users': settings.sharedUsers?.toString() || '1',
+                    // Default hotspot profile settings
+                    'status-autorefresh': '1m',
+                    'transparent-proxy': settings.transparentProxy ? 'yes' : 'no'
+                };
 
-            if (existing.length > 0) {
-                // Update
-                await profileMenu.set(profileData, existing[0]['.id']);
-                logger.info('Updated MikroTik profile', { routerId: router.id, profileName });
-            } else {
-                // Create
-                await profileMenu.add(profileData);
-                logger.info('Created MikroTik profile', { routerId: router.id, profileName });
-            }
+                if (settings.rateLimit) {
+                    profileData['rate-limit'] = settings.rateLimit;
+                }
 
-            await client.close();
-            await this.logRouterAction(router.id, router.tenantId, 'SYNC_PROFILE', 'SUCCESS', `Profile ${profileName} synced`);
+                if (existing.length > 0) {
+                    // Update
+                    await profileMenu.set(profileData, existing[0]['.id']);
+                    logger.info('Updated MikroTik profile', { routerId: router.id, profileName });
+                } else {
+                    // Create
+                    await profileMenu.add(profileData);
+                    logger.info('Created MikroTik profile', { routerId: router.id, profileName });
+                }
+
+                await client.close();
+                await this.logRouterAction(router.id, router.tenantId, 'SYNC_PROFILE', 'SUCCESS', `Profile ${profileName} synced`);
+            });
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = this.parseError(error);
             logger.error('Failed to sync hotspot profile', { routerId: router.id, profileName, error: errorMessage });
             await this.logRouterAction(router.id, router.tenantId, 'SYNC_PROFILE', 'FAILED', `Failed to sync profile ${profileName}: ${errorMessage}`);
-            throw error;
+            throw new Error(errorMessage);
         }
     }
 
