@@ -116,7 +116,7 @@ const DashboardLayout: React.FC = () => {
     // Live data for top bar
     const [walletBalance, setWalletBalance] = useState<number>(0);
     const [smsBalance, setSmsBalance] = useState<number>(0);
-    const [unreadCount, setUnreadCount] = useState<number>(3);
+    const [unreadCount, setUnreadCount] = useState<number>(0);
 
     // Persist sidebar collapse
     useEffect(() => {
