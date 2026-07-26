@@ -34,6 +34,9 @@ import { ErrorHandler } from './middleware/error-handler';
 
 const app = express();
 
+// Trust proxy (required for Cloudflare / reverse proxy to resolve real client IPs)
+app.set('trust proxy', 1);
+
 // SECURITY HARDENING
 app.use(helmet({
     contentSecurityPolicy: {
@@ -75,21 +78,24 @@ const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 500,
     message: 'Too many requests, please try again later.',
+    validate: false,
 });
 app.use('/api/', globalLimiter);
 
 // STRICT RATE LIMITING (Auth & Payments)
 const strictLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200, // Increased for dev
+    max: 200,
     message: 'Security threshold reached. Please try again later.',
+    validate: false,
 });
 
 // SUPER ADMIN RATE LIMITING (Extra strict)
 const superAdminLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 100, // Increased for dev
+    windowMs: 60 * 60 * 1000,
+    max: 100,
     message: 'Super Admin access restricted. Please contact platform support.',
+    validate: false,
 });
 
 app.use(bodyParser.json({
@@ -128,9 +134,10 @@ app.use('/api/v1/sms', authMiddleware, TenantResolver.resolveTenant, smsRoutes);
 
 // WEBHOOK RATE LIMITING (Prevent webhook flooding)
 const webhookLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 100, // Max 100 webhook calls per minute per IP
+    windowMs: 60 * 1000,
+    max: 100,
     message: 'Webhook rate limit exceeded',
+    validate: false,
 });
 app.use('/api/v1/webhooks', webhookLimiter, webhookRoutes);
 app.use('/api/v1/aggregator', aggregatorCallbackRoutes);

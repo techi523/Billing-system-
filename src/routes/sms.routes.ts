@@ -15,7 +15,8 @@ const purchaseLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, // 5 minutes
     max: 5,
     message: 'Too many purchase attempts. Please try again in 5 minutes.',
-    keyGenerator: (req: any) => req.user?.tenantId || req.ip,
+    validate: false,
+    keyGenerator: (req: any) => req.user?.tenantId || (req.ip || '').replace(/^::ffff:/, ''),
 });
 
 // ================================================================
