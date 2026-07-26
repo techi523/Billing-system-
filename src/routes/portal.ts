@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Package, Payment, Tenant, Router as RouterModel, PlatformSetting } from '../models';
+import { Package, Payment, Tenant, Router as RouterModel, PlatformSetting, MarketingCoupon } from '../models';
 import { AggregatorService } from '../services/aggregator.service';
 import logger from '../utils/logger';
 import { body, validationResult } from 'express-validator';
@@ -70,6 +70,44 @@ router.post('/ads/:adId/track', async (req: any, res) => {
         res.json({ success: true });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// 0e. Verify & Redeem Captive Portal Promo Coupon
+router.post('/:tenantId/verify-coupon', async (req: any, res: any) => {
+    try {
+        const tenantId = req.params.tenantId;
+        const couponCode = (req.body.couponCode as string || '').toUpperCase().trim();
+
+        if (!couponCode) {
+            return res.status(400).json({ valid: false, message: 'Please enter a coupon code' });
+        }
+
+        const coupon = await MarketingCoupon.findOne({
+            where: { tenantId, couponCode, status: 'ACTIVE' }
+        });
+
+        if (!coupon) {
+            return res.status(404).json({ valid: false, message: 'Invalid or expired coupon code' });
+        }
+
+        if (coupon.currentUses >= coupon.maxUses) {
+            return res.status(400).json({ valid: false, message: 'Coupon max redemptions reached' });
+        }
+
+        if (coupon.expirationDate && new Date() > coupon.expirationDate) {
+            return res.status(400).json({ valid: false, message: 'Coupon code has expired' });
+        }
+
+        res.json({
+            valid: true,
+            couponCode: coupon.couponCode,
+            discountType: coupon.discountType,
+            discountValue: coupon.discountValue,
+            message: `Coupon applied! ${coupon.discountType === 'PERCENTAGE' ? `${coupon.discountValue}% OFF` : `KES ${coupon.discountValue} OFF`}`
+        });
+    } catch (error: any) {
+        res.status(500).json({ valid: false, message: error.message });
     }
 });
 

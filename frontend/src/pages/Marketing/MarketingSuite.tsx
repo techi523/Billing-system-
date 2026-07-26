@@ -608,6 +608,183 @@ const MarketingSuite: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* ─── CREATE COUPON MODAL ─── */}
+            {showCouponModal && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl max-w-md w-full shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+                        <h3 className="text-xl font-bold">Generate Promo Coupon</h3>
+                        <form onSubmit={handleCreateCoupon} className="space-y-3 text-sm">
+                            <div>
+                                <label className="block font-medium mb-1">Coupon Code (Leave blank for auto)</label>
+                                <input
+                                    type="text"
+                                    value={newCoupon.couponCode}
+                                    onChange={e => setNewCoupon({ ...newCoupon, couponCode: e.target.value.toUpperCase() })}
+                                    className="w-full px-3 py-2 rounded-xl border dark:bg-slate-700 font-mono"
+                                    placeholder="SURF-50OFF"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block font-medium mb-1">Discount Type</label>
+                                    <select
+                                        value={newCoupon.discountType}
+                                        onChange={e => setNewCoupon({ ...newCoupon, discountType: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border dark:bg-slate-700"
+                                    >
+                                        <option value="PERCENTAGE">Percentage (%)</option>
+                                        <option value="FIXED_AMOUNT">Fixed KES</option>
+                                        <option value="FREE_PACKAGE">Free Pass</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block font-medium mb-1">Discount Value</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={newCoupon.discountValue}
+                                        onChange={e => setNewCoupon({ ...newCoupon, discountValue: Number(e.target.value) })}
+                                        className="w-full px-3 py-2 rounded-xl border dark:bg-slate-700"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block font-medium mb-1">Validity (Days)</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={newCoupon.validityDays}
+                                        onChange={e => setNewCoupon({ ...newCoupon, validityDays: Number(e.target.value) })}
+                                        className="w-full px-3 py-2 rounded-xl border dark:bg-slate-700"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block font-medium mb-1">Max Redemptions</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={newCoupon.maxUses}
+                                        onChange={e => setNewCoupon({ ...newCoupon, maxUses: Number(e.target.value) })}
+                                        className="w-full px-3 py-2 rounded-xl border dark:bg-slate-700"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-3">
+                                <button type="button" onClick={() => setShowCouponModal(false)} className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700">Cancel</button>
+                                <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold">Generate & Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── CREATE QR CAMPAIGN MODAL ─── */}
+            {showQRModal && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl max-w-md w-full shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+                        <h3 className="text-xl font-bold">Create QR Code Campaign</h3>
+                        <form onSubmit={handleCreateQR} className="space-y-3 text-sm">
+                            <div>
+                                <label className="block font-medium mb-1">Campaign Title</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={newQR.title}
+                                    onChange={e => setNewQR({ ...newQR, title: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border dark:bg-slate-700"
+                                    placeholder="e.g. Lobby Wi-Fi QR Code"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block font-medium mb-1">Destination Type</label>
+                                <select
+                                    value={newQR.destinationType}
+                                    onChange={e => setNewQR({ ...newQR, destinationType: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border dark:bg-slate-700"
+                                >
+                                    <option value="WEBSITE">Website Link</option>
+                                    <option value="PACKAGE_PURCHASE">Package Purchase</option>
+                                    <option value="WHATSAPP">WhatsApp Support</option>
+                                    <option value="PAYMENT">Direct M-Pesa Payment</option>
+                                    <option value="LOCATION">Google Maps Location</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block font-medium mb-1">Target URL / Link</label>
+                                <input
+                                    type="url"
+                                    required
+                                    value={newQR.targetUrl}
+                                    onChange={e => setNewQR({ ...newQR, targetUrl: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border dark:bg-slate-700"
+                                    placeholder="https://yourwebsite.com"
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-3">
+                                <button type="button" onClick={() => setShowQRModal(false)} className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700">Cancel</button>
+                                <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold">Generate QR Code</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── CREATE LANDING PAGE MODAL ─── */}
+            {showLandingModal && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl max-w-md w-full shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+                        <h3 className="text-xl font-bold">Build Micro Landing Page</h3>
+                        <form onSubmit={handleCreateLanding} className="space-y-3 text-sm">
+                            <div>
+                                <label className="block font-medium mb-1">Page Title</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={newLanding.title}
+                                    onChange={e => setNewLanding({ ...newLanding, title: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border dark:bg-slate-700"
+                                    placeholder="e.g. VIP Member Signup"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block font-medium mb-1">Headline</label>
+                                <input
+                                    type="text"
+                                    value={newLanding.headline}
+                                    onChange={e => setNewLanding({ ...newLanding, headline: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border dark:bg-slate-700"
+                                    placeholder="Welcome to High Speed WiFi"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block font-medium mb-1">Body Content</label>
+                                <textarea
+                                    rows={3}
+                                    value={newLanding.bodyContent}
+                                    onChange={e => setNewLanding({ ...newLanding, bodyContent: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border dark:bg-slate-700"
+                                    placeholder="Describe your special promotion or event details..."
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-3">
+                                <button type="button" onClick={() => setShowLandingModal(false)} className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700">Cancel</button>
+                                <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold">Publish Landing Page</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -25,6 +25,28 @@ const CaptivePortal = () => {
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null);
     const [activeAd, setActiveAd] = useState<any | null>(null);
+    const [couponInput, setCouponInput] = useState('');
+    const [appliedCoupon, setAppliedCoupon] = useState<any | null>(null);
+    const [couponMsg, setCouponMsg] = useState('');
+
+    const handleVerifyCoupon = async () => {
+        if (!couponInput.trim()) return;
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tenantId = urlParams.get('tenantId');
+            const res = await axios.post(`/api/v1/portal/${tenantId}/verify-coupon`, { couponCode: couponInput });
+            if (res.data.valid) {
+                setAppliedCoupon(res.data);
+                setCouponMsg(res.data.message);
+            } else {
+                setAppliedCoupon(null);
+                setCouponMsg(res.data.message || 'Invalid coupon code');
+            }
+        } catch (e: any) {
+            setAppliedCoupon(null);
+            setCouponMsg(e.response?.data?.message || 'Invalid coupon code');
+        }
+    };
 
     useEffect(() => {
         const initPortal = async () => {
@@ -310,6 +332,31 @@ const CaptivePortal = () => {
                                 </div>
                             </motion.button>
                         ))}
+                    </div>
+
+                    {/* Promo Coupon Redemption Input */}
+                    <div className="mt-5 p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Have a Promo Coupon?</div>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={couponInput}
+                                onChange={e => setCouponInput(e.target.value.toUpperCase())}
+                                placeholder="Enter Promo Code"
+                                className="flex-1 px-3.5 py-2 text-xs font-mono bg-slate-900 border border-slate-700 rounded-xl text-white uppercase placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                            />
+                            <button
+                                onClick={handleVerifyCoupon}
+                                className="px-4 py-2 text-xs font-bold bg-sky-500 hover:bg-sky-400 text-white rounded-xl transition shadow-sm"
+                            >
+                                Redeem
+                            </button>
+                        </div>
+                        {couponMsg && (
+                            <div className={`text-xs font-semibold mt-1 ${appliedCoupon ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                {couponMsg}
+                            </div>
+                        )}
                     </div>
 
                     {/* Payment Status Display */}
