@@ -32,6 +32,8 @@ import CustomerPortal from './pages/CustomerPortal';
 import SMSCredits from './pages/SMSCredits';
 import ProfilePage from './pages/Profile';
 import MarketingSuite from './pages/Marketing/MarketingSuite';
+import SaaSMonetisationSuite from './pages/SuperAdmin/SaaSMonetisationSuite';
+import TenantBillingHub from './pages/TenantBillingHub';
 
 
 function App() {
@@ -121,6 +123,18 @@ function App() {
                                 <Route path="/tenant/profile" element={
                                     <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
                                         <ProfilePage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/tenant/subscription" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
+                                        <TenantBillingHub />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/superadmin/monetisation" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+                                        <SaaSMonetisationSuite />
                                     </ProtectedRoute>
                                 } />
 

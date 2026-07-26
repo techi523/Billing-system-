@@ -1664,4 +1664,290 @@ CustomerSegment.belongsTo(Tenant, { foreignKey: 'tenantId' });
 Tenant.hasOne(MarketingSetting, { foreignKey: 'tenantId' });
 MarketingSetting.belongsTo(Tenant, { foreignKey: 'tenantId' });
 
+// ─────────────────────────────────────────────────────────────
+// SAAS MONETISATION & SUBSCRIPTION MODELS
+// ─────────────────────────────────────────────────────────────
+
+export class SubscriptionPlan extends Model {
+  public id!: string;
+  public name!: string;
+  public slug!: string;
+  public description!: string;
+  public monthlyPriceCents!: number; // e.g. 150000 = KSh 1,500
+  public yearlyPriceCents!: number; // e.g. 1500000 = KSh 15,000
+  public maxActiveUsers!: number; // -1 for unlimited
+  public maxRouters!: number;
+  public maxStaff!: number;
+  public maxSMS!: number;
+  public maxCampaigns!: number;
+  public storageLimitMB!: number;
+  public apiAccess!: boolean;
+  public marketingFeatures!: boolean;
+  public analyticsFeatures!: boolean;
+  public supportLevel!: 'COMMUNITY' | 'STANDARD' | 'PRIORITY' | 'DEDICATED';
+  public isPopular!: boolean;
+  public isActive!: boolean;
+}
+
+SubscriptionPlan.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  name: { type: DataTypes.STRING, allowNull: false },
+  slug: { type: DataTypes.STRING, allowNull: false, unique: true },
+  description: { type: DataTypes.TEXT },
+  monthlyPriceCents: { type: DataTypes.BIGINT, defaultValue: 150000 },
+  yearlyPriceCents: { type: DataTypes.BIGINT, defaultValue: 1500000 },
+  maxActiveUsers: { type: DataTypes.INTEGER, defaultValue: 500 },
+  maxRouters: { type: DataTypes.INTEGER, defaultValue: 5 },
+  maxStaff: { type: DataTypes.INTEGER, defaultValue: 3 },
+  maxSMS: { type: DataTypes.INTEGER, defaultValue: 200 },
+  maxCampaigns: { type: DataTypes.INTEGER, defaultValue: 2 },
+  storageLimitMB: { type: DataTypes.INTEGER, defaultValue: 1024 },
+  apiAccess: { type: DataTypes.BOOLEAN, defaultValue: false },
+  marketingFeatures: { type: DataTypes.BOOLEAN, defaultValue: true },
+  analyticsFeatures: { type: DataTypes.BOOLEAN, defaultValue: true },
+  supportLevel: { type: DataTypes.ENUM('COMMUNITY', 'STANDARD', 'PRIORITY', 'DEDICATED'), defaultValue: 'STANDARD' },
+  isPopular: { type: DataTypes.BOOLEAN, defaultValue: false },
+  isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
+}, { sequelize, modelName: 'subscription_plan' });
+
+export class PlatformPricingConfig extends Model {
+  public id!: string;
+  public baseSubscriptionPriceCents!: number; // Default 150000 = KSh 1,500
+  public includedActiveUsers!: number;
+  public extraActiveUserPriceCents!: number;
+  public adMonthlyFeeCents!: number;
+  public adCampaignFeeCents!: number;
+  public adVideoFeeCents!: number;
+  public adBannerFeeCents!: number;
+  public adStorageFeeCents!: number;
+  public smsPriceCents!: number;
+  public emailPriceCents!: number;
+  public whatsappPriceCents!: number;
+  public extraRouterPriceCents!: number;
+  public vatPercentage!: number;
+  public gracePeriodDays!: number;
+  public trialPeriodDays!: number;
+  public latePaymentFeeCents!: number;
+}
+
+PlatformPricingConfig.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  baseSubscriptionPriceCents: { type: DataTypes.BIGINT, defaultValue: 150000 }, // KSh 1,500
+  includedActiveUsers: { type: DataTypes.INTEGER, defaultValue: 100 },
+  extraActiveUserPriceCents: { type: DataTypes.BIGINT, defaultValue: 1500 }, // KSh 15
+  adMonthlyFeeCents: { type: DataTypes.BIGINT, defaultValue: 500000 }, // KSh 5,000
+  adCampaignFeeCents: { type: DataTypes.BIGINT, defaultValue: 100000 }, // KSh 1,000
+  adVideoFeeCents: { type: DataTypes.BIGINT, defaultValue: 200000 }, // KSh 2,000
+  adBannerFeeCents: { type: DataTypes.BIGINT, defaultValue: 50000 }, // KSh 500
+  adStorageFeeCents: { type: DataTypes.BIGINT, defaultValue: 50000 }, // KSh 500 per GB
+  smsPriceCents: { type: DataTypes.BIGINT, defaultValue: 200 }, // KSh 2.00
+  emailPriceCents: { type: DataTypes.BIGINT, defaultValue: 50 }, // KSh 0.50
+  whatsappPriceCents: { type: DataTypes.BIGINT, defaultValue: 300 }, // KSh 3.00
+  extraRouterPriceCents: { type: DataTypes.BIGINT, defaultValue: 100000 }, // KSh 1,000
+  vatPercentage: { type: DataTypes.FLOAT, defaultValue: 16.0 },
+  gracePeriodDays: { type: DataTypes.INTEGER, defaultValue: 7 },
+  trialPeriodDays: { type: DataTypes.INTEGER, defaultValue: 14 },
+  latePaymentFeeCents: { type: DataTypes.BIGINT, defaultValue: 50000 }, // KSh 500
+}, { sequelize, modelName: 'platform_pricing_config' });
+
+export class TenantSubscription extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public planId!: string;
+  public status!: 'TRIAL' | 'ACTIVE' | 'GRACE_PERIOD' | 'OVERDUE' | 'SUSPENDED' | 'EXPIRED' | 'CANCELLED';
+  public billingCycle!: 'MONTHLY' | 'YEARLY';
+  public startDate!: Date;
+  public currentPeriodStart!: Date;
+  public currentPeriodEnd!: Date;
+  public gracePeriodEndDate!: Date | null;
+  public cancelledAt!: Date | null;
+  public trialEndDate!: Date | null;
+  public autoRenew!: boolean;
+}
+
+TenantSubscription.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  planId: { type: DataTypes.UUID, allowNull: false },
+  status: {
+    type: DataTypes.ENUM('TRIAL', 'ACTIVE', 'GRACE_PERIOD', 'OVERDUE', 'SUSPENDED', 'EXPIRED', 'CANCELLED'),
+    defaultValue: 'ACTIVE'
+  },
+  billingCycle: { type: DataTypes.ENUM('MONTHLY', 'YEARLY'), defaultValue: 'MONTHLY' },
+  startDate: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  currentPeriodStart: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  currentPeriodEnd: { type: DataTypes.DATE },
+  gracePeriodEndDate: { type: DataTypes.DATE },
+  cancelledAt: { type: DataTypes.DATE },
+  trialEndDate: { type: DataTypes.DATE },
+  autoRenew: { type: DataTypes.BOOLEAN, defaultValue: true },
+}, { sequelize, modelName: 'tenant_subscription' });
+
+export class TenantAddonModule extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public moduleName!: 'ADVERTISING' | 'SMS' | 'WHATSAPP' | 'EMAIL' | 'ADVANCED_ANALYTICS' | 'API_ACCESS' | 'WHITE_LABEL' | 'EXTRA_ROUTERS' | 'CUSTOM_DOMAINS' | 'BACKUPS';
+  public monthlyPriceCents!: number;
+  public yearlyPriceCents!: number;
+  public status!: 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'DISABLED';
+  public trialEndsAt!: Date | null;
+}
+
+TenantAddonModule.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  moduleName: {
+    type: DataTypes.ENUM('ADVERTISING', 'SMS', 'WHATSAPP', 'EMAIL', 'ADVANCED_ANALYTICS', 'API_ACCESS', 'WHITE_LABEL', 'EXTRA_ROUTERS', 'CUSTOM_DOMAINS', 'BACKUPS'),
+    allowNull: false
+  },
+  monthlyPriceCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  yearlyPriceCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  status: { type: DataTypes.ENUM('ACTIVE', 'TRIAL', 'EXPIRED', 'DISABLED'), defaultValue: 'ACTIVE' },
+  trialEndsAt: { type: DataTypes.DATE },
+}, { sequelize, modelName: 'tenant_addon_module' });
+
+export class SaaSInvoice extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public invoiceNumber!: string;
+  public billingPeriodStart!: Date;
+  public billingPeriodEnd!: Date;
+  public dueDate!: Date;
+  public subscriptionAmountCents!: number;
+  public usageAmountCents!: number;
+  public adAmountCents!: number;
+  public smsAmountCents!: number;
+  public emailAmountCents!: number;
+  public whatsappAmountCents!: number;
+  public extraRoutersAmountCents!: number;
+  public addonAmountCents!: number;
+  public taxAmountCents!: number;
+  public discountAmountCents!: number;
+  public lateFeeCents!: number;
+  public totalAmountCents!: number;
+  public paymentStatus!: 'UNPAID' | 'PAID' | 'OVERDUE' | 'FAILED' | 'CANCELLED';
+  public paidAt!: Date | null;
+  public paymentMethod!: string | null;
+  public paymentReference!: string | null;
+  public intasendCheckoutUrl!: string | null;
+  public invoicePdfUrl!: string | null;
+}
+
+SaaSInvoice.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  invoiceNumber: { type: DataTypes.STRING, allowNull: false, unique: true },
+  billingPeriodStart: { type: DataTypes.DATE, allowNull: false },
+  billingPeriodEnd: { type: DataTypes.DATE, allowNull: false },
+  dueDate: { type: DataTypes.DATE, allowNull: false },
+  subscriptionAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  usageAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  adAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  smsAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  emailAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  whatsappAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  extraRoutersAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  addonAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  taxAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  discountAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  lateFeeCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  totalAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  paymentStatus: {
+    type: DataTypes.ENUM('UNPAID', 'PAID', 'OVERDUE', 'FAILED', 'CANCELLED'),
+    defaultValue: 'UNPAID'
+  },
+  paidAt: { type: DataTypes.DATE },
+  paymentMethod: { type: DataTypes.STRING },
+  paymentReference: { type: DataTypes.STRING },
+  intasendCheckoutUrl: { type: DataTypes.TEXT },
+  invoicePdfUrl: { type: DataTypes.TEXT },
+}, { sequelize, modelName: 'saas_invoice' });
+
+export class SaaSInvoiceItem extends Model {
+  public id!: string;
+  public invoiceId!: string;
+  public description!: string;
+  public category!: 'SUBSCRIPTION' | 'USAGE' | 'ADVERTISING' | 'SMS' | 'EMAIL' | 'WHATSAPP' | 'ADDON' | 'TAX' | 'DISCOUNT' | 'LATE_FEE';
+  public quantity!: number;
+  public unitPriceCents!: number;
+  public totalPriceCents!: number;
+}
+
+SaaSInvoiceItem.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  invoiceId: { type: DataTypes.UUID, allowNull: false },
+  description: { type: DataTypes.STRING, allowNull: false },
+  category: {
+    type: DataTypes.ENUM('SUBSCRIPTION', 'USAGE', 'ADVERTISING', 'SMS', 'EMAIL', 'WHATSAPP', 'ADDON', 'TAX', 'DISCOUNT', 'LATE_FEE'),
+    allowNull: false
+  },
+  quantity: { type: DataTypes.INTEGER, defaultValue: 1 },
+  unitPriceCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  totalPriceCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+}, { sequelize, modelName: 'saas_invoice_item' });
+
+export class SaaSPayment extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public invoiceId!: string;
+  public amountCents!: number;
+  public gateway!: 'INTASEND' | 'MPESA' | 'WALLET';
+  public transactionReference!: string;
+  public rawPayload!: string | null; // JSON
+  public status!: 'PENDING' | 'SUCCESS' | 'FAILED';
+}
+
+SaaSPayment.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  invoiceId: { type: DataTypes.UUID, allowNull: false },
+  amountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  gateway: { type: DataTypes.ENUM('INTASEND', 'MPESA', 'WALLET'), defaultValue: 'INTASEND' },
+  transactionReference: { type: DataTypes.STRING, allowNull: false, unique: true },
+  rawPayload: { type: DataTypes.TEXT },
+  status: { type: DataTypes.ENUM('PENDING', 'SUCCESS', 'FAILED'), defaultValue: 'SUCCESS' },
+}, { sequelize, modelName: 'saas_payment' });
+
+export class SaaSNotification extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public type!: 'INVOICE_CREATED' | 'PAYMENT_RECEIVED' | 'PAYMENT_FAILED' | 'SUBSCRIPTION_EXPIRING' | 'SUBSCRIPTION_SUSPENDED' | 'TRIAL_ENDING' | 'GRACE_PERIOD_ENDING' | 'AD_CHARGES_APPLIED';
+  public title!: string;
+  public message!: string;
+  public read!: boolean;
+}
+
+SaaSNotification.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  type: {
+    type: DataTypes.ENUM('INVOICE_CREATED', 'PAYMENT_RECEIVED', 'PAYMENT_FAILED', 'SUBSCRIPTION_EXPIRING', 'SUBSCRIPTION_SUSPENDED', 'TRIAL_ENDING', 'GRACE_PERIOD_ENDING', 'AD_CHARGES_APPLIED'),
+    allowNull: false
+  },
+  title: { type: DataTypes.STRING, allowNull: false },
+  message: { type: DataTypes.TEXT, allowNull: false },
+  read: { type: DataTypes.BOOLEAN, defaultValue: false },
+}, { sequelize, modelName: 'saas_notification' });
+
+// SaaS Model Relationships
+Tenant.hasOne(TenantSubscription, { foreignKey: 'tenantId' });
+TenantSubscription.belongsTo(Tenant, { foreignKey: 'tenantId' });
+SubscriptionPlan.hasMany(TenantSubscription, { foreignKey: 'planId' });
+TenantSubscription.belongsTo(SubscriptionPlan, { foreignKey: 'planId' });
+
+Tenant.hasMany(TenantAddonModule, { foreignKey: 'tenantId' });
+TenantAddonModule.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Tenant.hasMany(SaaSInvoice, { foreignKey: 'tenantId' });
+SaaSInvoice.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+SaaSInvoice.hasMany(SaaSInvoiceItem, { foreignKey: 'invoiceId' });
+SaaSInvoiceItem.belongsTo(SaaSInvoice, { foreignKey: 'invoiceId' });
+
+Tenant.hasMany(SaaSPayment, { foreignKey: 'tenantId' });
+SaaSPayment.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Tenant.hasMany(SaaSNotification, { foreignKey: 'tenantId' });
+SaaSNotification.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
 export { sequelize };

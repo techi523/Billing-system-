@@ -10,7 +10,10 @@
   },
   "include": [
     "src/**/*",
-    "scripts/**/*",
-    "frontend/src/**/*"
+    "scripts/**/*"
+  ],
+  "exclude": [
+    "frontend/**/*",
+    "node_modules"
   ]
 }

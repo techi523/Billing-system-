@@ -22,6 +22,9 @@ import smsGatewayRoutes from './routes/sms-gateway.routes';
 import smsRoutes from './routes/sms.routes';
 import profileRoutes from './routes/profile.routes';
 import marketingRoutes from './routes/marketing.routes';
+import superAdminSaasRoutes from './routes/superadmin-saas.routes';
+import tenantSaasRoutes from './routes/tenant-saas.routes';
+import intasendWebhookRoutes from './routes/intasend-webhook.routes';
 import { IspService } from './services/isp.service';
 import { SettlementEngine } from './services/settlement-engine';
 import { TrafficMonitorService } from './services/traffic-monitor.service';
@@ -129,7 +132,9 @@ app.use('/api/v1/campaigns', authMiddleware, TenantResolver.resolveTenant, campa
 
 app.use('/api/v1/marketing', authMiddleware, TenantResolver.resolveTenant, marketingRoutes);
 app.use('/api/v1/superadmin', authMiddleware, superAdminLimiter, superadminRoutes);
+app.use('/api/v1/superadmin/saas', authMiddleware, superAdminLimiter, superAdminSaasRoutes);
 app.use('/api/v1/superadmin/sms', authMiddleware, superAdminLimiter, smsGatewayRoutes);
+app.use('/api/v1/tenant/saas', authMiddleware, TenantResolver.resolveTenant, tenantSaasRoutes);
 app.use('/api/v1/sms', authMiddleware, TenantResolver.resolveTenant, smsRoutes);
 
 // WEBHOOK RATE LIMITING (Prevent webhook flooding)
@@ -139,6 +144,7 @@ const webhookLimiter = rateLimit({
     message: 'Webhook rate limit exceeded',
     validate: false,
 });
+app.use('/api/v1/webhooks/saas', webhookLimiter, intasendWebhookRoutes);
 app.use('/api/v1/webhooks', webhookLimiter, webhookRoutes);
 app.use('/api/v1/aggregator', aggregatorCallbackRoutes);
 app.use('/api/v1/payments/callback', paymentCallbackRoutes);

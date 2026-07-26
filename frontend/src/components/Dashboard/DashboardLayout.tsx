@@ -121,6 +121,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
     '/tenant/marketing/reports': 'Marketing Reports',
     '/tenant/marketing/settings': 'Marketing Settings',
     '/tenant/wallet': 'Wallet & Treasury',
+    '/tenant/subscription': 'Subscription & Invoices',
     '/tenant/profile': 'Profile & Settings',
 
 };
