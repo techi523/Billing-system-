@@ -35,6 +35,22 @@ router.get('/dashboard/summary', async (req: any, res: any) => {
             timestamp: c.updatedAt || new Date()
         }));
 
+        const topPerformingAds = await Promise.all(
+            campaigns.slice(0, 5).map(async c => {
+                const impressions = await AdAnalytic.count({ where: { tenantId, campaignId: c.id, eventType: 'IMPRESSION' } });
+                const clicks = await AdAnalytic.count({ where: { tenantId, campaignId: c.id, eventType: 'CLICK' } });
+                const ctr = impressions > 0 ? ((clicks / impressions) * 100).toFixed(2) + '%' : '0.00%';
+                return {
+                    id: c.id,
+                    name: c.name,
+                    campaignType: c.campaignType,
+                    impressions,
+                    clicks,
+                    ctr
+                };
+            })
+        );
+
         res.json({
             runningCampaigns: running,
             scheduledCampaigns: scheduled,
@@ -48,14 +64,7 @@ router.get('/dashboard/summary', async (req: any, res: any) => {
             revenueGenerated: metrics.totalRevenueCents / 100,
             couponsRedeemed,
             recentActivity,
-            topPerformingAds: campaigns.slice(0, 5).map(c => ({
-                id: c.id,
-                name: c.name,
-                campaignType: c.campaignType,
-                impressions: Math.floor(Math.random() * 5000) + 1200,
-                clicks: Math.floor(Math.random() * 400) + 80,
-                ctr: (Math.random() * 5 + 2).toFixed(2) + '%'
-            }))
+            topPerformingAds
         });
     } catch (error: any) {
         logger.error('Failed to load marketing dashboard summary', { tenantId: getTenantId(req), error: error.message });
@@ -367,7 +376,7 @@ router.post('/customer-segments', [
             name: req.body.name,
             description: req.body.description || '',
             rules: req.body.rules ? JSON.stringify(req.body.rules) : JSON.stringify({}),
-            memberCount: Math.floor(Math.random() * 300) + 20
+            memberCount: 0
         });
 
         res.status(201).json(segment);

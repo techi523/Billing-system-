@@ -2,6 +2,8 @@ import { AdCampaign, MediaItem, MarketingCoupon, QRCampaign, MarketingLandingPag
 import logger from '../utils/logger';
 import { Op } from 'sequelize';
 
+import crypto from 'crypto';
+
 export interface ClientAdContext {
     displayRule?: string; // e.g. 'BEFORE_LOGIN', 'AFTER_LOGIN', 'PAYMENT_SUCCESS'
     routerId?: string;
@@ -249,7 +251,7 @@ export class MarketingService {
     // 4. COUPON & QR CODE GENERATION ENGINE
     // ─────────────────────────────────────────────────────────────
     public static generateCouponCode(prefix: string = 'SURF'): string {
-        const randomStr = Math.random().toString(36).substring(2, 7).toUpperCase();
+        const randomStr = crypto.randomBytes(3).toString('hex').toUpperCase();
         return `${prefix}-${randomStr}`;
     }
 
