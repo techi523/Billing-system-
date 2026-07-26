@@ -24,6 +24,7 @@ const CaptivePortal = () => {
     const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'waiting_pin' | 'success' | 'failed'>('idle');
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null);
+    const [activeAd, setActiveAd] = useState<any | null>(null);
 
     useEffect(() => {
         const initPortal = async () => {
@@ -44,6 +45,21 @@ const CaptivePortal = () => {
                 // Fetch Packages
                 const res = await axios.get(`/api/v1/portal/${tenantId}/packages`);
                 setPackages(Array.isArray(res.data) ? res.data : []);
+
+                // Fetch Advertisements Asynchronously (Non-blocking fallback)
+                axios.get(`/api/v1/portal/${tenantId}/ads?displayRule=BEFORE_LOGIN`)
+                    .then(adRes => {
+                        if (Array.isArray(adRes.data) && adRes.data.length > 0) {
+                            setActiveAd(adRes.data[0]);
+                            // Log Impression
+                            axios.post(`/api/v1/portal/ads/${adRes.data[0].id}/track`, {
+                                tenantId,
+                                eventType: 'IMPRESSION'
+                            }).catch(() => { });
+                        }
+                    })
+                    .catch(() => { });
+
                 setLoading(false);
             } catch {
                 setErrorMessage('Failed to connect to network services');
@@ -216,6 +232,35 @@ const CaptivePortal = () => {
                     transition={{ delay: 0.2, duration: 0.6 }}
                     className="glass-panel-dark rounded-[2.5rem] p-8"
                 >
+                    {/* Dynamic Advertisement Banner (Asynchronous & Resilient) */}
+                    {activeAd && (
+                        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-blue-600/30 to-indigo-600/30 border border-blue-500/30 text-left relative overflow-hidden">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-sky-400 bg-sky-500/20 px-2 py-0.5 rounded-md">Sponsored</span>
+                            {activeAd.headline && <h3 className="text-sm font-bold text-white mt-1">{activeAd.headline}</h3>}
+                            {activeAd.subheading && <p className="text-xs text-slate-300 mt-0.5">{activeAd.subheading}</p>}
+                            {activeAd.destinationUrl && (
+                                <a
+                                    href={activeAd.destinationUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={() => {
+                                        const urlParams = new URLSearchParams(window.location.search);
+                                        const tenantId = urlParams.get('tenantId');
+                                        if (tenantId) {
+                                            axios.post(`/api/v1/portal/ads/${activeAd.id}/track`, {
+                                                tenantId,
+                                                eventType: 'CLICK'
+                                            }).catch(() => { });
+                                        }
+                                    }}
+                                    className="inline-block mt-3 px-3.5 py-1.5 text-xs font-bold bg-sky-500 hover:bg-sky-400 text-white rounded-xl transition shadow-sm"
+                                >
+                                    {activeAd.buttonText || 'Learn More'}
+                                </a>
+                            )}
+                        </div>
+                    )}
+
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h2 className="text-lg font-black text-white tracking-tight">Select Bandwidth</h2>

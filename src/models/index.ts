@@ -1329,4 +1329,339 @@ TenantDocument.belongsTo(Tenant, { foreignKey: 'tenantId' });
 Tenant.hasMany(TenantWithdrawal, { foreignKey: 'tenantId' });
 TenantWithdrawal.belongsTo(Tenant, { foreignKey: 'tenantId' });
 
+// ─────────────────────────────────────────────────────────────────
+// CAPTIVE PORTAL ADVERTISING & MARKETING PLATFORM MODELS
+// ─────────────────────────────────────────────────────────────────
+
+export class AdCampaign extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public name!: string;
+  public description!: string | null;
+  public campaignType!: 'IMAGE_BANNER' | 'VIDEO_AD' | 'CAROUSEL' | 'POPUP' | 'FULLSCREEN_SPLASH' | 'HTML_AD' | 'GIF_AD' | 'TEXT_ANNOUNCEMENT' | 'SCROLLING_MARQUEE' | 'COUPON_CARD' | 'QR_PROMOTION' | 'COUNTDOWN_PROMOTION';
+  public mediaUrls!: string | null; // JSON array of string URLs
+  public headline!: string | null;
+  public subheading!: string | null;
+  public buttonText!: string | null;
+  public destinationUrl!: string | null;
+  public whatsappLink!: string | null;
+  public facebookLink!: string | null;
+  public instagramLink!: string | null;
+  public tiktokLink!: string | null;
+  public emailLink!: string | null;
+  public ctaType!: 'VISIT_WEBSITE' | 'BUY_NOW' | 'CALL_NOW' | 'WHATSAPP' | 'MESSENGER' | 'DOWNLOAD_APP' | 'LEARN_MORE' | 'REDEEM_COUPON' | 'OPEN_MAPS';
+  public priority!: number;
+  public status!: 'DRAFT' | 'SCHEDULED' | 'RUNNING' | 'PAUSED' | 'EXPIRED' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+  public budget!: number; // stored in cents/smallest currency unit
+  public spentBudget!: number;
+  public displayRules!: string | null; // JSON array: BEFORE_LOGIN, AFTER_LOGIN, DURING_SESSION, LOGOUT, WELCOME, VOUCHER_SUCCESS, PACKAGE_PURCHASE, PAYMENT_SUCCESS
+  public startDate!: Date | null;
+  public endDate!: Date | null;
+  public startTime!: string | null;
+  public endTime!: string | null;
+  public daysOfWeek!: string | null; // JSON array e.g. ["MON", "TUE"]
+  public isRecurring!: boolean;
+  public targeting!: string | null; // JSON object: routerIds, locationNames, branchIds, packageIds, subscriberGroups, customerTypes, deviceTypes, OS, browsers, languages, countries, timeOfDay
+  public rotationType!: 'SINGLE' | 'RANDOM' | 'PRIORITY' | 'WEIGHTED' | 'SEQUENTIAL';
+  public weight!: number;
+  public abTestEnabled!: boolean;
+  public abVariant!: string | null;
+  public abSiblingId!: string | null;
+  public marketingTrigger!: string | null; // JSON object: triggers for automated campaigns
+  public approvalStatus!: 'PENDING' | 'APPROVED' | 'REJECTED';
+  public approvedBy!: string | null;
+  public createdAt!: Date;
+  public updatedAt!: Date;
+}
+
+AdCampaign.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  name: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT },
+  campaignType: {
+    type: DataTypes.ENUM(
+      'IMAGE_BANNER', 'VIDEO_AD', 'CAROUSEL', 'POPUP', 'FULLSCREEN_SPLASH',
+      'HTML_AD', 'GIF_AD', 'TEXT_ANNOUNCEMENT', 'SCROLLING_MARQUEE', 'COUPON_CARD',
+      'QR_PROMOTION', 'COUNTDOWN_PROMOTION'
+    ),
+    defaultValue: 'IMAGE_BANNER'
+  },
+  mediaUrls: { type: DataTypes.TEXT },
+  headline: { type: DataTypes.STRING },
+  subheading: { type: DataTypes.STRING },
+  buttonText: { type: DataTypes.STRING, defaultValue: 'Learn More' },
+  destinationUrl: { type: DataTypes.TEXT },
+  whatsappLink: { type: DataTypes.TEXT },
+  facebookLink: { type: DataTypes.TEXT },
+  instagramLink: { type: DataTypes.TEXT },
+  tiktokLink: { type: DataTypes.TEXT },
+  emailLink: { type: DataTypes.TEXT },
+  ctaType: {
+    type: DataTypes.ENUM(
+      'VISIT_WEBSITE', 'BUY_NOW', 'CALL_NOW', 'WHATSAPP', 'MESSENGER',
+      'DOWNLOAD_APP', 'LEARN_MORE', 'REDEEM_COUPON', 'OPEN_MAPS'
+    ),
+    defaultValue: 'LEARN_MORE'
+  },
+  priority: { type: DataTypes.INTEGER, defaultValue: 1 },
+  status: {
+    type: DataTypes.ENUM('DRAFT', 'SCHEDULED', 'RUNNING', 'PAUSED', 'EXPIRED', 'APPROVED', 'REJECTED', 'SUSPENDED'),
+    defaultValue: 'RUNNING'
+  },
+  budget: { type: DataTypes.BIGINT, defaultValue: 0 },
+  spentBudget: { type: DataTypes.BIGINT, defaultValue: 0 },
+  displayRules: { type: DataTypes.TEXT },
+  startDate: { type: DataTypes.DATE },
+  endDate: { type: DataTypes.DATE },
+  startTime: { type: DataTypes.STRING },
+  endTime: { type: DataTypes.STRING },
+  daysOfWeek: { type: DataTypes.TEXT },
+  isRecurring: { type: DataTypes.BOOLEAN, defaultValue: false },
+  targeting: { type: DataTypes.TEXT },
+  rotationType: {
+    type: DataTypes.ENUM('SINGLE', 'RANDOM', 'PRIORITY', 'WEIGHTED', 'SEQUENTIAL'),
+    defaultValue: 'PRIORITY'
+  },
+  weight: { type: DataTypes.FLOAT, defaultValue: 1.0 },
+  abTestEnabled: { type: DataTypes.BOOLEAN, defaultValue: false },
+  abVariant: { type: DataTypes.STRING },
+  abSiblingId: { type: DataTypes.UUID },
+  marketingTrigger: { type: DataTypes.TEXT },
+  approvalStatus: {
+    type: DataTypes.ENUM('PENDING', 'APPROVED', 'REJECTED'),
+    defaultValue: 'APPROVED'
+  },
+  approvedBy: { type: DataTypes.UUID },
+}, { sequelize, modelName: 'ad_campaign' });
+
+export class MediaItem extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public fileName!: string;
+  public fileUrl!: string;
+  public fileType!: 'IMAGE' | 'VIDEO' | 'GIF' | 'PDF' | 'LOGO' | 'ICON';
+  public fileSize!: number;
+  public mimeType!: string;
+  public dimensions!: string | null;
+  public duration!: number | null;
+  public thumbnailUrl!: string | null;
+  public metadata!: string | null;
+}
+
+MediaItem.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  fileName: { type: DataTypes.STRING, allowNull: false },
+  fileUrl: { type: DataTypes.TEXT, allowNull: false },
+  fileType: { type: DataTypes.ENUM('IMAGE', 'VIDEO', 'GIF', 'PDF', 'LOGO', 'ICON'), defaultValue: 'IMAGE' },
+  fileSize: { type: DataTypes.INTEGER, defaultValue: 0 },
+  mimeType: { type: DataTypes.STRING },
+  dimensions: { type: DataTypes.STRING },
+  duration: { type: DataTypes.INTEGER, defaultValue: 0 },
+  thumbnailUrl: { type: DataTypes.TEXT },
+  metadata: { type: DataTypes.TEXT },
+}, { sequelize, modelName: 'media_item' });
+
+export class MarketingCoupon extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public campaignId!: string | null;
+  public couponCode!: string;
+  public discountType!: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_PACKAGE';
+  public discountValue!: number;
+  public validityDays!: number;
+  public maxUses!: number;
+  public currentUses!: number;
+  public expirationDate!: Date | null;
+  public applicablePackageIds!: string | null; // JSON array
+  public qrCodeUrl!: string | null;
+  public status!: 'ACTIVE' | 'EXPIRED' | 'EXHAUSTED';
+}
+
+MarketingCoupon.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  campaignId: { type: DataTypes.UUID },
+  couponCode: { type: DataTypes.STRING, allowNull: false },
+  discountType: { type: DataTypes.ENUM('PERCENTAGE', 'FIXED_AMOUNT', 'FREE_PACKAGE'), defaultValue: 'PERCENTAGE' },
+  discountValue: { type: DataTypes.BIGINT, defaultValue: 0 },
+  validityDays: { type: DataTypes.INTEGER, defaultValue: 30 },
+  maxUses: { type: DataTypes.INTEGER, defaultValue: 100 },
+  currentUses: { type: DataTypes.INTEGER, defaultValue: 0 },
+  expirationDate: { type: DataTypes.DATE },
+  applicablePackageIds: { type: DataTypes.TEXT },
+  qrCodeUrl: { type: DataTypes.TEXT },
+  status: { type: DataTypes.ENUM('ACTIVE', 'EXPIRED', 'EXHAUSTED'), defaultValue: 'ACTIVE' },
+}, { sequelize, modelName: 'marketing_coupon' });
+
+export class QRCampaign extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public title!: string;
+  public destinationType!: 'WEBSITE' | 'PACKAGE_PURCHASE' | 'WHATSAPP' | 'PAYMENT' | 'LOCATION' | 'PROMOTION';
+  public targetUrl!: string;
+  public qrCodeUrl!: string;
+  public scansCount!: number;
+}
+
+QRCampaign.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  title: { type: DataTypes.STRING, allowNull: false },
+  destinationType: {
+    type: DataTypes.ENUM('WEBSITE', 'PACKAGE_PURCHASE', 'WHATSAPP', 'PAYMENT', 'LOCATION', 'PROMOTION'),
+    defaultValue: 'WEBSITE'
+  },
+  targetUrl: { type: DataTypes.TEXT, allowNull: false },
+  qrCodeUrl: { type: DataTypes.TEXT, allowNull: false },
+  scansCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+}, { sequelize, modelName: 'qr_campaign' });
+
+export class MarketingLandingPage extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public slug!: string;
+  public title!: string;
+  public logoUrl!: string | null;
+  public bannerUrl!: string | null;
+  public videoUrl!: string | null;
+  public headline!: string | null;
+  public bodyContent!: string | null;
+  public ctaButtonText!: string | null;
+  public ctaUrl!: string | null;
+  public contactInfo!: string | null; // JSON
+  public mapEmbedUrl!: string | null;
+  public countdownEndDate!: Date | null;
+  public testimonials!: string | null; // JSON array
+  public status!: 'DRAFT' | 'PUBLISHED';
+  public publishedAt!: Date | null;
+}
+
+MarketingLandingPage.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  slug: { type: DataTypes.STRING, allowNull: false },
+  title: { type: DataTypes.STRING, allowNull: false },
+  logoUrl: { type: DataTypes.TEXT },
+  bannerUrl: { type: DataTypes.TEXT },
+  videoUrl: { type: DataTypes.TEXT },
+  headline: { type: DataTypes.STRING },
+  bodyContent: { type: DataTypes.TEXT },
+  ctaButtonText: { type: DataTypes.STRING, defaultValue: 'Get Started' },
+  ctaUrl: { type: DataTypes.TEXT },
+  contactInfo: { type: DataTypes.TEXT },
+  mapEmbedUrl: { type: DataTypes.TEXT },
+  countdownEndDate: { type: DataTypes.DATE },
+  testimonials: { type: DataTypes.TEXT },
+  status: { type: DataTypes.ENUM('DRAFT', 'PUBLISHED'), defaultValue: 'DRAFT' },
+  publishedAt: { type: DataTypes.DATE },
+}, { sequelize, modelName: 'marketing_landing_page' });
+
+export class AdAnalytic extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public campaignId!: string;
+  public eventType!: 'IMPRESSION' | 'VIEW' | 'UNIQUE_VIEW' | 'CLICK' | 'VIDEO_COMPLETE' | 'CONVERSION';
+  public revenue!: number; // stored in cents
+  public deviceType!: string | null;
+  public browser!: string | null;
+  public os!: string | null;
+  public country!: string | null;
+  public city!: string | null;
+  public routerId!: string | null;
+  public packageId!: string | null;
+  public sessionDuration!: number;
+  public ipAddress!: string | null;
+  public macAddress!: string | null;
+}
+
+AdAnalytic.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  campaignId: { type: DataTypes.UUID, allowNull: false },
+  eventType: {
+    type: DataTypes.ENUM('IMPRESSION', 'VIEW', 'UNIQUE_VIEW', 'CLICK', 'VIDEO_COMPLETE', 'CONVERSION'),
+    allowNull: false
+  },
+  revenue: { type: DataTypes.BIGINT, defaultValue: 0 },
+  deviceType: { type: DataTypes.STRING },
+  browser: { type: DataTypes.STRING },
+  os: { type: DataTypes.STRING },
+  country: { type: DataTypes.STRING },
+  city: { type: DataTypes.STRING },
+  routerId: { type: DataTypes.UUID },
+  packageId: { type: DataTypes.UUID },
+  sessionDuration: { type: DataTypes.INTEGER, defaultValue: 0 },
+  ipAddress: { type: DataTypes.STRING },
+  macAddress: { type: DataTypes.STRING },
+}, { sequelize, modelName: 'ad_analytic' });
+
+export class CustomerSegment extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public name!: string;
+  public description!: string | null;
+  public rules!: string | null; // JSON object: criteria
+  public memberCount!: number;
+}
+
+CustomerSegment.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  name: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT },
+  rules: { type: DataTypes.TEXT },
+  memberCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+}, { sequelize, modelName: 'customer_segment' });
+
+export class MarketingSetting extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public maxUploadSizeBytes!: number;
+  public supportedFormats!: string | null; // JSON array
+  public defaultImpressionsLimit!: number;
+  public autoApproveAds!: boolean;
+  public moduleEnabled!: boolean;
+}
+
+MarketingSetting.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  maxUploadSizeBytes: { type: DataTypes.BIGINT, defaultValue: 52428800 }, // 50MB
+  supportedFormats: { type: DataTypes.TEXT, defaultValue: JSON.stringify(['jpg', 'png', 'gif', 'mp4', 'pdf', 'webp']) },
+  defaultImpressionsLimit: { type: DataTypes.INTEGER, defaultValue: 50000 },
+  autoApproveAds: { type: DataTypes.BOOLEAN, defaultValue: true },
+  moduleEnabled: { type: DataTypes.BOOLEAN, defaultValue: true },
+}, { sequelize, modelName: 'marketing_setting' });
+
+// Marketing Model Relationships
+Tenant.hasMany(AdCampaign, { foreignKey: 'tenantId' });
+AdCampaign.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Tenant.hasMany(MediaItem, { foreignKey: 'tenantId' });
+MediaItem.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Tenant.hasMany(MarketingCoupon, { foreignKey: 'tenantId' });
+MarketingCoupon.belongsTo(Tenant, { foreignKey: 'tenantId' });
+AdCampaign.hasMany(MarketingCoupon, { foreignKey: 'campaignId' });
+MarketingCoupon.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+
+Tenant.hasMany(QRCampaign, { foreignKey: 'tenantId' });
+QRCampaign.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Tenant.hasMany(MarketingLandingPage, { foreignKey: 'tenantId' });
+MarketingLandingPage.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Tenant.hasMany(AdAnalytic, { foreignKey: 'tenantId' });
+AdAnalytic.belongsTo(Tenant, { foreignKey: 'tenantId' });
+AdCampaign.hasMany(AdAnalytic, { foreignKey: 'campaignId' });
+AdAnalytic.belongsTo(AdCampaign, { foreignKey: 'campaignId' });
+
+Tenant.hasMany(CustomerSegment, { foreignKey: 'tenantId' });
+CustomerSegment.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Tenant.hasOne(MarketingSetting, { foreignKey: 'tenantId' });
+MarketingSetting.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
 export { sequelize };

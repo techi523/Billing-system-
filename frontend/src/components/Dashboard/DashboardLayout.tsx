@@ -68,6 +68,22 @@ const MENU_SECTIONS: MenuSection[] = [
         ]
     },
     {
+        label: 'Marketing',
+        items: [
+            { id: 'mkt-dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/tenant/marketing/dashboard' },
+            { id: 'mkt-campaigns', label: 'Advertisement Campaigns', icon: Radio, path: '/tenant/marketing/campaigns' },
+            { id: 'mkt-portal-ads', label: 'Captive Portal Ads', icon: Globe, path: '/tenant/marketing/captive-ads' },
+            { id: 'mkt-promotions', label: 'Promotions', icon: Zap, path: '/tenant/marketing/promotions' },
+            { id: 'mkt-coupons', label: 'Coupons', icon: CreditCard, path: '/tenant/marketing/coupons' },
+            { id: 'mkt-segments', label: 'Customer Segments', icon: Users, path: '/tenant/marketing/customer-segments' },
+            { id: 'mkt-landing-pages', label: 'Landing Pages', icon: FileText, path: '/tenant/marketing/landing-pages' },
+            { id: 'mkt-qr-campaigns', label: 'QR Campaigns', icon: Radio, path: '/tenant/marketing/qr-campaigns' },
+            { id: 'mkt-analytics', label: 'Analytics', icon: BarChart3, path: '/tenant/marketing/analytics' },
+            { id: 'mkt-reports', label: 'Reports', icon: FileText, path: '/tenant/marketing/reports' },
+            { id: 'mkt-settings', label: 'Settings', icon: Settings, path: '/tenant/marketing/settings' },
+        ]
+    },
+    {
         label: 'Finance',
         items: [
             { id: 'wallet', label: 'Wallet & Treasury', icon: Wallet, path: '/tenant/wallet' },
@@ -93,6 +109,17 @@ const BREADCRUMB_MAP: Record<string, string> = {
     '/tenant/mikrotik': 'MikroTik Routers',
     '/tenant/campaigns': 'Campaigns',
     '/tenant/communication': 'SMS Credits',
+    '/tenant/marketing/dashboard': 'Marketing Dashboard',
+    '/tenant/marketing/campaigns': 'Advertisement Campaigns',
+    '/tenant/marketing/captive-ads': 'Captive Portal Ads',
+    '/tenant/marketing/promotions': 'Promotions',
+    '/tenant/marketing/coupons': 'Coupons',
+    '/tenant/marketing/customer-segments': 'Customer Segments',
+    '/tenant/marketing/landing-pages': 'Landing Pages',
+    '/tenant/marketing/qr-campaigns': 'QR Campaigns',
+    '/tenant/marketing/analytics': 'Marketing Analytics',
+    '/tenant/marketing/reports': 'Marketing Reports',
+    '/tenant/marketing/settings': 'Marketing Settings',
     '/tenant/wallet': 'Wallet & Treasury',
     '/tenant/profile': 'Profile & Settings',
 

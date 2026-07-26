@@ -4,6 +4,7 @@ import { AggregatorService } from '../services/aggregator.service';
 import logger from '../utils/logger';
 import { body, validationResult } from 'express-validator';
 import { handleValidationErrors } from '../middleware/validation';
+import { MarketingService } from '../services/marketing.service';
 
 const router = Router();
 
@@ -25,6 +26,53 @@ router.get('/config/:subdomain', async (req, res) => {
     if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
     res.json(tenant);
 });
+
+// 0c. Get Eligible Captive Portal Ads (Asynchronous & Resilient)
+router.get('/:tenantId/ads', async (req: any, res) => {
+    try {
+        const tenantId = req.params.tenantId;
+        const displayRule = (req.query.displayRule as string) || 'BEFORE_LOGIN';
+        const routerId = req.query.routerId as string;
+        const packageId = req.query.packageId as string;
+        const deviceType = (req.query.deviceType as string) || 'DESKTOP';
+
+        const ads = await MarketingService.getEligibleAds(tenantId, {
+            displayRule,
+            routerId,
+            packageId,
+            deviceType
+        });
+
+        // Always return array; if empty or error, portal falls back cleanly
+        res.json(ads);
+    } catch (error: any) {
+        logger.error('Captive portal ad fetch error, returning fallback', { tenantId: req.params.tenantId, error: error.message });
+        res.json([]);
+    }
+});
+
+// 0d. Track Captive Portal Ad Event
+router.post('/ads/:adId/track', async (req: any, res) => {
+    try {
+        const adId = req.params.adId;
+        const { tenantId, eventType, routerId, packageId, deviceType } = req.body;
+
+        if (!tenantId || !eventType) {
+            return res.status(400).json({ error: 'Missing tenantId or eventType' });
+        }
+
+        await MarketingService.trackEvent(tenantId, adId, eventType, {
+            routerId,
+            packageId,
+            deviceType
+        });
+
+        res.json({ success: true });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 // 1. Get Packages for a specific tenant
 router.get('/:tenantId/packages', async (req: any, res) => {

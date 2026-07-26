@@ -21,6 +21,7 @@ import campaignRoutes from './routes/campaigns';
 import smsGatewayRoutes from './routes/sms-gateway.routes';
 import smsRoutes from './routes/sms.routes';
 import profileRoutes from './routes/profile.routes';
+import marketingRoutes from './routes/marketing.routes';
 import { IspService } from './services/isp.service';
 import { SettlementEngine } from './services/settlement-engine';
 import { TrafficMonitorService } from './services/traffic-monitor.service';
@@ -120,6 +121,7 @@ app.use('/api/v1/agent', authMiddleware, TenantResolver.resolveTenant, agentRout
 app.use('/api/v1/wallet', authMiddleware, TenantResolver.resolveTenant, walletRoutes);
 app.use('/api/v1/campaigns', authMiddleware, TenantResolver.resolveTenant, campaignRoutes);
 
+app.use('/api/v1/marketing', authMiddleware, TenantResolver.resolveTenant, marketingRoutes);
 app.use('/api/v1/superadmin', authMiddleware, superAdminLimiter, superadminRoutes);
 app.use('/api/v1/superadmin/sms', authMiddleware, superAdminLimiter, smsGatewayRoutes);
 app.use('/api/v1/sms', authMiddleware, TenantResolver.resolveTenant, smsRoutes);

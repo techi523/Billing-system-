@@ -31,6 +31,7 @@ import Campaigns from './pages/Campaigns';
 import CustomerPortal from './pages/CustomerPortal';
 import SMSCredits from './pages/SMSCredits';
 import ProfilePage from './pages/Profile';
+import MarketingSuite from './pages/Marketing/MarketingSuite';
 
 
 function App() {
@@ -108,6 +109,12 @@ function App() {
                                 <Route path="/tenant/communication" element={
                                     <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
                                         <SMSCredits />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/tenant/marketing/*" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
+                                        <MarketingSuite />
                                     </ProtectedRoute>
                                 } />
 
