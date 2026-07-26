@@ -134,7 +134,20 @@ const DashboardLayout: React.FC = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
         return localStorage.getItem('sidebar-collapsed') === 'true';
     });
+    const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
     const [mobileOpen, setMobileOpen] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const desktop = window.innerWidth >= 1024;
+            setIsDesktop(desktop);
+            if (desktop) {
+                setMobileOpen(false);
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     const [searchOpen, setSearchOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [quickActionsOpen, setQuickActionsOpen] = useState(false);
@@ -283,6 +296,8 @@ const DashboardLayout: React.FC = () => {
         </div>
     );
 
+    const sidebarOffset = isDesktop ? (sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-w)') : '0px';
+
     return (
         <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] transition-colors duration-200">
             {/* ─── Sidebar (Desktop) ──────────────────────────── */}
@@ -303,7 +318,7 @@ const DashboardLayout: React.FC = () => {
             {/* ─── Top Bar ────────────────────────────────────── */}
             <header
                 className="dashboard-topbar"
-                style={{ left: sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-w)' }}
+                style={{ left: sidebarOffset }}
             >
                 {/* Mobile menu button */}
                 <button
@@ -426,9 +441,9 @@ const DashboardLayout: React.FC = () => {
             {/* ─── Main Content ────────────────────────────────── */}
             <main
                 className="dashboard-content"
-                style={{ marginLeft: sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-w)' }}
+                style={{ marginLeft: sidebarOffset }}
             >
-                <div className="p-6 page-fade-in">
+                <div className="p-3 sm:p-6 page-fade-in">
                     <Outlet />
                 </div>
             </main>

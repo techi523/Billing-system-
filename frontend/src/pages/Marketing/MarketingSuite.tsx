@@ -535,7 +535,7 @@ const MarketingSuite: React.FC = () => {
             {/* ─── CREATE CAMPAIGN MODAL ─── */}
             {showCreateModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl max-w-lg w-full shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+                    <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
                         <h3 className="text-xl font-bold">Create Advertisement Campaign</h3>
                         <form onSubmit={handleCreateCampaign} className="space-y-3 text-sm">
                             <div>
@@ -612,7 +612,7 @@ const MarketingSuite: React.FC = () => {
             {/* ─── CREATE COUPON MODAL ─── */}
             {showCouponModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl max-w-md w-full shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+                    <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
                         <h3 className="text-xl font-bold">Generate Promo Coupon</h3>
                         <form onSubmit={handleCreateCoupon} className="space-y-3 text-sm">
                             <div>
@@ -686,7 +686,7 @@ const MarketingSuite: React.FC = () => {
             {/* ─── CREATE QR CAMPAIGN MODAL ─── */}
             {showQRModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl max-w-md w-full shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+                    <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
                         <h3 className="text-xl font-bold">Create QR Code Campaign</h3>
                         <form onSubmit={handleCreateQR} className="space-y-3 text-sm">
                             <div>
@@ -740,7 +740,7 @@ const MarketingSuite: React.FC = () => {
             {/* ─── CREATE LANDING PAGE MODAL ─── */}
             {showLandingModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl max-w-md w-full shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+                    <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
                         <h3 className="text-xl font-bold">Build Micro Landing Page</h3>
                         <form onSubmit={handleCreateLanding} className="space-y-3 text-sm">
                             <div>

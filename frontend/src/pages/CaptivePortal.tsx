@@ -232,12 +232,12 @@ const CaptivePortal = () => {
             <motion.div
                 initial={{ y: -50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="relative z-10 pt-12 pb-8 px-8 flex flex-col items-center text-center text-white"
+                className="relative z-10 pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-8 flex flex-col items-center text-center text-white"
             >
-                <div className="w-24 h-24 bg-white/5 backdrop-blur-2xl rounded-3xl border border-white/10 flex items-center justify-center mb-6 shadow-2xl">
-                    <img src={tenantConfig?.logoUrl || logo} alt="Logo" className="w-16 h-16 object-contain" />
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white/5 backdrop-blur-2xl rounded-3xl border border-white/10 flex items-center justify-center mb-4 sm:mb-6 shadow-2xl">
+                    <img src={tenantConfig?.logoUrl || logo} alt="Logo" className="w-12 h-12 sm:w-16 sm:h-16 object-contain" />
                 </div>
-                <h1 className="text-4xl font-black tracking-tighter mb-2">
+                <h1 className="text-3xl sm:text-4xl font-black tracking-tighter mb-2">
                     {tenantConfig?.name || 'SurfBill'} <span className="text-sky-400">Portal</span>
                 </h1>
                 <p className="text-slate-400 font-bold text-xs tracking-[0.2em] uppercase flex items-center gap-2">
@@ -247,12 +247,12 @@ const CaptivePortal = () => {
             </motion.div>
 
             {/* Main Content Card */}
-            <div className="relative z-20 px-6 max-w-md mx-auto -mt-4 pb-20">
+            <div className="relative z-20 px-3 sm:px-6 max-w-md mx-auto -mt-2 sm:-mt-4 pb-20">
                 <motion.div
                     initial={{ y: 50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.6 }}
-                    className="glass-panel-dark rounded-[2.5rem] p-8"
+                    className="glass-panel-dark rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-8"
                 >
                     {/* Dynamic Advertisement Banner (Asynchronous & Resilient) */}
                     {activeAd && (

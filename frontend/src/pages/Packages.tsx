@@ -377,9 +377,9 @@ const Packages = () => {
                 </AnimatePresence>
 
                 {/* Packages Table List */}
-                <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
-                    <div className="px-10 py-8 border-b border-white/5 flex justify-between items-center">
-                        <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center gap-3">
+                <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-2xl">
+                    <div className="px-4 sm:px-10 py-5 sm:py-8 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-widest flex items-center gap-3">
                             <Wifi className="text-sky-400" /> Active Inventory
                         </h3>
                         <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
@@ -389,21 +389,21 @@ const Packages = () => {
                     </div>
 
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full text-left border-collapse min-w-[640px]">
                             <thead>
                                 <tr className="text-[10px] font-black uppercase text-slate-500 tracking-widest border-b border-white/5 bg-black/20">
-                                    <th className="px-10 py-6">Package Identity</th>
-                                    <th className="px-6 py-6">Type & Validity</th>
-                                    <th className="px-6 py-6">Billing Price</th>
-                                    <th className="px-6 py-6">Network Limits</th>
-                                    <th className="px-6 py-6">Sales Performance</th>
-                                    <th className="px-6 py-6 text-right">Actions</th>
+                                    <th className="px-4 sm:px-10 py-4 sm:py-6">Package Identity</th>
+                                    <th className="px-4 sm:px-6 py-4 sm:py-6">Type & Validity</th>
+                                    <th className="px-4 sm:px-6 py-4 sm:py-6">Billing Price</th>
+                                    <th className="px-4 sm:px-6 py-4 sm:py-6">Network Limits</th>
+                                    <th className="px-4 sm:px-6 py-4 sm:py-6">Sales Performance</th>
+                                    <th className="px-4 sm:px-6 py-4 sm:py-6 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {packages.map((pkg) => (
                                     <tr key={pkg.id} className="hover:bg-white/5 transition-colors group">
-                                        <td className="px-10 py-8">
+                                        <td className="px-4 sm:px-10 py-6 sm:py-8">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center text-sky-400 group-hover:scale-110 transition-transform">
                                                     {pkg.type === 'HOTSPOT' ? <Wifi size={20} /> : <Database size={20} />}

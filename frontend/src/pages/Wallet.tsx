@@ -199,19 +199,19 @@ const WalletPage = () => {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Balance Cards */}
-                <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="p-8 bg-slate-900 text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+                <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    <div className="p-5 sm:p-8 bg-slate-900 text-white rounded-3xl sm:rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/20 rounded-full blur-3xl -tr-8 -tt-8 group-hover:bg-sky-500/30 transition-all"></div>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Total Balance</p>
-                        <h3 className="text-3xl font-black relative z-10">KES {(Number(balance?.balance || 0) / 100).toLocaleString()}</h3>
+                        <h3 className="text-2xl sm:text-3xl font-black relative z-10">KES {(Number(balance?.balance || 0) / 100).toLocaleString()}</h3>
                         <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-emerald-400 relative z-10">
                             <ShieldCheck className="w-3 h-3" /> VERIFIED BY LEDGER
                         </div>
                     </div>
 
-                    <div className="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl group">
+                    <div className="p-5 sm:p-8 bg-white border border-slate-100 rounded-3xl sm:rounded-[2.5rem] shadow-xl group dark:bg-slate-800 dark:border-slate-700">
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Settled (Ready)</p>
-                        <h3 className="text-3xl font-black text-emerald-600">KES {(Number(balance?.settled || 0) / 100).toLocaleString()}</h3>
+                        <h3 className="text-2xl sm:text-3xl font-black text-emerald-600">KES {(Number(balance?.settled || 0) / 100).toLocaleString()}</h3>
                         <button
                             onClick={() => { setShowWithdrawModal(true); setStep('REQUEST'); setMessage(''); }}
                             className="mt-4 text-xs font-black text-emerald-700 hover:text-emerald-800 flex items-center gap-1 group-hover:translate-x-1 transition-all"
@@ -220,16 +220,16 @@ const WalletPage = () => {
                         </button>
                     </div>
 
-                    <div className="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl">
+                    <div className="p-5 sm:p-8 bg-white border border-slate-100 rounded-3xl sm:rounded-[2.5rem] shadow-xl dark:bg-slate-800 dark:border-slate-700">
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">In Escrow</p>
-                        <h3 className="text-3xl font-black text-amber-500">KES {(Number(balance?.pending || 0) / 100).toLocaleString()}</h3>
+                        <h3 className="text-2xl sm:text-3xl font-black text-amber-500">KES {(Number(balance?.pending || 0) / 100).toLocaleString()}</h3>
                         <p className="mt-4 text-[10px] font-black text-slate-400 italic">Matures in 24-48 hours</p>
                     </div>
 
-                    <div className="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl">
+                    <div className="p-5 sm:p-8 bg-white border border-slate-100 rounded-3xl sm:rounded-[2.5rem] shadow-xl dark:bg-slate-800 dark:border-slate-700">
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Frozen</p>
-                        <h3 className="text-3xl font-black text-rose-500">KES {(Number(balance?.frozen || 0) / 100).toLocaleString()}</h3>
-                        <p className="mt-4 text-[10px) font-black text-slate-400 italic">Disputed or pending reversal</p>
+                        <h3 className="text-2xl sm:text-3xl font-black text-rose-500">KES {(Number(balance?.frozen || 0) / 100).toLocaleString()}</h3>
+                        <p className="mt-4 text-[10px] font-black text-slate-400 italic">Disputed or pending reversal</p>
                     </div>
                 </div>
 
