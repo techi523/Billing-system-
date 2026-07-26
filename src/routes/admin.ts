@@ -209,8 +209,22 @@ router.delete('/subscribers/:id', async (req: any, res) => {
 // Initialize tenant data (bootstrap)
 router.post('/initialize', async (req: any, res) => {
     try {
-        const tenantId = req.user.tenantId;
+        let tenantId = req.user.tenantId;
         const userId = req.user.id;
+
+        if (!tenantId) {
+            const defaultTenant = await Tenant.findOne({ where: { status: 'ACTIVE' }, order: [['createdAt', 'ASC']] });
+            if (defaultTenant) {
+                tenantId = defaultTenant.id;
+            }
+        }
+
+        if (!tenantId) {
+            return res.json({
+                message: 'No tenant workspace available to initialize.',
+                status: 'NO_TENANT'
+            });
+        }
 
         // Check if tenant is already bootstrapped
         const isBootstrapped = await TenantBootstrapService.isTenantBootstrapped(tenantId);
@@ -240,7 +254,21 @@ router.post('/initialize', async (req: any, res) => {
 // Check tenant initialization status
 router.get('/initialize/status', async (req: any, res) => {
     try {
-        const tenantId = req.user.tenantId;
+        let tenantId = req.user.tenantId;
+        if (!tenantId) {
+            const defaultTenant = await Tenant.findOne({ where: { status: 'ACTIVE' }, order: [['createdAt', 'ASC']] });
+            if (defaultTenant) {
+                tenantId = defaultTenant.id;
+            }
+        }
+
+        if (!tenantId) {
+            return res.json({
+                isBootstrapped: true,
+                message: 'No active tenant workspace found'
+            });
+        }
+
         const isBootstrapped = await TenantBootstrapService.isTenantBootstrapped(tenantId);
         res.json({
             isBootstrapped,
