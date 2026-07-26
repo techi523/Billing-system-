@@ -130,8 +130,9 @@ const TenantPortal = () => {
         { label: 'Create Package', icon: Package, path: '/tenant/packages', color: 'text-sky-500', bg: 'bg-sky-500/10' },
         { label: 'Add Subscriber', icon: Users, path: '/tenant', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { label: 'Connect Router', icon: Wifi, path: '/tenant/mikrotik', color: 'text-violet-500', bg: 'bg-violet-500/10' },
-        { label: 'Send Campaign', icon: Send, path: '/tenant/campaigns', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { label: 'Marketing Suite', icon: BarChart3, path: '/tenant/marketing/dashboard', color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
         { label: 'Buy SMS', icon: CreditCard, path: '/tenant/communication', color: 'text-rose-500', bg: 'bg-rose-500/10' },
+        { label: 'Subscription & Billing', icon: DollarSign, path: '/tenant/subscription', color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
         { label: 'View Wallet', icon: Wallet, path: '/tenant/wallet', color: 'text-orange-500', bg: 'bg-orange-500/10' },
     ];
 

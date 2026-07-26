@@ -3,15 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import SuperAdminDashboard from '../components/SuperAdmin/SuperAdminDashboard';
 import PlatformSettings from '../components/SuperAdmin/PlatformSettings';
 import SmsGatewayManager from '../components/SuperAdmin/SmsGatewayManager';
+import SaaSMonetisationSuite from './SuperAdmin/SaaSMonetisationSuite';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/Common/BackButton';
 import ThemeToggle from '../components/Common/ThemeToggle';
-import { LayoutDashboard, Settings as SettingsIcon, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Settings as SettingsIcon, MessageSquare, DollarSign } from 'lucide-react';
 
 const SuperAdminPortal = () => {
     const navigate = useNavigate();
     const { logout, loading: authLoading } = useAuth();
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'settings' | 'sms'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'saas' | 'settings' | 'sms'>('dashboard');
 
     if (authLoading) {
         return (
@@ -42,6 +43,16 @@ const SuperAdminPortal = () => {
                                 >
                                     <LayoutDashboard size={16} />
                                     Dashboard
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('saas')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'saas'
+                                        ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                                        }`}
+                                >
+                                    <DollarSign size={16} />
+                                    SaaS Monetisation
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('settings')}
@@ -89,6 +100,7 @@ const SuperAdminPortal = () => {
 
             <div className="max-w-7xl mx-auto p-8 space-y-8">
                 {activeTab === 'dashboard' && <SuperAdminDashboard />}
+                {activeTab === 'saas' && <SaaSMonetisationSuite />}
                 {activeTab === 'settings' && <PlatformSettings />}
                 {activeTab === 'sms' && <SmsGatewayManager />}
             </div>
