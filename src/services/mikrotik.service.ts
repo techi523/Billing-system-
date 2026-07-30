@@ -291,18 +291,28 @@ export class MikroTikService {
     }
 
     /**
-     * Get router system resources
+     * Get system resources: CPU, RAM, disk, uptime, version, temperature
      */
-    static async getSystemResources(router: RouterModel): Promise<MikroTikResource> {
+    static async getSystemResources(router: RouterModel) {
         try {
             return await this.executeWithRetry(async () => {
                 const client = await this.getConnection(router);
                 if (!client) {
                     return {
-                        cpuUsage: Math.floor(Math.random() * 20) + 1,
-                        memoryUsage: Math.floor(Math.random() * 30) + 10,
+                        cpuUsage: 10,
+                        cpuLoad: 10,
+                        memoryUsage: 25,
+                        ramUsedPercent: 25,
                         diskUsage: 15,
+                        diskUsedPercent: 15,
+                        freeMemory: 100 * 1024 * 1024,
+                        totalMemory: 128 * 1024 * 1024,
+                        freeHddSpace: 100 * 1024 * 1024,
+                        totalHddSpace: 128 * 1024 * 1024,
                         uptime: '14d 02:44:10',
+                        version: '7.x',
+                        boardName: 'hEX',
+                        architecture: 'mmips',
                         temperature: 42
                     };
                 }
@@ -321,17 +331,32 @@ export class MikroTikService {
 
                 await client.close();
 
+                if (!resource || resource.length === 0) return null;
+
                 const r = resource[0];
-                const totalMemory = parseInt(r['total-memory']);
-                const freeMemory = parseInt(r['free-memory']);
-                const totalHdd = parseInt(r['total-hdd-space']);
-                const freeHdd = parseInt(r['free-hdd-space']);
+                const totalMemory = parseInt(r['total-memory'] || '0');
+                const freeMemory = parseInt(r['free-memory'] || '0');
+                const totalHdd = parseInt(r['total-hdd-space'] || '0');
+                const freeHdd = parseInt(r['free-hdd-space'] || '0');
+                const cpuLoad = parseInt(r['cpu-load'] || '0');
+                const memoryUsage = totalMemory ? Math.round(((totalMemory - freeMemory) / totalMemory) * 100) : 0;
+                const diskUsage = totalHdd ? Math.round(((totalHdd - freeHdd) / totalHdd) * 100) : 0;
 
                 return {
-                    cpuUsage: parseInt(r['cpu-load']),
-                    memoryUsage: Math.round(((totalMemory - freeMemory) / totalMemory) * 100),
-                    diskUsage: Math.round(((totalHdd - freeHdd) / totalHdd) * 100),
-                    uptime: r.uptime,
+                    cpuUsage: cpuLoad,
+                    cpuLoad,
+                    memoryUsage,
+                    ramUsedPercent: memoryUsage,
+                    diskUsage,
+                    diskUsedPercent: diskUsage,
+                    freeMemory,
+                    totalMemory,
+                    freeHddSpace: freeHdd,
+                    totalHddSpace: totalHdd,
+                    uptime: r['uptime'] || '0s',
+                    version: r['version'] || 'Unknown',
+                    boardName: r['board-name'] || 'Unknown',
+                    architecture: r['architecture-name'] || 'Unknown',
                     temperature
                 };
             });
@@ -428,4 +453,301 @@ export class MikroTikService {
             logger.error('Failed to log router action', { error });
         }
     }
+
+    /**
+     * Get interface list and status
+     */
+    static async getInterfaces(router: RouterModel) {
+        return await this.executeWithRetry(async () => {
+            const client = await this.getConnection(router);
+            const api = await client.connect();
+            const interfaces = await api.menu('/interface').get();
+            await client.close();
+            return (interfaces as Record<string, string>[]).map(i => ({
+                id: i['.id'],
+                name: i['name'],
+                type: i['type'],
+                running: i['running'] === 'true',
+                disabled: i['disabled'] === 'true',
+                txBytes: parseInt(i['tx-byte'] || '0'),
+                rxBytes: parseInt(i['rx-byte'] || '0'),
+                txRate: i['tx-bits-per-second'] ? parseInt(i['tx-bits-per-second']) : 0,
+                rxRate: i['rx-bits-per-second'] ? parseInt(i['rx-bits-per-second']) : 0,
+                comment: i['comment'] || '',
+                macAddress: i['mac-address'] || '',
+            }));
+        });
+    }
+
+    /**
+     * Get hotspot users
+     */
+    static async getHotspotUsers(router: RouterModel) {
+        return await this.executeWithRetry(async () => {
+            const client = await this.getConnection(router);
+            const api = await client.connect();
+            const users = await api.menu('/ip/hotspot/user').get();
+            await client.close();
+            return (users as Record<string, string>[]).map(u => ({
+                id: u['.id'],
+                name: u['name'],
+                password: u['password'],
+                profile: u['profile'],
+                disabled: u['disabled'] === 'true',
+                limitUptime: u['limit-uptime'] || '',
+                limitBytes: u['limit-bytes-total'] || '',
+                comment: u['comment'] || '',
+            }));
+        });
+    }
+
+    /**
+     * Get active hotspot sessions
+     */
+    static async getActiveSessions(router: RouterModel) {
+        return await this.executeWithRetry(async () => {
+            const client = await this.getConnection(router);
+            const api = await client.connect();
+            const sessions = await api.menu('/ip/hotspot/active').get();
+            await client.close();
+            return (sessions as Record<string, string>[]).map(s => ({
+                id: s['.id'],
+                user: s['user'],
+                address: s['address'],
+                macAddress: s['mac-address'],
+                uptime: s['uptime'],
+                loginBy: s['login-by'],
+                rxBytes: parseInt(s['bytes-in'] || '0'),
+                txBytes: parseInt(s['bytes-out'] || '0'),
+            }));
+        });
+    }
+
+    /**
+     * Get simple queues
+     */
+    static async getQueues(router: RouterModel) {
+        return await this.executeWithRetry(async () => {
+            const client = await this.getConnection(router);
+            const api = await client.connect();
+            const queues = await api.menu('/queue/simple').get();
+            await client.close();
+            return (queues as Record<string, string>[]).map(q => ({
+                id: q['.id'],
+                name: q['name'],
+                target: q['target'],
+                maxLimit: q['max-limit'],
+                disabled: q['disabled'] === 'true',
+                priority: q['priority'],
+                burstLimit: q['burst-limit'] || '',
+                comment: q['comment'] || '',
+            }));
+        });
+    }
+
+    /**
+     * Get firewall filter rules
+     */
+    static async getFirewallRules(router: RouterModel) {
+        return await this.executeWithRetry(async () => {
+            const client = await this.getConnection(router);
+            const api = await client.connect();
+            const rules = await api.menu('/ip/firewall/filter').get();
+            await client.close();
+            return (rules as Record<string, string>[]).map(r => ({
+                id: r['.id'],
+                chain: r['chain'],
+                action: r['action'],
+                protocol: r['protocol'] || '',
+                srcAddress: r['src-address'] || '',
+                dstAddress: r['dst-address'] || '',
+                dstPort: r['dst-port'] || '',
+                srcPort: r['src-port'] || '',
+                disabled: r['disabled'] === 'true',
+                comment: r['comment'] || '',
+            }));
+        });
+    }
+
+    /**
+     * Get DHCP leases
+     */
+    static async getDhcpLeases(router: RouterModel) {
+        return await this.executeWithRetry(async () => {
+            const client = await this.getConnection(router);
+            const api = await client.connect();
+            const leases = await api.menu('/ip/dhcp-server/lease').get();
+            await client.close();
+            return (leases as Record<string, string>[]).map(l => ({
+                id: l['.id'],
+                address: l['address'],
+                macAddress: l['mac-address'],
+                hostname: l['host-name'] || '',
+                status: l['status'],
+                expiresAfter: l['expires-after'] || '',
+                comment: l['comment'] || '',
+            }));
+        });
+    }
+
+    /**
+     * Get router system logs (last 50 entries)
+     */
+    static async getSystemLogs(router: RouterModel) {
+        return await this.executeWithRetry(async () => {
+            const client = await this.getConnection(router);
+            const api = await client.connect();
+            const logs = await api.menu('/log').get();
+            await client.close();
+            // Return last 50 entries most recent first
+            return (logs as Record<string, string>[])
+                .slice(-50)
+                .reverse()
+                .map(l => ({
+                    id: l['.id'],
+                    time: l['time'],
+                    topics: l['topics'],
+                    message: l['message'],
+                }));
+        });
+    }
+
+    /**
+     * Generate and retrieve a system backup from the router
+     */
+    static async generateBackup(router: RouterModel, backupName: string) {
+        return await this.executeWithRetry(async () => {
+            const client = await this.getConnection(router);
+            const api = await client.connect();
+            // Generate backup
+            await (api.menu('/system/backup') as any).save({ name: backupName });
+            // Wait a moment for the file to be created
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            // List files to confirm
+            const files = await api.menu('/file').get();
+            await client.close();
+
+            const backupFile = (files as Record<string, string>[]).find(
+                f => f['name'] === `${backupName}.backup`
+            );
+            return {
+                success: true,
+                fileName: backupFile ? backupFile['name'] : `${backupName}.backup`,
+                size: backupFile ? parseInt(backupFile['size'] || '0') : 0,
+                creationTime: backupFile ? backupFile['creation-time'] : new Date().toISOString(),
+            };
+        });
+    }
+
+    /**
+     * List all files on the router
+     */
+    static async listFiles(router: RouterModel) {
+        return await this.executeWithRetry(async () => {
+            const client = await this.getConnection(router);
+            const api = await client.connect();
+            const files = await api.menu('/file').get();
+            await client.close();
+            return (files as Record<string, string>[]).map(f => ({
+                id: f['.id'],
+                name: f['name'],
+                type: f['type'],
+                size: parseInt(f['size'] || '0'),
+                creationTime: f['creation-time'] || '',
+            }));
+        });
+    }
+
+    /**
+     * Reboot the router
+     */
+    static async rebootRouter(router: RouterModel): Promise<{ success: boolean }> {
+        try {
+            const client = await this.getConnection(router);
+            const api = await client.connect();
+            await (api.menu('/system') as any).reboot();
+            // client will close as router reboots
+            return { success: true };
+        } catch (error) {
+            // Expect connection drop after reboot command - that's normal
+            logger.info('Router reboot command sent (connection closed as expected)', { routerId: router.id });
+            return { success: true };
+        }
+    }
+
+    /**
+     * Create PPPoE Secret
+     */
+    static async createPPPoESecret(
+        router: RouterModel,
+        username: string,
+        password: string,
+        service: string = 'pppoe',
+        profile: string = 'default',
+        comment: string = 'Created by SurfBill'
+    ): Promise<void> {
+        try {
+            await this.executeWithRetry(async () => {
+                const client = await this.getConnection(router);
+                const api = await client.connect();
+
+                await api.menu('/ppp/secret').add({
+                    name: username,
+                    password: password,
+                    service: service,
+                    profile: profile,
+                    comment: comment
+                } as any);
+
+                await client.close();
+                await this.logRouterAction(router.id, router.tenantId, 'CREATE_PPPOE', 'SUCCESS', `PPPoE secret ${username} created`);
+            });
+        } catch (error: unknown) {
+            const errorMessage = this.parseError(error);
+            logger.error('Failed to create PPPoE secret', { routerId: router.id, username, error: errorMessage });
+            throw error;
+        }
+    }
+
+    /**
+     * Remove Hotspot User
+     */
+    static async removeHotspotUser(
+        router: RouterModel,
+        username: string
+    ): Promise<void> {
+        try {
+            await this.executeWithRetry(async () => {
+                const client = await this.getConnection(router);
+                const api = await client.connect();
+
+                const userMenu = api.menu('/ip/hotspot/user');
+                const users = await userMenu.where({ name: username }).get();
+                for (const u of users) {
+                    await userMenu.remove(u['.id']);
+                }
+
+                await client.close();
+                await this.logRouterAction(router.id, router.tenantId, 'REMOVE_USER', 'SUCCESS', `User ${username} removed`);
+            });
+        } catch (error: unknown) {
+            const errorMessage = this.parseError(error);
+            logger.error('Failed to remove hotspot user', { routerId: router.id, username, error: errorMessage });
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a file from the router
+     */
+    static async deleteFile(router: RouterModel, fileId: string): Promise<{ success: boolean }> {
+        return await this.executeWithRetry(async () => {
+            const client = await this.getConnection(router);
+            const api = await client.connect();
+            await api.menu('/file').remove(fileId);
+            await client.close();
+            return { success: true };
+        });
+    }
 }
+

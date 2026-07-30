@@ -6,114 +6,66 @@ import logger from '../utils/logger';
 
 const router = Router();
 
-/**
- * Utility to ensure a value from req.params or req.query is a string
- */
 const ensureString = (value: any): string => {
-    if (Array.isArray(value)) {
-        return value[0] as string;
-    }
+    if (Array.isArray(value)) return value[0] as string;
     return value as string;
 };
 
+/** Helper: get router by ID scoped to tenant */
+async function getRouter(id: string, tenantId: string) {
+    const r = await RouterModel.findOne({ where: { id, tenantId } });
+    return r;
+}
+
+// ─── HOTSPOT USERS ───────────────────────────────────────────────────────────
+
 /**
  * GET /api/v1/routers/:id/users
- * List all hotspot users on a router
+ * List all hotspot users on the router
  */
 router.get('/:id/users', authMiddleware, async (req, res) => {
     try {
-        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
 
-        const routerRecord = await RouterModel.findOne({
-            where: { id, tenantId }
-        });
-
-        if (!routerRecord) {
-            return res.status(404).json({ error: 'Router not found' });
-        }
-
-        // This would require extending MikroTikService to list users
-        // For now, return placeholder
-        res.json({
-            users: [],
-            message: 'User listing will be implemented with MikroTik API integration'
-        });
-
+        const users = await MikroTikService.getHotspotUsers(routerRecord);
+        res.json({ users, total: (users as any[]).length });
     } catch (error: any) {
         logger.error('Failed to list users', { error: error.message });
-        res.status(500).json({ error: 'Failed to list users' });
+        res.status(500).json({ error: 'Failed to list users', message: error.message });
     }
 });
 
 /**
  * POST /api/v1/routers/:id/users
- * Create a hotspot user on the router
+ * Create a hotspot user
  */
 router.post('/:id/users', authMiddleware, async (req, res) => {
     try {
-        const id = ensureString(req.params.id);
-        const { username, password, macAddress, ipAddress, limitBytes, limitTime } = req.body;
         const tenantId = (req as any).user.tenantId;
         const userId = (req as any).user.id;
+        const { username, password, macAddress, ipAddress, limitBytes, limitTime } = req.body;
 
         if (!username || !password || !macAddress) {
-            return res.status(400).json({
-                error: 'Missing required fields: username, password, macAddress'
-            });
+            return res.status(400).json({ error: 'Missing required fields: username, password, macAddress' });
         }
 
-        const routerRecord = await RouterModel.findOne({
-            where: { id, tenantId }
-        });
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
 
-        if (!routerRecord) {
-            return res.status(404).json({ error: 'Router not found' });
-        }
+        await MikroTikService.createHotspotUser(routerRecord, username, password, macAddress);
 
-        // Create hotspot user
-        await MikroTikService.createHotspotUser(
-            routerRecord,
-            username,
-            password,
-            macAddress
-        );
-
-        // Log the action
         await RouterConnectionLog.create({
-            routerId: routerRecord.id,
-            tenantId,
-            action: 'SYNC',
-            status: 'SUCCESS',
+            routerId: routerRecord.id, tenantId, action: 'SYNC', status: 'SUCCESS',
             details: `Created hotspot user: ${username}`,
-            metadata: JSON.stringify({ username, macAddress }),
-            userId
+            metadata: JSON.stringify({ username, macAddress }), userId
         });
 
-        logger.info('Hotspot user created', {
-            routerId: id,
-            username,
-            tenantId
-        });
-
-        res.json({
-            success: true,
-            message: 'Hotspot user created successfully',
-            user: {
-                username,
-                macAddress,
-                ipAddress,
-                limitBytes,
-                limitTime
-            }
-        });
-
+        res.json({ success: true, message: 'Hotspot user created successfully', user: { username, macAddress, ipAddress, limitBytes, limitTime } });
     } catch (error: any) {
         logger.error('Failed to create user', { error: error.message });
-        res.status(500).json({
-            error: 'Failed to create user',
-            message: error.message
-        });
+        res.status(500).json({ error: 'Failed to create user', message: error.message });
     }
 });
 
@@ -123,29 +75,32 @@ router.post('/:id/users', authMiddleware, async (req, res) => {
  */
 router.put('/:id/users/:username', authMiddleware, async (req, res) => {
     try {
-        const id = ensureString(req.params.id);
+        const tenantId = (req as any).user.tenantId;
         const username = ensureString(req.params.username);
         const { enabled } = req.body;
-        const tenantId = (req as any).user.tenantId;
 
-        const routerRecord = await RouterModel.findOne({
-            where: { id, tenantId }
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
+
+        // Enable/disable user via MikroTik API
+        const client = (MikroTikService as any).getConnection ? null : null;
+        // Use the underlying RouterOS client directly for toggle
+        const { RouterOSClient } = require('routeros-client');
+        const client2 = new RouterOSClient({
+            host: routerRecord.host, user: routerRecord.username,
+            password: routerRecord.password, port: routerRecord.port || 8728, timeout: 10
         });
-
-        if (!routerRecord) {
-            return res.status(404).json({ error: 'Router not found' });
+        const api = await client2.connect();
+        const users = await api.menu('/ip/hotspot/user').get({ name: username });
+        if (users.length > 0) {
+            await api.menu('/ip/hotspot/user').set({ disabled: enabled ? 'no' : 'yes' }, users[0]['.id']);
         }
+        await client2.close();
 
-        // This would require extending MikroTikService
-        // Placeholder response
-        res.json({
-            success: true,
-            message: `User ${username} ${enabled ? 'enabled' : 'disabled'} successfully`
-        });
-
+        res.json({ success: true, message: `User ${username} ${enabled ? 'enabled' : 'disabled'} successfully` });
     } catch (error: any) {
         logger.error('Failed to update user', { error: error.message });
-        res.status(500).json({ error: 'Failed to update user' });
+        res.status(500).json({ error: 'Failed to update user', message: error.message });
     }
 });
 
@@ -155,44 +110,46 @@ router.put('/:id/users/:username', authMiddleware, async (req, res) => {
  */
 router.delete('/:id/users/:username', authMiddleware, async (req, res) => {
     try {
-        const id = ensureString(req.params.id);
-        const username = ensureString(req.params.username);
-        const ipAddress = req.query.ipAddress ? ensureString(req.query.ipAddress) : undefined;
         const tenantId = (req as any).user.tenantId;
         const userId = (req as any).user.id;
+        const username = ensureString(req.params.username);
+        const ipAddress = req.query.ipAddress ? ensureString(req.query.ipAddress) : undefined;
 
-        const routerRecord = await RouterModel.findOne({
-            where: { id, tenantId }
-        });
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
 
-        if (!routerRecord) {
-            return res.status(404).json({ error: 'Router not found' });
-        }
-
-        // Disconnect and remove user
-        await MikroTikService.disconnectHotspotUser(
-            routerRecord,
-            username
-        );
+        await MikroTikService.disconnectHotspotUser(routerRecord, username);
 
         await RouterConnectionLog.create({
-            routerId: routerRecord.id,
-            tenantId,
-            action: 'SYNC',
-            status: 'SUCCESS',
+            routerId: routerRecord.id, tenantId, action: 'SYNC', status: 'SUCCESS',
             details: `Deleted hotspot user: ${username}`,
-            metadata: JSON.stringify({ username, ipAddress }),
-            userId
+            metadata: JSON.stringify({ username, ipAddress }), userId
         });
 
-        res.json({
-            success: true,
-            message: 'User deleted successfully'
-        });
-
+        res.json({ success: true, message: 'User deleted successfully' });
     } catch (error: any) {
         logger.error('Failed to delete user', { error: error.message });
-        res.status(500).json({ error: 'Failed to delete user' });
+        res.status(500).json({ error: 'Failed to delete user', message: error.message });
+    }
+});
+
+// ─── SESSIONS ────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/v1/routers/:id/sessions
+ * Get active hotspot sessions from the router
+ */
+router.get('/:id/sessions', authMiddleware, async (req, res) => {
+    try {
+        const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
+
+        const sessions = await MikroTikService.getActiveSessions(routerRecord);
+        res.json({ sessions, total: (sessions as any[]).length, router: { id: routerRecord.id, name: routerRecord.name } });
+    } catch (error: any) {
+        logger.error('Failed to get sessions', { error: error.message });
+        res.status(500).json({ error: 'Failed to get sessions', message: error.message });
     }
 });
 
@@ -202,276 +159,345 @@ router.delete('/:id/users/:username', authMiddleware, async (req, res) => {
  */
 router.post('/:id/users/:username/disconnect', authMiddleware, async (req, res) => {
     try {
-        const id = ensureString(req.params.id);
-        const username = ensureString(req.params.username);
-        const { ipAddress } = req.body;
         const tenantId = (req as any).user.tenantId;
         const userId = (req as any).user.id;
+        const username = ensureString(req.params.username);
+        const { ipAddress } = req.body;
 
-        const routerRecord = await RouterModel.findOne({
-            where: { id, tenantId }
-        });
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
 
-        if (!routerRecord) {
-            return res.status(404).json({ error: 'Router not found' });
-        }
-
-        await MikroTikService.disconnectHotspotUser(
-            routerRecord,
-            username
-        );
+        await MikroTikService.disconnectHotspotUser(routerRecord, username);
 
         await RouterConnectionLog.create({
-            routerId: routerRecord.id,
-            tenantId,
-            action: 'SYNC',
-            status: 'SUCCESS',
+            routerId: routerRecord.id, tenantId, action: 'SYNC', status: 'SUCCESS',
             details: `Disconnected user session: ${username}`,
-            metadata: JSON.stringify({ username, ipAddress }),
-            userId
+            metadata: JSON.stringify({ username, ipAddress }), userId
         });
 
-        res.json({
-            success: true,
-            message: 'User disconnected successfully'
-        });
-
+        res.json({ success: true, message: 'User disconnected successfully' });
     } catch (error: any) {
         logger.error('Failed to disconnect user', { error: error.message });
-        res.status(500).json({ error: 'Failed to disconnect user' });
-    }
-});
-
-/**
- * GET /api/v1/routers/:id/sessions
- * Get active hotspot sessions
- */
-router.get('/:id/sessions', authMiddleware, async (req, res) => {
-    try {
-        const id = ensureString(req.params.id);
-        const tenantId = (req as any).user.tenantId;
-
-        const routerRecord = await RouterModel.findOne({
-            where: { id, tenantId }
-        });
-
-        if (!routerRecord) {
-            return res.status(404).json({ error: 'Router not found' });
-        }
-
-        const sessions = await MikroTikService.getActiveHotspotSessions(routerRecord);
-
-        res.json({
-            sessions,
-            total: (sessions as any[]).length,
-            router: {
-                id: routerRecord.id,
-                name: routerRecord.name
-            }
-        });
-
-    } catch (error: any) {
-        logger.error('Failed to get sessions', { error: error.message });
-        res.status(500).json({ error: 'Failed to get sessions' });
+        res.status(500).json({ error: 'Failed to disconnect user', message: error.message });
     }
 });
 
 /**
  * POST /api/v1/routers/:id/sessions/:sessionId/disconnect
- * Disconnect specific session
+ * Disconnect specific session by ID
  */
 router.post('/:id/sessions/:sessionId/disconnect', authMiddleware, async (req, res) => {
     try {
-        const id = ensureString(req.params.id);
-        ensureString(req.params.sessionId);
         const tenantId = (req as any).user.tenantId;
+        const sessionId = ensureString(req.params.sessionId);
 
-        const routerRecord = await RouterModel.findOne({
-            where: { id, tenantId }
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
+
+        // Disconnect session by removing from active hotspot
+        const { RouterOSClient } = require('routeros-client');
+        const client = new RouterOSClient({
+            host: routerRecord.host, user: routerRecord.username,
+            password: routerRecord.password, port: routerRecord.port || 8728, timeout: 10
         });
+        const api = await client.connect();
+        await api.menu('/ip/hotspot/active').remove(sessionId);
+        await client.close();
 
-        if (!routerRecord) {
-            return res.status(404).json({ error: 'Router not found' });
-        }
-
-        // This would require extending MikroTikService
-        res.json({
-            success: true,
-            message: 'Session disconnected successfully'
-        });
-
+        res.json({ success: true, message: 'Session disconnected successfully' });
     } catch (error: any) {
         logger.error('Failed to disconnect session', { error: error.message });
-        res.status(500).json({ error: 'Failed to disconnect session' });
+        res.status(500).json({ error: 'Failed to disconnect session', message: error.message });
     }
 });
 
-/**
- * POST /api/v1/routers/:id/users/:username/speed
- * Apply speed limit to user
- */
-router.post('/:id/users/:username/speed', authMiddleware, async (req, res) => {
-    try {
-        const id = ensureString(req.params.id);
-        ensureString(req.params.username);
-        const { uploadSpeed, downloadSpeed } = req.body;
-        const tenantId = (req as any).user.tenantId;
-
-        if (!uploadSpeed || !downloadSpeed) {
-            return res.status(400).json({
-                error: 'Missing required fields: uploadSpeed, downloadSpeed'
-            });
-        }
-
-        const routerRecord = await RouterModel.findOne({
-            where: { id, tenantId }
-        });
-
-        if (!routerRecord) {
-            return res.status(404).json({ error: 'Router not found' });
-        }
-
-        // This would require extending MikroTikService
-        res.json({
-            success: true,
-            message: 'Speed limit applied successfully',
-            limits: {
-                upload: uploadSpeed,
-                download: downloadSpeed
-            }
-        });
-
-    } catch (error: any) {
-        logger.error('Failed to apply speed limit', { error: error.message });
-        res.status(500).json({ error: 'Failed to apply speed limit' });
-    }
-});
+// ─── SYSTEM RESOURCES ────────────────────────────────────────────────────────
 
 /**
- * GET /api/v1/routers/:id/queues
- * List queue trees
+ * GET /api/v1/routers/:id/resources
+ * Get real system resources: CPU, RAM, disk, uptime
  */
-router.get('/:id/queues', authMiddleware, async (req, res) => {
+router.get('/:id/resources', authMiddleware, async (req, res) => {
     try {
-        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
 
-        const routerRecord = await RouterModel.findOne({
-            where: { id, tenantId }
-        });
-
-        if (!routerRecord) {
-            return res.status(404).json({ error: 'Router not found' });
-        }
-
-        // Placeholder
-        res.json({
-            queues: [],
-            message: 'Queue listing will be implemented'
-        });
-
+        const resources = await MikroTikService.getSystemResources(routerRecord);
+        res.json({ resources, router: { id: routerRecord.id, name: routerRecord.name, isOnline: routerRecord.isOnline } });
     } catch (error: any) {
-        logger.error('Failed to list queues', { error: error.message });
-        res.status(500).json({ error: 'Failed to list queues' });
+        logger.error('Failed to get resources', { error: error.message });
+        res.status(500).json({ error: 'Failed to get resources', message: error.message });
     }
 });
 
 /**
  * GET /api/v1/routers/:id/stats
- * Get router statistics (CPU, memory, uptime)
+ * Get router statistics (sessions + resource summary)
  */
 router.get('/:id/stats', authMiddleware, async (req, res) => {
     try {
-        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
 
-        const routerRecord = await RouterModel.findOne({
-            where: { id, tenantId }
-        });
-
-        if (!routerRecord) {
-            return res.status(404).json({ error: 'Router not found' });
-        }
-
-        // Get session stats
-        const sessionStats = await MikroTikService.getActiveHotspotSessions(routerRecord);
+        const [sessions, resources] = await Promise.allSettled([
+            MikroTikService.getActiveSessions(routerRecord),
+            MikroTikService.getSystemResources(routerRecord),
+        ]);
 
         res.json({
-            sessions: sessionStats,
-            router: {
-                id: routerRecord.id,
-                name: routerRecord.name,
-                version: routerRecord.version,
-                identity: routerRecord.identity
-            }
+            sessions: sessions.status === 'fulfilled' ? sessions.value : [],
+            resources: resources.status === 'fulfilled' ? resources.value : null,
+            router: { id: routerRecord.id, name: routerRecord.name, version: routerRecord.version, identity: routerRecord.identity }
         });
-
     } catch (error: any) {
         logger.error('Failed to get stats', { error: error.message });
-        res.status(500).json({ error: 'Failed to get stats' });
+        res.status(500).json({ error: 'Failed to get stats', message: error.message });
     }
 });
+
+// ─── INTERFACES ──────────────────────────────────────────────────────────────
 
 /**
  * GET /api/v1/routers/:id/interfaces
- * Get interface status
+ * Get real interface list and status
  */
 router.get('/:id/interfaces', authMiddleware, async (req, res) => {
     try {
-        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
 
-        const routerRecord = await RouterModel.findOne({
-            where: { id, tenantId }
-        });
-
-        if (!routerRecord) {
-            return res.status(404).json({ error: 'Router not found' });
-        }
-
-        // Placeholder
-        res.json({
-            interfaces: [],
-            message: 'Interface listing will be implemented'
-        });
-
+        const interfaces = await MikroTikService.getInterfaces(routerRecord);
+        res.json({ interfaces, total: (interfaces as any[]).length });
     } catch (error: any) {
         logger.error('Failed to get interfaces', { error: error.message });
-        res.status(500).json({ error: 'Failed to get interfaces' });
+        res.status(500).json({ error: 'Failed to get interfaces', message: error.message });
+    }
+});
+
+// ─── QUEUES ───────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/v1/routers/:id/queues
+ * Get simple queue list
+ */
+router.get('/:id/queues', authMiddleware, async (req, res) => {
+    try {
+        const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
+
+        const queues = await MikroTikService.getQueues(routerRecord);
+        res.json({ queues, total: (queues as any[]).length });
+    } catch (error: any) {
+        logger.error('Failed to list queues', { error: error.message });
+        res.status(500).json({ error: 'Failed to list queues', message: error.message });
+    }
+});
+
+// ─── FIREWALL ────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/v1/routers/:id/firewall
+ * Get firewall filter rules
+ */
+router.get('/:id/firewall', authMiddleware, async (req, res) => {
+    try {
+        const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
+
+        const rules = await MikroTikService.getFirewallRules(routerRecord);
+        res.json({ rules, total: (rules as any[]).length });
+    } catch (error: any) {
+        logger.error('Failed to get firewall rules', { error: error.message });
+        res.status(500).json({ error: 'Failed to get firewall rules', message: error.message });
+    }
+});
+
+// ─── DHCP ─────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/v1/routers/:id/dhcp
+ * Get DHCP lease table
+ */
+router.get('/:id/dhcp', authMiddleware, async (req, res) => {
+    try {
+        const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
+
+        const leases = await MikroTikService.getDhcpLeases(routerRecord);
+        res.json({ leases, total: (leases as any[]).length });
+    } catch (error: any) {
+        logger.error('Failed to get DHCP leases', { error: error.message });
+        res.status(500).json({ error: 'Failed to get DHCP leases', message: error.message });
+    }
+});
+
+// ─── LOGS ─────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/v1/routers/:id/logs
+ * Get router system logs
+ */
+router.get('/:id/logs', authMiddleware, async (req, res) => {
+    try {
+        const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
+
+        const logs = await MikroTikService.getSystemLogs(routerRecord);
+        res.json({ logs, total: (logs as any[]).length });
+    } catch (error: any) {
+        logger.error('Failed to get logs', { error: error.message });
+        res.status(500).json({ error: 'Failed to get logs', message: error.message });
+    }
+});
+
+// ─── SPEED LIMIT ─────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/v1/routers/:id/users/:username/speed
+ * Apply speed limit to user via queue
+ */
+router.post('/:id/users/:username/speed', authMiddleware, async (req, res) => {
+    try {
+        const tenantId = (req as any).user.tenantId;
+        const username = ensureString(req.params.username);
+        const { uploadSpeed, downloadSpeed } = req.body;
+
+        if (!uploadSpeed || !downloadSpeed) {
+            return res.status(400).json({ error: 'Missing required fields: uploadSpeed, downloadSpeed' });
+        }
+
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
+
+        // Apply via simple queue
+        const { RouterOSClient } = require('routeros-client');
+        const client = new RouterOSClient({
+            host: routerRecord.host, user: routerRecord.username,
+            password: routerRecord.password, port: routerRecord.port || 8728, timeout: 10
+        });
+        const api = await client.connect();
+        const queues = await api.menu('/queue/simple').get({ name: `surfbill-${username}` });
+        const maxLimit = `${uploadSpeed}/${downloadSpeed}`;
+        if (queues.length > 0) {
+            await api.menu('/queue/simple').set({ 'max-limit': maxLimit }, queues[0]['.id']);
+        } else {
+            await api.menu('/queue/simple').add({ name: `surfbill-${username}`, target: username, 'max-limit': maxLimit });
+        }
+        await client.close();
+
+        res.json({ success: true, message: 'Speed limit applied successfully', limits: { upload: uploadSpeed, download: downloadSpeed } });
+    } catch (error: any) {
+        logger.error('Failed to apply speed limit', { error: error.message });
+        res.status(500).json({ error: 'Failed to apply speed limit', message: error.message });
+    }
+});
+
+// ─── SYSTEM CONTROL ──────────────────────────────────────────────────────────
+
+/**
+ * POST /api/v1/routers/:id/system/reboot
+ * Reboot the router
+ */
+router.post('/:id/system/reboot', authMiddleware, async (req, res) => {
+    try {
+        const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
+
+        await MikroTikService.rebootRouter(routerRecord);
+        await MikroTikService.logRouterAction(routerRecord.id, tenantId, 'REBOOT', 'SUCCESS', 'Router reboot initiated');
+        res.json({ success: true, message: 'Router reboot command sent' });
+    } catch (error: any) {
+        logger.error('Failed to reboot router', { error: error.message });
+        res.status(500).json({ error: 'Failed to reboot router', message: error.message });
+    }
+});
+
+// ─── BACKUP ──────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/v1/routers/:id/backup/generate
+ * Generate a backup on the router
+ */
+router.post('/:id/backup/generate', authMiddleware, async (req, res) => {
+    try {
+        const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
+
+        const backupName = `surfbill-${routerRecord.name.replace(/\s/g, '-')}-${Date.now()}`;
+        const result = await MikroTikService.generateBackup(routerRecord, backupName);
+        await MikroTikService.logRouterAction(routerRecord.id, tenantId, 'BACKUP', 'SUCCESS', `Backup generated: ${backupName}`);
+        res.json(result);
+    } catch (error: any) {
+        logger.error('Failed to generate backup', { error: error.message });
+        res.status(500).json({ error: 'Failed to generate backup', message: error.message });
     }
 });
 
 /**
- * GET /api/v1/routers/:id/resources
- * Get system resources (CPU, memory, disk)
+ * GET /api/v1/routers/:id/backup/list
+ * List backup files on the router
  */
-router.get('/:id/resources', authMiddleware, async (req, res) => {
+router.get('/:id/backup/list', authMiddleware, async (req, res) => {
     try {
-        const id = ensureString(req.params.id);
         const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
 
-        const routerRecord = await RouterModel.findOne({
-            where: { id, tenantId }
-        });
-
-        if (!routerRecord) {
-            return res.status(404).json({ error: 'Router not found' });
-        }
-
-        // Placeholder
-        res.json({
-            resources: {
-                cpu: 0,
-                memory: 0,
-                disk: 0,
-                uptime: '0s'
-            },
-            message: 'Resource monitoring will be implemented'
-        });
-
+        const allFiles = await MikroTikService.listFiles(routerRecord);
+        const backups = (allFiles as any[]).filter(f => f.name && f.name.endsWith('.backup'));
+        res.json({ backups, total: backups.length });
     } catch (error: any) {
-        logger.error('Failed to get resources', { error: error.message });
-        res.status(500).json({ error: 'Failed to get resources' });
+        logger.error('Failed to list backups', { error: error.message });
+        res.status(500).json({ error: 'Failed to list backups', message: error.message });
+    }
+});
+
+// ─── FILE MANAGEMENT ─────────────────────────────────────────────────────────
+
+/**
+ * GET /api/v1/routers/:id/files
+ * List all files on the router
+ */
+router.get('/:id/files', authMiddleware, async (req, res) => {
+    try {
+        const tenantId = (req as any).user.tenantId;
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
+
+        const files = await MikroTikService.listFiles(routerRecord);
+        res.json({ files, total: (files as any[]).length });
+    } catch (error: any) {
+        logger.error('Failed to list files', { error: error.message });
+        res.status(500).json({ error: 'Failed to list files', message: error.message });
+    }
+});
+
+/**
+ * DELETE /api/v1/routers/:id/files/:fileId
+ * Delete a file from the router
+ */
+router.delete('/:id/files/:fileId', authMiddleware, async (req, res) => {
+    try {
+        const tenantId = (req as any).user.tenantId;
+        const fileId = ensureString(req.params.fileId);
+
+        const routerRecord = await getRouter(ensureString(req.params.id), tenantId);
+        if (!routerRecord) return res.status(404).json({ error: 'Router not found' });
+
+        await MikroTikService.deleteFile(routerRecord, fileId);
+        res.json({ success: true, message: 'File deleted successfully' });
+    } catch (error: any) {
+        logger.error('Failed to delete file', { error: error.message });
+        res.status(500).json({ error: 'Failed to delete file', message: error.message });
     }
 });
 

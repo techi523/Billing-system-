@@ -4,7 +4,7 @@ import { ArrowRight, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useAuth, type User } from '../context/AuthContext';
-import logo from '../assets/logo-main.png';
+import SurfBillLogo from '../components/Common/SurfBillLogo';
 import SupportFooter from '../components/Common/SupportFooter';
 import { OFFICIAL_SUPPORT } from '../constants';
 import BackButton from '../components/Common/BackButton';
@@ -80,9 +80,9 @@ const Login = () => {
                             initial={{ y: -20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.2 }}
-                            className="w-24 h-24 mx-auto mb-6 drop-shadow-2xl"
+                            className="flex justify-center mb-6"
                         >
-                            <img src={logo} alt="SurfBill" className="w-full h-full object-contain" />
+                            <SurfBillLogo size="lg" showText={false} />
                         </motion.div>
                         <motion.h1
                             initial={{ y: -10, opacity: 0 }}

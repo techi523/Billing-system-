@@ -31,6 +31,23 @@ async function initialSetup() {
             logger.info('Super Admin created successfully.');
         }
 
+        // 1b. Create Platform Owner if not exists
+        const ownerEmail = process.env.PLATFORM_OWNER_EMAIL || 'owner@surfbill.com';
+        const ownerPassword = process.env.PLATFORM_OWNER_PASSWORD || 'SurfBillOwner2026!';
+
+        const existingOwner = await AdminUser.findOne({ where: { role: 'PLATFORM_OWNER' } });
+        if (!existingOwner) {
+            const hashedOwnerPassword = await bcrypt.hash(ownerPassword, 12);
+            await AdminUser.create({
+                email: ownerEmail,
+                password: hashedOwnerPassword,
+                role: 'PLATFORM_OWNER',
+                tenantId: null,
+                commissionRate: 0
+            });
+            logger.info('Platform Owner created successfully.');
+        }
+
         // 2. Create Platform Settings (Contact Details)
         const { Tenant, Package, Router: RouterModel, Subscriber, Payment, Voucher, Wallet, PlatformSetting } = require('./models');
 

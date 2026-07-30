@@ -9,6 +9,13 @@
     "surfbill": "concurrently \"pnpm run dev\" \"pnpm run frontend\"",
     "build": "tsc"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sqlite3",
+      "unrs-resolver"
+    ]
+  },
   "dependencies": {
     "@types/body-parser": "^1.19.6",
     "@types/cors": "^2.8.19",

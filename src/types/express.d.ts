@@ -1,7 +1,7 @@
 export interface UserAuth {
     id: string;
     email: string;
-    role: 'SUPER_ADMIN' | 'TENANT' | 'STAFF' | 'AGENT';
+    role: 'PLATFORM_OWNER' | 'SUPER_ADMIN' | 'TENANT' | 'STAFF' | 'AGENT';
     tenantId: string | null;
 }
 

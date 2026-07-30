@@ -1,4 +1,4 @@
-import { Payment, Session, Package, Subscriber, Voucher, SMSLog, sequelize } from '../models';
+import { Payment, Session, Package, Subscriber, Voucher, SMSLog, Router, Settlement, sequelize } from '../models';
 import { Op } from 'sequelize';
 
 export class AnalyticsService {
@@ -291,6 +291,190 @@ export class AnalyticsService {
         return {
             peakHours,
             netEfficiency: efficiency.toFixed(1) + '%'
+        };
+    }
+
+    /**
+     * Full revenue breakdown: today, week, month, year
+     */
+    static async getYearlyRevenue(tenantId: string) {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+        const [today, week, month, year] = await Promise.all([
+            Payment.sum('amount', { where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: startOfToday } } }),
+            Payment.sum('amount', { where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: startOfWeek } } }),
+            Payment.sum('amount', { where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: startOfMonth } } }),
+            Payment.sum('amount', { where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: startOfYear } } }),
+        ]);
+
+        return {
+            today: Number(today || 0),
+            week: Number(week || 0),
+            month: Number(month || 0),
+            year: Number(year || 0),
+        };
+    }
+
+    /**
+     * Subscriber growth: new subscribers per day for last 30 days
+     */
+    static async getSubscriberGrowth(tenantId: string) {
+        const last30Days = new Date();
+        last30Days.setDate(last30Days.getDate() - 30);
+
+        const growth = await Subscriber.findAll({
+            attributes: [
+                [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
+                [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+            ],
+            where: { tenantId, createdAt: { [Op.gte]: last30Days } },
+            group: [sequelize.fn('DATE', sequelize.col('createdAt'))],
+            order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']],
+            raw: true
+        });
+
+        return (growth as unknown as Array<{ date: string; count: string | number }>).map(r => ({
+            date: r.date,
+            count: Number(r.count)
+        }));
+    }
+
+    /**
+     * Top selling packages by revenue and count
+     */
+    static async getPackageSales(tenantId: string) {
+        const sales = await Payment.findAll({
+            attributes: [
+                'packageId',
+                [sequelize.fn('COUNT', sequelize.col('payment.id')), 'count'],
+                [sequelize.fn('SUM', sequelize.col('payment.amount')), 'revenue']
+            ],
+            where: { tenantId, status: 'SUCCESS' },
+            group: ['packageId', 'package.id'],
+            order: [[sequelize.literal('revenue'), 'DESC']],
+            limit: 10,
+            include: [{ model: Package, attributes: ['name', 'price'] }],
+            raw: true,
+            nest: true
+        });
+
+        return (sales as unknown as Array<{
+            packageId: number;
+            count: string | number;
+            revenue: string | number;
+            package: { name: string; price: string | number };
+        }>).map(r => ({
+            packageId: r.packageId,
+            name: r.package?.name || 'Unknown',
+            count: Number(r.count),
+            revenue: Number(r.revenue),
+        }));
+    }
+
+    /**
+     * Network health score (0-100) based on online router percentage
+     */
+    static async getNetworkHealthScore(tenantId: string): Promise<number> {
+        const [total, online] = await Promise.all([
+            Router.count({ where: { tenantId } }),
+            Router.count({ where: { tenantId, isOnline: true } }),
+        ]);
+        if (total === 0) return 100;
+        return Math.round((online / total) * 100);
+    }
+
+    /**
+     * Monthly revenue trend for the last 12 months
+     */
+    static async getMonthlyRevenueTrend(tenantId: string) {
+        const last12Months = new Date();
+        last12Months.setMonth(last12Months.getMonth() - 12);
+
+        const isMySQL = process.env.DB_TYPE === 'mysql';
+        const monthFormat = isMySQL ? '%Y-%m' : '%Y-%m';
+        const monthFunc = isMySQL ? 'DATE_FORMAT' : 'STRFTIME';
+
+        const trend = await Payment.findAll({
+            attributes: [
+                [sequelize.fn(monthFunc, sequelize.col('createdAt'), monthFormat), 'month'],
+                [sequelize.fn('SUM', sequelize.col('amount')), 'total']
+            ],
+            where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: last12Months } },
+            group: [sequelize.fn(monthFunc, sequelize.col('createdAt'), monthFormat)],
+            order: [[sequelize.fn(monthFunc, sequelize.col('createdAt'), monthFormat), 'ASC']],
+            raw: true
+        });
+
+        return (trend as unknown as Array<{ month: string; total: string | number }>).map(r => ({
+            month: r.month,
+            total: Number(r.total)
+        }));
+    }
+
+    /**
+     * Full BI Dashboard Stats — aggregates all 18 KPIs in one call
+     */
+    static async getFullDashboardStats(tenantId: string) {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+        const [
+            revenueToday, revenueWeek, revenueMonth, revenueYear,
+            totalSubscribers, activeSubscribers, expiredSubscribers,
+            onlineUsers, totalRouters, connectedRouters,
+            successPayments, failedPayments, pendingPayments,
+            activeCampaigns, pendingWithdrawals
+        ] = await Promise.all([
+            Payment.sum('amount', { where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: startOfToday } } }),
+            Payment.sum('amount', { where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: startOfWeek } } }),
+            Payment.sum('amount', { where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: startOfMonth } } }),
+            Payment.sum('amount', { where: { tenantId, status: 'SUCCESS', createdAt: { [Op.gte]: startOfYear } } }),
+            Subscriber.count({ where: { tenantId } }),
+            Subscriber.count({ where: { tenantId, status: 'ACTIVE' } }),
+            Subscriber.count({ where: { tenantId, status: { [Op.in]: ['INACTIVE', 'SUSPENDED'] } } }),
+            Session.count({ where: { tenantId, status: 'ACTIVE' } }),
+            Router.count({ where: { tenantId } }),
+            Router.count({ where: { tenantId, isOnline: true } }),
+            Payment.count({ where: { tenantId, status: 'SUCCESS' } }),
+            Payment.count({ where: { tenantId, status: 'FAILED' } }),
+            Payment.count({ where: { tenantId, status: 'PENDING' } }),
+            // Campaigns: count active SMS campaigns (vouchers available as proxy)
+            Voucher.count({ where: { tenantId, status: 'AVAILABLE' } }),
+            Settlement.count({ where: { tenantId, status: 'PENDING' } }),
+        ]);
+
+        const networkHealth = totalRouters > 0 ? Math.round((connectedRouters / totalRouters) * 100) : 100;
+
+        return {
+            revenueToday: Number(revenueToday || 0),
+            revenueWeek: Number(revenueWeek || 0),
+            revenueMonth: Number(revenueMonth || 0),
+            revenueYear: Number(revenueYear || 0),
+            totalSubscribers,
+            activeSubscribers,
+            expiredSubscribers,
+            onlineUsers,
+            offlineUsers: Math.max(0, activeSubscribers - onlineUsers),
+            totalRouters,
+            connectedRouters,
+            disconnectedRouters: Math.max(0, totalRouters - connectedRouters),
+            successPayments,
+            failedPayments,
+            pendingPayments,
+            activeCampaigns,
+            pendingWithdrawals,
+            networkHealth,
         };
     }
 }

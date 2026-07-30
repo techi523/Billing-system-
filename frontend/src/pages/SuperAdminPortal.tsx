@@ -1,18 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SuperAdminDashboard from '../components/SuperAdmin/SuperAdminDashboard';
+import SuperAdminCommandCenter from './SuperAdmin/SuperAdminCommandCenter';
+import UltimateSuperAdminCenter from './SuperAdmin/UltimateSuperAdminCenter';
 import PlatformSettings from '../components/SuperAdmin/PlatformSettings';
 import SmsGatewayManager from '../components/SuperAdmin/SmsGatewayManager';
 import SaaSMonetisationSuite from './SuperAdmin/SaaSMonetisationSuite';
+import BrandingCenter from './SuperAdmin/BrandingCenter';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/Common/BackButton';
 import ThemeToggle from '../components/Common/ThemeToggle';
-import { LayoutDashboard, Settings as SettingsIcon, MessageSquare, DollarSign } from 'lucide-react';
+import SurfBillLogo from '../components/Common/SurfBillLogo';
+import { LayoutDashboard, Settings as SettingsIcon, MessageSquare, DollarSign, Palette, Zap, ShieldCheck } from 'lucide-react';
 
 const SuperAdminPortal = () => {
     const navigate = useNavigate();
     const { logout, loading: authLoading } = useAuth();
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'saas' | 'settings' | 'sms'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'ultimate' | 'command' | 'saas' | 'branding' | 'settings' | 'sms'>('ultimate');
 
     if (authLoading) {
         return (
@@ -31,18 +34,28 @@ const SuperAdminPortal = () => {
             <div className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] sticky top-0 z-50 shadow-sm transition-colors duration-300">
                 <div className="max-w-7xl mx-auto px-6 py-4">
                     <div className="flex items-center gap-6">
-                        <BackButton to="/" label="Home" variant="dark" />
+                        <SurfBillLogo size="sm" showText={true} />
                         <div className="flex-1 flex items-center justify-between">
                             <div className="flex items-center gap-2 bg-[var(--bg-surface-elevated)] p-1 rounded-xl border border-[var(--border-subtle)]">
                                 <button
-                                    onClick={() => setActiveTab('dashboard')}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'dashboard'
+                                    onClick={() => setActiveTab('ultimate')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'ultimate'
                                         ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
                                         : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                                         }`}
                                 >
-                                    <LayoutDashboard size={16} />
-                                    Dashboard
+                                    <ShieldCheck size={16} />
+                                    Ultimate Control
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('command')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'command'
+                                        ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                                        }`}
+                                >
+                                    <Zap size={16} />
+                                    Command Center
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('saas')}
@@ -53,6 +66,16 @@ const SuperAdminPortal = () => {
                                 >
                                     <DollarSign size={16} />
                                     SaaS Monetisation
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('branding')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'branding'
+                                        ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                                        }`}
+                                >
+                                    <Palette size={16} />
+                                    Branding Center
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('settings')}
@@ -77,6 +100,12 @@ const SuperAdminPortal = () => {
                             </div>
                             <div className="flex items-center gap-6">
                                 <button
+                                    onClick={() => navigate('/platform-owner')}
+                                    className="px-4 py-2 bg-amber-500/10 text-amber-400 font-bold rounded-xl hover:bg-amber-500 hover:text-white border border-amber-500/20 transition-all text-xs flex items-center gap-2"
+                                >
+                                    👑 Platform Owner Suite
+                                </button>
+                                <button
                                     onClick={() => navigate('/tenant')}
                                     className="px-4 py-2 bg-sky-500/10 text-sky-400 font-bold rounded-xl hover:bg-sky-500 hover:text-white border border-sky-500/20 transition-all text-xs flex items-center gap-2"
                                 >
@@ -88,7 +117,7 @@ const SuperAdminPortal = () => {
                                 </span>
                                 <button
                                     onClick={logout}
-                                    className="px-4 py-2 bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] font-bold rounded-xl hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] transition-all hover:text-[var(--text-primary)]"
+                                    className="px-4 py-2 bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] font-bold rounded-xl hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] transition-all hover:text-[var(--text-primary)] text-xs"
                                 >
                                     Logout
                                 </button>
@@ -99,8 +128,10 @@ const SuperAdminPortal = () => {
             </div>
 
             <div className="max-w-7xl mx-auto p-8 space-y-8">
-                {activeTab === 'dashboard' && <SuperAdminDashboard />}
+                {activeTab === 'ultimate' && <UltimateSuperAdminCenter />}
+                {activeTab === 'command' && <SuperAdminCommandCenter />}
                 {activeTab === 'saas' && <SaaSMonetisationSuite />}
+                {activeTab === 'branding' && <BrandingCenter />}
                 {activeTab === 'settings' && <PlatformSettings />}
                 {activeTab === 'sms' && <SmsGatewayManager />}
             </div>

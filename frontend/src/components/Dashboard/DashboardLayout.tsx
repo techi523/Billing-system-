@@ -5,13 +5,15 @@ import {
     Wallet, Settings, HelpCircle, ChevronLeft, ChevronRight,
     Search, Bell, Menu, X, LogOut, User, Shield, Zap,
     FileText, CreditCard, Radio, Send, Globe, Terminal,
-    Palette, Lock, BellRing, BookOpen, Headphones, Activity
+    Palette, Lock, BellRing, BookOpen, Headphones, Activity,
+    Router, HardDrive, Layers, RotateCcw
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from '../Common/ThemeToggle';
 import GlobalSearch from './GlobalSearch';
 import NotificationCenter from './NotificationCenter';
+import SurfBillLogo from '../Common/SurfBillLogo';
 import QuickActions from './QuickActions';
 
 // ─── Sidebar Menu Configuration ─────────────────────────────────
@@ -44,7 +46,7 @@ const MENU_SECTIONS: MenuSection[] = [
     {
         label: 'Subscribers',
         items: [
-            { id: 'subscribers', label: 'Subscribers', icon: Users, path: '/tenant' },
+            { id: 'subscribers', label: 'Subscriber Onboarding', icon: Users, path: '/tenant/subscribers' },
         ]
     },
     {
@@ -56,7 +58,11 @@ const MENU_SECTIONS: MenuSection[] = [
     {
         label: 'Network',
         items: [
-            { id: 'routers', label: 'MikroTik Routers', icon: Wifi, path: '/tenant/mikrotik' },
+            { id: 'routers', label: 'MikroTik Center', icon: Wifi, path: '/tenant/mikrotik' },
+            { id: 'router-management', label: 'Router Management', icon: Router, path: '/tenant/router-management' },
+            { id: 'network-monitoring', label: 'Network Monitoring', icon: Activity, path: '/tenant/network-monitoring' },
+            { id: 'router-backups', label: 'Router Backups', icon: HardDrive, path: '/tenant/router-backups' },
+            { id: 'sessions', label: 'Active Sessions', icon: Layers, path: '/tenant/sessions' },
             { id: 'captive', label: 'Captive Portal', icon: Globe, path: '/captive-portal' },
         ]
     },
@@ -87,6 +93,9 @@ const MENU_SECTIONS: MenuSection[] = [
         label: 'Finance',
         items: [
             { id: 'wallet', label: 'Wallet & Treasury', icon: Wallet, path: '/tenant/wallet' },
+            { id: 'refunds', label: 'Refunds & Compensation', icon: RotateCcw, path: '/tenant/refunds' },
+            { id: 'reports', label: 'Reports', icon: FileText, path: '/tenant/reports' },
+            { id: 'subscription', label: 'Subscription', icon: CreditCard, path: '/tenant/subscription' },
         ]
     },
     {
@@ -233,16 +242,12 @@ const DashboardLayout: React.FC = () => {
     const SidebarContent = () => (
         <div className="flex flex-col h-full">
             {/* Logo / Brand */}
-            <div className="flex items-center gap-3 px-5 h-16 border-b border-[var(--sidebar-border)] flex-shrink-0">
-                <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Zap className="w-4 h-4 text-white" />
-                </div>
-                {!sidebarCollapsed && (
-                    <div className="overflow-hidden">
-                        <h1 className="text-base font-black text-[var(--text-primary)] truncate leading-tight">SurfBill</h1>
-                        <p className="text-[10px] font-medium text-[var(--text-muted)] truncate">WiFi Billing Platform</p>
-                    </div>
-                )}
+            <div className="flex items-center px-4 h-16 border-b border-[var(--sidebar-border)] flex-shrink-0">
+                <SurfBillLogo
+                    variant={sidebarCollapsed ? 'icon' : 'primary'}
+                    size="sm"
+                    showText={!sidebarCollapsed}
+                />
             </div>
 
             {/* Navigation */}
@@ -447,6 +452,13 @@ const DashboardLayout: React.FC = () => {
                 <div className="p-3 sm:p-6 page-fade-in">
                     <Outlet />
                 </div>
+                <footer className="px-6 py-4 border-t border-[var(--border-subtle)] text-xs text-[var(--text-muted)] flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <div>© 2026 SurfBill Pro. All rights reserved.</div>
+                    <div className="flex items-center gap-4">
+                        <span>Support Phone: <strong className="text-[var(--text-primary)]">0714498996</strong></span>
+                        <span>Support Email: <strong className="text-[var(--text-primary)]">surfbill0@gmail.com</strong></span>
+                    </div>
+                </footer>
             </main>
 
             {/* ─── Overlays ───────────────────────────────────── */}

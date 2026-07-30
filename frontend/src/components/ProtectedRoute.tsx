@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
-    allowedRoles?: ('SUPER_ADMIN' | 'TENANT' | 'STAFF' | 'AGENT')[];
+    allowedRoles?: ('PLATFORM_OWNER' | 'SUPER_ADMIN' | 'TENANT' | 'STAFF' | 'AGENT')[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
@@ -30,9 +30,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
+    // PLATFORM_OWNER bypasses all path restrictions
+    if (user.role === 'PLATFORM_OWNER') {
+        return <>{children}</>;
+    }
+
     // FIX: Hard separation for Super Admin
     if (user.role === 'SUPER_ADMIN') {
-        const isSuperAdminRoute = location.pathname.startsWith('/superadmin');
+        const isSuperAdminRoute = location.pathname.startsWith('/superadmin') || location.pathname.startsWith('/platform-owner');
         if (!isSuperAdminRoute && allowedRoles && !allowedRoles.includes('SUPER_ADMIN')) {
             console.log(`[ProtectedRoute] Super Admin accessing restricted route ${location.pathname}. Redirecting to /superadmin.`);
             return <Navigate to="/superadmin" replace />;

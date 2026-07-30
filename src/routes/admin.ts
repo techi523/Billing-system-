@@ -61,7 +61,7 @@ router.post('/tenants/setup', async (req: any, res) => {
     }
 });
 
-// Admin dashboard summary
+// Admin dashboard summary - Full BI Dashboard (18 KPIs)
 router.get('/dashboard-summary', async (req: any, res) => {
     try {
         let tenantId = req.user.tenantId;
@@ -82,7 +82,13 @@ router.get('/dashboard-summary', async (req: any, res) => {
                 subscriberCount: 0,
                 activeSessions: 0,
                 pendingPayments: 0,
-                plan: 'Standard'
+                plan: 'Standard',
+                revenueToday: 0, revenueWeek: 0, revenueMonth: 0, revenueYear: 0,
+                totalSubscribers: 0, activeSubscribers: 0, expiredSubscribers: 0,
+                onlineUsers: 0, offlineUsers: 0,
+                totalRouters: 0, connectedRouters: 0, disconnectedRouters: 0,
+                successPayments: 0, failedPayments: 0, activeCampaigns: 0,
+                pendingWithdrawals: 0, networkHealth: 100,
             });
         }
 
@@ -100,25 +106,32 @@ router.get('/dashboard-summary', async (req: any, res) => {
                 subscriberCount: 0,
                 activeSessions: 0,
                 pendingPayments: 0,
-                plan: 'Standard'
+                plan: 'Standard',
+                revenueToday: 0, revenueWeek: 0, revenueMonth: 0, revenueYear: 0,
+                totalSubscribers: 0, activeSubscribers: 0, expiredSubscribers: 0,
+                onlineUsers: 0, offlineUsers: 0,
+                totalRouters: 0, connectedRouters: 0, disconnectedRouters: 0,
+                successPayments: 0, failedPayments: 0, activeCampaigns: 0,
+                pendingWithdrawals: 0, networkHealth: 100,
             });
         }
 
-        const [subscriberCount, activeSessions, pendingPayments] = await Promise.all([
-            Subscriber.count({ where: { tenantId: tenant.id } }),
-            Session.count({ where: { tenantId: tenant.id, status: 'ACTIVE' } }),
-            Payment.count({ where: { tenantId: tenant.id, status: 'PENDING' } })
-        ]);
+        // Load AnalyticsService for full stats
+        const { AnalyticsService } = require('../services/analytics.service');
+        const biStats = await AnalyticsService.getFullDashboardStats(tenantId);
 
         res.json({
             tenantId: tenant.id,
             tenantName: tenant.name,
             tenantLogo: tenant.logoUrl,
             tenantColor: tenant.primaryColor,
-            subscriberCount,
-            activeSessions,
-            pendingPayments,
-            plan: 'Standard'
+            plan: 'Standard',
+            // Legacy fields (for backwards compat)
+            subscriberCount: biStats.totalSubscribers,
+            activeSessions: biStats.onlineUsers,
+            pendingPayments: biStats.pendingPayments,
+            // Full BI KPIs
+            ...biStats,
         });
     } catch (error) {
         logger.error('Failed to get dashboard summary', { error });
@@ -329,6 +342,56 @@ router.get('/analytics/context', async (req: any, res) => {
     } catch (error) {
         logger.error('Failed to fetch traffic context', { error });
         res.status(500).json({ error: 'Failed to fetch traffic context' });
+    }
+});
+
+router.get('/analytics/subscriber-growth', async (req: any, res) => {
+    try {
+        const { AnalyticsService } = require('../services/analytics.service');
+        const data = await AnalyticsService.getSubscriberGrowth(req.user.tenantId);
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch subscriber growth' });
+    }
+});
+
+router.get('/analytics/package-sales', async (req: any, res) => {
+    try {
+        const { AnalyticsService } = require('../services/analytics.service');
+        const data = await AnalyticsService.getPackageSales(req.user.tenantId);
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch package sales' });
+    }
+});
+
+router.get('/analytics/monthly-trend', async (req: any, res) => {
+    try {
+        const { AnalyticsService } = require('../services/analytics.service');
+        const data = await AnalyticsService.getMonthlyRevenueTrend(req.user.tenantId);
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch monthly trend' });
+    }
+});
+
+router.get('/analytics/full-stats', async (req: any, res) => {
+    try {
+        const { AnalyticsService } = require('../services/analytics.service');
+        const data = await AnalyticsService.getFullDashboardStats(req.user.tenantId);
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch full dashboard stats' });
+    }
+});
+
+router.get('/analytics/hourly-trends', async (req: any, res) => {
+    try {
+        const { AnalyticsService } = require('../services/analytics.service');
+        const data = await AnalyticsService.getHourlyTrends(req.user.tenantId);
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch hourly trends' });
     }
 });
 

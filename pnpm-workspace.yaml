@@ -2,6 +2,11 @@ packages:
   - "."
   - "frontend"
 
+allowBuilds:
+  esbuild: set this to true or false
+  sqlite3: set this to true or false
+  unrs-resolver: set this to true or false
+
 onlyBuiltDependencies:
   - sqlite3
   - unrs-resolver

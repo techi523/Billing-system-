@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Lock, Mail, Globe, Building } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import logo from '../assets/logo.png';
+import SurfBillLogo from '../components/Common/SurfBillLogo';
 import SupportFooter from '../components/Common/SupportFooter';
 import { OFFICIAL_SUPPORT } from '../constants';
 import BackButton from '../components/Common/BackButton';
@@ -94,7 +94,9 @@ const Register = () => {
             >
                 <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-10 rounded-[3rem] shadow-2xl transition-colors">
                     <div className="text-center mb-10">
-                        <img src={logo} alt="SurfBill" className="w-20 h-20 mx-auto mb-4" />
+                        <div className="flex justify-center mb-4">
+                            <SurfBillLogo size="lg" showText={false} />
+                        </div>
                         <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">Create Tenant Account</h1>
                         <p className="text-[var(--text-secondary)] text-sm font-medium mt-2">Start your production-grade ISP/Hotspot billing</p>
                     </div>

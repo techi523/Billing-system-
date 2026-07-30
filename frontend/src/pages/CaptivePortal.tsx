@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Smartphone, Zap, Clock, Wifi, ShieldCheck, ChevronRight, Share2, Info, Loader2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import logo from '../assets/logo-main.png';
+import SurfBillLogo from '../components/Common/SurfBillLogo';
 import SupportFooter from '../components/Common/SupportFooter';
 
 import type { Package } from '../types';
@@ -234,8 +234,12 @@ const CaptivePortal = () => {
                 animate={{ y: 0, opacity: 1 }}
                 className="relative z-10 pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-8 flex flex-col items-center text-center text-white"
             >
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white/5 backdrop-blur-2xl rounded-3xl border border-white/10 flex items-center justify-center mb-4 sm:mb-6 shadow-2xl">
-                    <img src={tenantConfig?.logoUrl || logo} alt="Logo" className="w-12 h-12 sm:w-16 sm:h-16 object-contain" />
+                <div className="flex justify-center mb-4 sm:mb-6">
+                    {tenantConfig?.logoUrl ? (
+                        <img src={tenantConfig.logoUrl} alt="Logo" className="w-16 h-16 sm:w-20 sm:h-20 object-contain" />
+                    ) : (
+                        <SurfBillLogo variant="captive" size="lg" showText={false} />
+                    )}
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-black tracking-tighter mb-2">
                     {tenantConfig?.name || 'SurfBill'} <span className="text-sky-400">Portal</span>

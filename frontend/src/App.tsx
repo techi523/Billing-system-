@@ -19,6 +19,10 @@ import AdminPortal from './pages/AdminPortal';
 // Protected Pages - Super Admin
 import SuperAdminPortal from './pages/SuperAdminPortal';
 
+// Protected Pages - Platform Owner
+import PlatformOwnerPortal from './pages/PlatformOwnerPortal';
+import ImpersonationBanner from './components/ImpersonationBanner';
+
 // Protected Pages - Tenant
 import DashboardLayout from './components/Dashboard/DashboardLayout';
 import TenantSetup from './pages/TenantSetup';
@@ -34,6 +38,21 @@ import ProfilePage from './pages/Profile';
 import MarketingSuite from './pages/Marketing/MarketingSuite';
 import SaaSMonetisationSuite from './pages/SuperAdmin/SaaSMonetisationSuite';
 import TenantBillingHub from './pages/TenantBillingHub';
+import RouterManagement from './pages/RouterManagement';
+import NetworkMonitoring from './pages/NetworkMonitoring';
+import RouterBackups from './pages/RouterBackups';
+import Reports from './pages/Reports';
+import ActiveSessions from './pages/ActiveSessions';
+import RefundsManagement from './pages/RefundsManagement';
+import SubscribersManagement from './pages/SubscribersManagement';
+import BrandingCenter from './pages/SuperAdmin/BrandingCenter';
+import PrivacyPolicy from './pages/Public/PrivacyPolicy';
+import TermsConditions from './pages/Public/TermsConditions';
+import AboutUs from './pages/Public/AboutUs';
+import ContactUs from './pages/Public/ContactUs';
+import SystemStatus from './pages/Public/SystemStatus';
+import HelpCenter from './pages/Public/HelpCenter';
+import { BrandingProvider } from './context/BrandingContext';
 
 
 function App() {
@@ -41,23 +60,43 @@ function App() {
         <ErrorBoundary>
             <AuthProvider>
                 <ThemeProvider>
-                    <SupportProvider>
-                        <Routes>
-                            {/* Public Routes */}
-                            <Route path="/" element={<LandingPage />} />
-                            <Route path="/login" element={<Login />} />
-                            <Route path="/register" element={<Register />} />
-                            <Route path="/password-reset" element={<PasswordResetRequest />} />
-                            <Route path="/captive-portal" element={<CaptivePortal />} />
+                    <BrandingProvider>
+                        <SupportProvider>
+                            <ImpersonationBanner />
+                            <Routes>
+                                {/* Public Routes */}
+                                <Route path="/" element={<LandingPage />} />
+                                <Route path="/login" element={<Login />} />
+                                <Route path="/register" element={<Register />} />
+                                <Route path="/password-reset" element={<PasswordResetRequest />} />
+                                <Route path="/captive-portal" element={<CaptivePortal />} />
+
+                                {/* Public Trust Pages */}
+                                <Route path="/privacy" element={<PrivacyPolicy />} />
+                                <Route path="/terms" element={<TermsConditions />} />
+                                <Route path="/about" element={<AboutUs />} />
+                                <Route path="/contact" element={<ContactUs />} />
+                                <Route path="/status" element={<SystemStatus />} />
+                                <Route path="/help" element={<HelpCenter />} />
 
                             {/* Super Admin Login (Explicit) */}
                             <Route path="/superadmin/login" element={<SuperAdminLogin />} />
+
+                            {/* Protected Platform Owner Routes */}
+                            <Route
+                                path="/platform-owner/*"
+                                element={
+                                    <ProtectedRoute allowedRoles={['PLATFORM_OWNER', 'SUPER_ADMIN']}>
+                                        <PlatformOwnerPortal />
+                                    </ProtectedRoute>
+                                }
+                            />
 
                             {/* Protected Super Admin Routes */}
                             <Route
                                 path="/superadmin/*"
                                 element={
-                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'PLATFORM_OWNER']}>
                                         <SuperAdminPortal />
                                     </ProtectedRoute>
                                 }
@@ -138,6 +177,48 @@ function App() {
                                     </ProtectedRoute>
                                 } />
 
+                                <Route path="/tenant/router-management" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
+                                        <RouterManagement />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/tenant/network-monitoring" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
+                                        <NetworkMonitoring />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/tenant/router-backups" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
+                                        <RouterBackups />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/tenant/reports" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
+                                        <Reports />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/tenant/sessions" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
+                                        <ActiveSessions />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/tenant/refunds" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
+                                        <RefundsManagement />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/tenant/subscribers" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
+                                        <SubscribersManagement />
+                                    </ProtectedRoute>
+                                } />
+
                             </Route>
 
                             {/* Legacy / Admin Routes */}
@@ -154,6 +235,7 @@ function App() {
                             <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
                     </SupportProvider>
+                    </BrandingProvider>
                 </ThemeProvider>
             </AuthProvider>
         </ErrorBoundary>

@@ -24,7 +24,15 @@ import profileRoutes from './routes/profile.routes';
 import marketingRoutes from './routes/marketing.routes';
 import superAdminSaasRoutes from './routes/superadmin-saas.routes';
 import tenantSaasRoutes from './routes/tenant-saas.routes';
+import reportsRoutes from './routes/reports.routes';
+import refundRoutes from './routes/refund.routes';
+import subscriberRoutes from './routes/subscriber.routes';
+import brandingRoutes from './routes/branding.routes';
+import superadminCommandRoutes from './routes/superadmin-command.routes';
+import ultimateSuperAdminRoutes from './routes/ultimate-superadmin-control.routes';
 import intasendWebhookRoutes from './routes/intasend-webhook.routes';
+import platformOwnerRoutes from './routes/platform-owner.routes';
+import { DormantRouterService } from './services/dormant-router.service';
 import { IspService } from './services/isp.service';
 import { SettlementEngine } from './services/settlement-engine';
 import { TrafficMonitorService } from './services/traffic-monitor.service';
@@ -122,6 +130,7 @@ app.use('/api/v1/auth', strictLimiter, authRoutes);
 
 app.use('/api/v1/portal', portalRoutes); // Public portal handle its own resolution
 app.use('/api/v1/portal/:tenantId/pay', strictLimiter, portalRoutes);
+app.use('/api/v1/branding', brandingRoutes);
 
 // Authenticated Routes with Tenant Resolution
 app.use('/api/v1/admin/profile', authMiddleware, TenantResolver.resolveTenant, profileRoutes);
@@ -132,10 +141,16 @@ app.use('/api/v1/campaigns', authMiddleware, TenantResolver.resolveTenant, campa
 
 app.use('/api/v1/marketing', authMiddleware, TenantResolver.resolveTenant, marketingRoutes);
 app.use('/api/v1/superadmin', authMiddleware, superAdminLimiter, superadminRoutes);
+app.use('/api/v1/superadmin/command', authMiddleware, superAdminLimiter, superadminCommandRoutes);
+app.use('/api/v1/superadmin/ultimate', authMiddleware, superAdminLimiter, ultimateSuperAdminRoutes);
 app.use('/api/v1/superadmin/saas', authMiddleware, superAdminLimiter, superAdminSaasRoutes);
 app.use('/api/v1/superadmin/sms', authMiddleware, superAdminLimiter, smsGatewayRoutes);
+app.use('/api/v1/platform-owner', platformOwnerRoutes);
 app.use('/api/v1/tenant/saas', authMiddleware, TenantResolver.resolveTenant, tenantSaasRoutes);
 app.use('/api/v1/sms', authMiddleware, TenantResolver.resolveTenant, smsRoutes);
+app.use('/api/v1/admin/reports', authMiddleware, TenantResolver.resolveTenant, reportsRoutes);
+app.use('/api/v1/admin/refunds', authMiddleware, TenantResolver.resolveTenant, refundRoutes);
+app.use('/api/v1/admin/subscribers', authMiddleware, TenantResolver.resolveTenant, subscriberRoutes);
 
 // WEBHOOK RATE LIMITING (Prevent webhook flooding)
 const webhookLimiter = rateLimit({
@@ -248,6 +263,20 @@ async function startServer() {
                 logger.error('Matured balance clearing failed', { error: (err as Error).message });
             }
         }, 15 * 60 * 1000);
+
+        // Periodically scan for dormant routers and enforce policies (every 5 minutes)
+        setInterval(async () => {
+            try {
+                await DormantRouterService.scanAndEnforceDormantRouters();
+            } catch (err) {
+                logger.error('Dormant router scan background job failed', { error: (err as Error).message });
+            }
+        }, 5 * 60 * 1000);
+
+        // Initial scan on startup
+        DormantRouterService.scanAndEnforceDormantRouters().catch(err => {
+            logger.warn('Initial dormant router scan failed', { error: err.message });
+        });
 
         // Daily cycle for automated settlements
         setInterval(async () => {

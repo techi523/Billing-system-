@@ -36,7 +36,7 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
         }
 
         // Strict Role Check based on Secret used
-        if (tokenType === 'SUPER_ADMIN' && decoded.role !== 'SUPER_ADMIN') {
+        if (tokenType === 'SUPER_ADMIN' && decoded.role !== 'SUPER_ADMIN' && decoded.role !== 'PLATFORM_OWNER') {
             throw new Error('Role mismatch for token type');
         }
 
@@ -78,7 +78,16 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
 
 export const authorize = (roles: string[]) => {
     return (req: AuthRequest, res: Response, next: NextFunction) => {
-        if (!req.user || !roles.includes(req.user.role)) {
+        if (!req.user) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        // PLATFORM_OWNER inherits and bypasses all role restrictions
+        if (req.user.role === 'PLATFORM_OWNER') {
+            return next();
+        }
+
+        if (!roles.includes(req.user.role)) {
             logger.warn('Permission Denied', { user: req.user?.id, role: req.user?.role, rolesNeeded: roles });
             return res.status(403).json({ error: 'Access denied: insufficient permissions' });
         }
@@ -91,8 +100,8 @@ export const tenantGuard = (req: AuthRequest, res: Response, next: NextFunction)
         return res.status(401).json({ error: 'Authentication required' });
     }
 
-    // Super admins bypass tenant checks
-    if (req.user.role === 'SUPER_ADMIN') {
+    // Platform Owners and Super Admins bypass single-tenant restrictions
+    if (req.user.role === 'SUPER_ADMIN' || req.user.role === 'PLATFORM_OWNER') {
         return next();
     }
 

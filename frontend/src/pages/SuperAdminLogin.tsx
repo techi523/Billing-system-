@@ -6,6 +6,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import BackButton from '../components/Common/BackButton';
 import ThemeToggle from '../components/Common/ThemeToggle';
+import SurfBillLogo from '../components/Common/SurfBillLogo';
 
 const SuperAdminLogin = () => {
     const navigate = useNavigate();
@@ -61,9 +62,9 @@ const SuperAdminLogin = () => {
                             initial={{ y: -20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.2 }}
-                            className="w-20 h-20 mx-auto mb-6 bg-red-500/20 rounded-full flex items-center justify-center"
+                            className="flex justify-center mb-6"
                         >
-                            <Shield size={32} className="text-red-400" />
+                            <SurfBillLogo size="lg" showText={false} />
                         </motion.div>
                         <motion.h1
                             initial={{ y: -10, opacity: 0 }}

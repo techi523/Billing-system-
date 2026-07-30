@@ -1,350 +1,380 @@
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SubscriberTable from '../components/Modern/SubscriberTable';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import { motion } from 'framer-motion';
 import {
-    Shield, Zap, ArrowRight, ArrowUpRight, ArrowDownRight,
-    Users, Wifi, Wallet, MessageSquare, Package, Send,
-    CreditCard, TrendingUp, Activity, Clock, DollarSign,
-    BarChart3, Globe, Mail, Plus, RefreshCw
+    TrendingUp, TrendingDown, Users, Wifi, Router, DollarSign,
+    Activity, CheckCircle, XCircle, Clock, MessageSquare, Wallet,
+    ArrowUpRight, ArrowDownRight, RefreshCw, Plus, Zap, BarChart3,
+    ShieldCheck, Globe, AlertTriangle, Package, FileText, Settings
 } from 'lucide-react';
+import {
+    LineChart, Line, AreaChart, Area, BarChart, Bar,
+    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
+} from 'recharts';
 
-interface TenantDashboardData {
+// ─── TYPES ───────────────────────────────────────────────────────────────────
+
+interface DashboardStats {
     tenantName: string;
-    tenantLogo?: string;
     tenantColor?: string;
-    activeUsers: number;
-    subscriberCount: number;
+    revenueToday: number;
+    revenueWeek: number;
+    revenueMonth: number;
+    revenueYear: number;
+    totalSubscribers: number;
+    activeSubscribers: number;
+    expiredSubscribers: number;
+    onlineUsers: number;
+    offlineUsers: number;
+    totalRouters: number;
+    connectedRouters: number;
+    disconnectedRouters: number;
+    successPayments: number;
+    failedPayments: number;
     pendingPayments: number;
-    walletBalance: number;
-    settledBalance: number;
-    plan: string;
-    isNewTenant: boolean;
+    activeCampaigns: number;
+    pendingWithdrawals: number;
+    networkHealth: number;
 }
 
-const TenantPortal = () => {
-    const navigate = useNavigate();
-    const { user, logout } = useAuth();
-    const [isLoading, setIsLoading] = useState(true);
-    const [tenantData, setTenantData] = useState<TenantDashboardData | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [smsBalance, setSmsBalance] = useState(0);
+interface RevenuePoint { date: string; total: number; }
+interface SubGrowthPoint { date: string; count: number; }
 
-    const fetchDashboardData = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            const initStatusRes = await axios.get<{ isBootstrapped: boolean }>('/api/v1/admin/initialize/status');
-            const isBootstrapped = initStatusRes.data.isBootstrapped;
-            if (!isBootstrapped) {
-                await axios.post('/api/v1/admin/initialize');
-            }
+// ─── FORMATTERS ──────────────────────────────────────────────────────────────
 
-            const [statsRes, walletRes, smsRes] = await Promise.all([
-                axios.get<{
-                    tenantName: string;
-                    tenantLogo?: string;
-                    tenantColor?: string;
-                    activeSessions: number;
-                    subscriberCount: number;
-                    pendingPayments: number;
-                    plan: string;
-                }>('/api/v1/admin/dashboard-summary'),
-                axios.get<{ balance: number; settledBalance: number }>('/api/v1/wallet/balance'),
-                axios.get<{ balance: number }>('/api/v1/sms/balance').catch(() => ({ data: { balance: 0 } })),
-            ]);
-
-            setTenantData({
-                tenantName: statsRes.data.tenantName || 'Your Tenant',
-                tenantLogo: statsRes.data.tenantLogo,
-                tenantColor: statsRes.data.tenantColor,
-                activeUsers: statsRes.data.activeSessions || 0,
-                subscriberCount: statsRes.data.subscriberCount || 0,
-                pendingPayments: statsRes.data.pendingPayments || 0,
-                walletBalance: walletRes.data.balance || 0,
-                settledBalance: walletRes.data.settledBalance || 0,
-                plan: statsRes.data.plan || 'Standard',
-                isNewTenant: !isBootstrapped
-            });
-            setSmsBalance(smsRes.data.balance || 0);
-        } catch (err: unknown) {
-            console.error('Failed to fetch tenant data', err);
-            if (axios.isAxiosError(err)) {
-                if (err.response?.status === 401) { logout(); return; }
-                if (err.response?.status === 404) { setError('Tenant not found. Please contact support.'); }
-                else if (err.response?.status === 403) { setError('Access denied. Please check your permissions.'); }
-                else { setError('Failed to load tenant data. Please try again.'); }
-            } else {
-                setError('An unexpected error occurred.');
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    }, [logout]);
-
-    useEffect(() => {
-        fetchDashboardData();
-    }, [fetchDashboardData]);
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center py-32">
-                <div className="text-center">
-                    <RefreshCw className="w-10 h-10 text-sky-500 animate-spin mx-auto mb-3" />
-                    <p className="text-[var(--text-muted)] font-semibold text-sm">Loading dashboard...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="flex items-center justify-center py-32">
-                <div className="text-center max-w-md p-8 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-subtle)] shadow-[var(--shadow-md)]">
-                    <div className="w-14 h-14 bg-rose-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                        <Shield className="w-7 h-7 text-rose-500" />
-                    </div>
-                    <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">Workspace Access Issue</h2>
-                    <p className="text-[var(--text-secondary)] text-sm mb-6">
-                        {error === 'No tenant assigned to your account'
-                            ? "You don't have an active workspace yet. Let's get you set up."
-                            : error}
-                    </p>
-                    <div className="space-y-2">
-                        {(!user?.tenantId || error === 'No tenant assigned to your account') && (
-                            <button onClick={() => navigate('/tenant/setup')} className="btn-primary w-full">
-                                Setup Your Workspace <ArrowRight className="w-4 h-4" />
-                            </button>
-                        )}
-                        <button onClick={logout} className="btn-secondary w-full">
-                            Logout & Switch Account
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // ─── Quick Action Items ─────────────────────────
-    const quickActions = [
-        { label: 'Create Package', icon: Package, path: '/tenant/packages', color: 'text-sky-500', bg: 'bg-sky-500/10' },
-        { label: 'Add Subscriber', icon: Users, path: '/tenant', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Connect Router', icon: Wifi, path: '/tenant/mikrotik', color: 'text-violet-500', bg: 'bg-violet-500/10' },
-        { label: 'Marketing Suite', icon: BarChart3, path: '/tenant/marketing/dashboard', color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-        { label: 'Buy SMS', icon: CreditCard, path: '/tenant/communication', color: 'text-rose-500', bg: 'bg-rose-500/10' },
-        { label: 'Subscription & Billing', icon: DollarSign, path: '/tenant/subscription', color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
-        { label: 'View Wallet', icon: Wallet, path: '/tenant/wallet', color: 'text-orange-500', bg: 'bg-orange-500/10' },
-    ];
-
-    return (
-        <div className="space-y-6">
-            {/* ─── Welcome & New Tenant Banner ─────────────── */}
-            {tenantData?.isNewTenant && (
-                <div className="premium-card border-l-4 border-l-emerald-500 !p-5">
-                    <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 flex-shrink-0">
-                            <Zap className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">Welcome to Your New Portal!</h3>
-                            <p className="text-[var(--text-secondary)] text-xs mb-3">
-                                Your workspace is initialized. Complete setup by creating packages and connecting your router.
-                            </p>
-                            <div className="flex gap-2">
-                                <button onClick={() => navigate('/tenant/packages')} className="btn-primary !py-2 !px-4 !text-xs">
-                                    Create Packages
-                                </button>
-                                <button onClick={() => navigate('/tenant/mikrotik')} className="btn-secondary !py-2 !px-4 !text-xs">
-                                    Setup Router
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ─── KPI Cards Row ──────────────────────────────── */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                <KPICard
-                    label="Active Users"
-                    value={tenantData?.activeUsers || 0}
-                    icon={<Users className="w-4 h-4" />}
-                    color="sky"
-                />
-                <KPICard
-                    label="Subscribers"
-                    value={tenantData?.subscriberCount || 0}
-                    icon={<Activity className="w-4 h-4" />}
-                    color="emerald"
-                />
-                <KPICard
-                    label="Wallet Balance"
-                    value={`KES ${((tenantData?.walletBalance || 0) / 100).toLocaleString()}`}
-                    icon={<Wallet className="w-4 h-4" />}
-                    color="violet"
-                    onClick={() => navigate('/tenant/wallet')}
-                />
-                <KPICard
-                    label="SMS Credits"
-                    value={smsBalance}
-                    icon={<MessageSquare className="w-4 h-4" />}
-                    color="amber"
-                    onClick={() => navigate('/tenant/communication')}
-                />
-                <KPICard
-                    label="Pending Payments"
-                    value={tenantData?.pendingPayments || 0}
-                    icon={<Clock className="w-4 h-4" />}
-                    color="rose"
-                />
-            </div>
-
-            {/* ─── Quick Actions Grid ─────────────────────────── */}
-            <div className="premium-card !p-5">
-                <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                    {quickActions.map((action) => (
-                        <button
-                            key={action.label}
-                            onClick={() => navigate(action.path)}
-                            className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[var(--bg-surface-elevated)] transition-all group text-center"
-                        >
-                            <div className={`p-2.5 rounded-lg ${action.bg} ${action.color} group-hover:scale-110 transition-transform`}>
-                                <action.icon className="w-4 h-4" />
-                            </div>
-                            <span className="text-[11px] font-semibold text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors leading-tight">
-                                {action.label}
-                            </span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* ─── Feature Navigation Cards ───────────────────── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <FeatureCard
-                    title="Real-time Analytics"
-                    subtitle="Revenue & Traffic"
-                    icon={<BarChart3 className="w-5 h-5" />}
-                    onClick={() => navigate('/tenant/analytics')}
-                    variant="dark"
-                />
-                <FeatureCard
-                    title="Billing Packages"
-                    subtitle="Plans & Pricing"
-                    icon={<Zap className="w-5 h-5" />}
-                    onClick={() => navigate('/tenant/packages')}
-                    variant="primary"
-                />
-                <FeatureCard
-                    title="MikroTik Center"
-                    subtitle="Router Management"
-                    icon={<Wifi className="w-5 h-5" />}
-                    onClick={() => navigate('/tenant/mikrotik')}
-                    variant="outlined"
-                />
-                <FeatureCard
-                    title="SMS & Campaigns"
-                    subtitle="Communication Hub"
-                    icon={<MessageSquare className="w-5 h-5" />}
-                    onClick={() => navigate('/tenant/communication')}
-                    variant="gradient"
-                />
-            </div>
-
-            {/* ─── Subscriber Management Table ────────────────── */}
-            <div className="premium-card !p-0 overflow-hidden">
-                <div className="p-5 border-b border-[var(--border-subtle)]">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-base font-bold text-[var(--text-primary)]">Subscriber Management</h2>
-                            <p className="text-[var(--text-secondary)] text-xs mt-0.5">Live session monitoring and user control</p>
-                        </div>
-                        <button onClick={fetchDashboardData} className="btn-ghost !py-2 !px-3 !text-xs">
-                            <RefreshCw className="w-3.5 h-3.5" /> Refresh
-                        </button>
-                    </div>
-                </div>
-                <SubscriberTable />
-            </div>
-        </div>
-    );
+const fmt = (n: number) => {
+    const k = n / 100; // cents → KES
+    if (k >= 1_000_000) return `KES ${(k / 1_000_000).toFixed(1)}M`;
+    if (k >= 1_000) return `KES ${(k / 1_000).toFixed(1)}K`;
+    return `KES ${k.toFixed(0)}`;
 };
 
-// ─── Sub-components ─────────────────────────────────────────────
+const fmtNum = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n);
+
+// ─── KPI CARD ────────────────────────────────────────────────────────────────
 
 interface KPICardProps {
     label: string;
     value: string | number;
+    sub?: string;
     icon: React.ReactNode;
-    color: string;
+    color: string; // tailwind bg class
+    trend?: 'up' | 'down' | 'neutral';
+    trendVal?: string;
     onClick?: () => void;
 }
 
-const KPICard: React.FC<KPICardProps> = ({ label, value, icon, color, onClick }) => {
-    const colorMap: Record<string, { bg: string; text: string }> = {
-        sky: { bg: 'bg-sky-500/10', text: 'text-sky-500' },
-        emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-500' },
-        violet: { bg: 'bg-violet-500/10', text: 'text-violet-500' },
-        amber: { bg: 'bg-amber-500/10', text: 'text-amber-500' },
-        rose: { bg: 'bg-rose-500/10', text: 'text-rose-500' },
-    };
-    const c = colorMap[color] || colorMap.sky;
-
-    return (
-        <div
-            onClick={onClick}
-            className={`stat-card ${onClick ? 'cursor-pointer hover:border-[var(--border-strong)]' : ''}`}
-        >
-            <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{label}</p>
-                <div className={`p-1.5 rounded-lg ${c.bg} ${c.text}`}>
-                    {icon}
-                </div>
+const KPICard: React.FC<KPICardProps> = ({ label, value, sub, icon, color, trend, trendVal, onClick }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        onClick={onClick}
+        className={`bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-subtle)] p-5 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all ${onClick ? 'cursor-pointer hover:-translate-y-0.5' : ''}`}
+    >
+        <div className="flex items-start justify-between mb-3">
+            <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center flex-shrink-0`}>
+                {icon}
             </div>
-            <p className="text-xl font-bold text-[var(--text-primary)]">{value}</p>
+            {trend && trendVal && (
+                <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${trend === 'up' ? 'bg-emerald-500/10 text-emerald-600' : trend === 'down' ? 'bg-rose-500/10 text-rose-600' : 'bg-slate-100 text-slate-500 dark:bg-slate-800'}`}>
+                    {trend === 'up' ? <TrendingUp className="w-3 h-3" /> : trend === 'down' ? <TrendingDown className="w-3 h-3" /> : null}
+                    {trendVal}
+                </span>
+            )}
         </div>
+        <div className="text-2xl font-black text-[var(--text-primary)] leading-tight">{value}</div>
+        <div className="text-xs font-semibold text-[var(--text-muted)] mt-1 uppercase tracking-wide">{label}</div>
+        {sub && <div className="text-xs text-[var(--text-secondary)] mt-0.5">{sub}</div>}
+    </motion.div>
+);
+
+// ─── QUICK ACTION BUTTON ─────────────────────────────────────────────────────
+
+interface QuickActionProps {
+    icon: React.ReactNode;
+    label: string;
+    to: string;
+    color: string;
+}
+
+const QuickAction: React.FC<QuickActionProps> = ({ icon, label, to, color }) => {
+    const navigate = useNavigate();
+    return (
+        <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate(to)}
+            className={`flex flex-col items-center gap-2 p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:shadow-md transition-all group`}
+        >
+            <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                {icon}
+            </div>
+            <span className="text-xs font-bold text-[var(--text-secondary)] text-center leading-tight">{label}</span>
+        </motion.button>
     );
 };
 
-interface FeatureCardProps {
-    title: string;
-    subtitle: string;
-    icon: React.ReactNode;
-    onClick: () => void;
-    variant: 'dark' | 'primary' | 'outlined' | 'gradient';
-}
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ title, subtitle, icon, onClick, variant }) => {
-    const styles: Record<string, string> = {
-        dark: 'bg-slate-900 text-white border-transparent dark:bg-slate-800',
-        primary: 'bg-sky-500 text-white border-transparent',
-        outlined: 'bg-[var(--bg-surface)] text-[var(--text-primary)] border-2 border-[var(--border-strong)]',
-        gradient: 'bg-gradient-to-br from-sky-600 to-indigo-700 text-white border-transparent',
-    };
+const TenantPortal: React.FC = () => {
+    const navigate = useNavigate();
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [revTrend, setRevTrend] = useState<RevenuePoint[]>([]);
+    const [subGrowth, setSubGrowth] = useState<SubGrowthPoint[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState(new Date());
 
-    const iconBg: Record<string, string> = {
-        dark: 'bg-sky-500',
-        primary: 'bg-white/20',
-        outlined: 'bg-slate-900 text-white dark:bg-sky-500',
-        gradient: 'bg-white/20',
-    };
+    const load = useCallback(async (silent = false) => {
+        if (!silent) setLoading(true);
+        else setRefreshing(true);
+        try {
+            const [summaryRes, trendRes, growthRes] = await Promise.allSettled([
+                axios.get<DashboardStats>('/api/v1/admin/dashboard-summary'),
+                axios.get<RevenuePoint[]>('/api/v1/admin/analytics/revenue-trend'),
+                axios.get<SubGrowthPoint[]>('/api/v1/admin/analytics/subscriber-growth'),
+            ]);
+
+            if (summaryRes.status === 'fulfilled') setStats(summaryRes.value.data);
+            if (trendRes.status === 'fulfilled') setRevTrend(trendRes.value.data || []);
+            if (growthRes.status === 'fulfilled') setSubGrowth(growthRes.value.data || []);
+            setLastUpdated(new Date());
+        } catch (e) {
+            console.error('[Dashboard] Load failed:', e);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        load();
+        const interval = setInterval(() => load(true), 60_000);
+        return () => clearInterval(interval);
+    }, [load]);
+
+    if (loading) return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-widest">Loading Dashboard...</p>
+            </div>
+        </div>
+    );
+
+    const s = stats!;
+    const netHealthColor = s.networkHealth >= 80 ? 'text-emerald-500' : s.networkHealth >= 50 ? 'text-amber-500' : 'text-rose-500';
+    const paymentSuccessRate = s.successPayments + s.failedPayments > 0
+        ? ((s.successPayments / (s.successPayments + s.failedPayments)) * 100).toFixed(1)
+        : '100';
+
+    // Pie chart data
+    const subPieData = [
+        { name: 'Active', value: s.activeSubscribers, color: '#10b981' },
+        { name: 'Expired', value: s.expiredSubscribers, color: '#ef4444' },
+    ];
+    const routerPieData = [
+        { name: 'Online', value: s.connectedRouters, color: '#38bdf8' },
+        { name: 'Offline', value: s.disconnectedRouters, color: '#64748b' },
+    ];
 
     return (
-        <button
-            onClick={onClick}
-            className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer group overflow-hidden relative transition-all duration-300 hover:shadow-lg text-left ${styles[variant]}`}
-        >
-            <div className={`p-3 rounded-xl ${iconBg[variant]} flex-shrink-0`}>
-                {icon}
+        <div className="space-y-6 pb-8">
+
+            {/* ── Header ── */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-black text-[var(--text-primary)]">
+                        {s.tenantName || 'Dashboard'}
+                        <span className="ml-2 text-sky-500">Overview</span>
+                    </h1>
+                    <p className="text-sm text-[var(--text-muted)] mt-0.5">
+                        Last updated: {lastUpdated.toLocaleTimeString()}
+                    </p>
+                </div>
+                <div className="flex items-center gap-3">
+                    {/* Network health badge */}
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-sm font-bold ${netHealthColor}`}>
+                        <Activity className="w-4 h-4" />
+                        Network {s.networkHealth}%
+                    </div>
+                    <button
+                        onClick={() => load(true)}
+                        disabled={refreshing}
+                        className="flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-60"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </button>
+                </div>
             </div>
+
+            {/* ── Revenue Section ── */}
             <div>
-                <h3 className="text-sm font-bold mb-0.5">{title}</h3>
-                <p className={`text-[10px] font-semibold uppercase tracking-widest ${variant === 'outlined' ? 'text-[var(--text-muted)]' : 'opacity-70'}`}>
-                    {subtitle}
-                </p>
+                <h2 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <DollarSign className="w-3.5 h-3.5" /> Revenue
+                </h2>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <KPICard label="Today" value={fmt(s.revenueToday)} icon={<DollarSign className="w-5 h-5 text-emerald-600" />} color="bg-emerald-500/10" trend="up" trendVal="Live" />
+                    <KPICard label="This Week" value={fmt(s.revenueWeek)} icon={<TrendingUp className="w-5 h-5 text-sky-600" />} color="bg-sky-500/10" />
+                    <KPICard label="This Month" value={fmt(s.revenueMonth)} icon={<BarChart3 className="w-5 h-5 text-violet-600" />} color="bg-violet-500/10" onClick={() => navigate('/tenant/analytics')} />
+                    <KPICard label="This Year" value={fmt(s.revenueYear)} icon={<TrendingUp className="w-5 h-5 text-amber-600" />} color="bg-amber-500/10" />
+                </div>
             </div>
-        </button>
+
+            {/* ── Revenue Chart ── */}
+            {revTrend.length > 0 && (
+                <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-subtle)] p-5 shadow-[var(--shadow-sm)]">
+                    <h3 className="text-sm font-black text-[var(--text-primary)] mb-4">Revenue Trend (Last 7 Days)</h3>
+                    <ResponsiveContainer width="100%" height={180}>
+                        <AreaChart data={revTrend} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+                            <defs>
+                                <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} />
+                            <YAxis tickFormatter={v => `KES ${(v / 100).toFixed(0)}`} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} width={70} />
+                            <Tooltip formatter={(v: any) => [`KES ${((Number(v) || 0) / 100).toFixed(2)}`, 'Revenue']} contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', fontSize: '12px' }} />
+                            <Area type="monotone" dataKey="total" stroke="#38bdf8" strokeWidth={2} fill="url(#revGrad)" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+
+            {/* ── Subscribers + Routers ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* Subscribers */}
+                <div>
+                    <h2 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Users className="w-3.5 h-3.5" /> Subscribers
+                    </h2>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        <KPICard label="Total" value={fmtNum(s.totalSubscribers)} icon={<Users className="w-5 h-5 text-sky-600" />} color="bg-sky-500/10" onClick={() => navigate('/tenant')} />
+                        <KPICard label="Active" value={fmtNum(s.activeSubscribers)} icon={<CheckCircle className="w-5 h-5 text-emerald-600" />} color="bg-emerald-500/10" trend="up" trendVal={`${s.totalSubscribers > 0 ? Math.round((s.activeSubscribers / s.totalSubscribers) * 100) : 0}%`} />
+                        <KPICard label="Online Now" value={fmtNum(s.onlineUsers)} icon={<Wifi className="w-5 h-5 text-violet-600" />} color="bg-violet-500/10" onClick={() => navigate('/tenant/sessions')} />
+                        <KPICard label="Expired" value={fmtNum(s.expiredSubscribers)} icon={<XCircle className="w-5 h-5 text-rose-600" />} color="bg-rose-500/10" trend={s.expiredSubscribers > 0 ? 'down' : 'neutral'} />
+                    </div>
+
+                    {/* Mini pie */}
+                    {(s.activeSubscribers + s.expiredSubscribers) > 0 && (
+                        <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-subtle)] p-4 flex items-center gap-4">
+                            <ResponsiveContainer width={80} height={80}>
+                                <PieChart>
+                                    <Pie data={subPieData} cx="50%" cy="50%" innerRadius={22} outerRadius={38} dataKey="value" strokeWidth={0}>
+                                        {subPieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div className="space-y-1.5">
+                                {subPieData.map(d => (
+                                    <div key={d.name} className="flex items-center gap-2 text-xs">
+                                        <div className="w-2 h-2 rounded-full" style={{ background: d.color }} />
+                                        <span className="text-[var(--text-secondary)] font-semibold">{d.name}: <strong className="text-[var(--text-primary)]">{d.value}</strong></span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Routers */}
+                <div>
+                    <h2 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Router className="w-3.5 h-3.5" /> Network
+                    </h2>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        <KPICard label="Total Routers" value={s.totalRouters} icon={<Router className="w-5 h-5 text-slate-600" />} color="bg-slate-500/10" onClick={() => navigate('/tenant/router-management')} />
+                        <KPICard label="Online" value={s.connectedRouters} icon={<Wifi className="w-5 h-5 text-emerald-600" />} color="bg-emerald-500/10" trend="up" trendVal={`${s.totalRouters > 0 ? Math.round((s.connectedRouters / s.totalRouters) * 100) : 100}%`} />
+                        <KPICard label="Offline" value={s.disconnectedRouters} icon={<AlertTriangle className="w-5 h-5 text-rose-600" />} color="bg-rose-500/10" trend={s.disconnectedRouters > 0 ? 'down' : 'neutral'} />
+                        <KPICard
+                            label="Health Score"
+                            value={`${s.networkHealth}%`}
+                            icon={<ShieldCheck className="w-5 h-5 text-sky-600" />}
+                            color="bg-sky-500/10"
+                            onClick={() => navigate('/tenant/network-monitoring')}
+                        />
+                    </div>
+
+                    {/* Mini pie */}
+                    {s.totalRouters > 0 && (
+                        <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-subtle)] p-4 flex items-center gap-4">
+                            <ResponsiveContainer width={80} height={80}>
+                                <PieChart>
+                                    <Pie data={routerPieData} cx="50%" cy="50%" innerRadius={22} outerRadius={38} dataKey="value" strokeWidth={0}>
+                                        {routerPieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div className="space-y-1.5">
+                                {routerPieData.map(d => (
+                                    <div key={d.name} className="flex items-center gap-2 text-xs">
+                                        <div className="w-2 h-2 rounded-full" style={{ background: d.color }} />
+                                        <span className="text-[var(--text-secondary)] font-semibold">{d.name}: <strong className="text-[var(--text-primary)]">{d.value}</strong></span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* ── Finance + SMS Row ── */}
+            <div>
+                <h2 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <Wallet className="w-3.5 h-3.5" /> Finance & Payments
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <KPICard label="Successful" value={fmtNum(s.successPayments)} icon={<CheckCircle className="w-5 h-5 text-emerald-600" />} color="bg-emerald-500/10" onClick={() => navigate('/tenant/reports')} />
+                    <KPICard label="Failed" value={fmtNum(s.failedPayments)} icon={<XCircle className="w-5 h-5 text-rose-600" />} color="bg-rose-500/10" trend={s.failedPayments > 0 ? 'down' : 'neutral'} trendVal={s.failedPayments > 0 ? `${paymentSuccessRate}%` : undefined} />
+                    <KPICard label="Pending" value={fmtNum(s.pendingPayments)} icon={<Clock className="w-5 h-5 text-amber-600" />} color="bg-amber-500/10" />
+                    <KPICard label="Withdrawals" value={fmtNum(s.pendingWithdrawals)} icon={<ArrowUpRight className="w-5 h-5 text-violet-600" />} color="bg-violet-500/10" onClick={() => navigate('/tenant/wallet')} />
+                    <KPICard label="SMS Campaigns" value={fmtNum(s.activeCampaigns)} icon={<MessageSquare className="w-5 h-5 text-sky-600" />} color="bg-sky-500/10" onClick={() => navigate('/tenant/communication')} />
+                    <KPICard label="Success Rate" value={`${paymentSuccessRate}%`} icon={<ShieldCheck className="w-5 h-5 text-emerald-600" />} color="bg-emerald-500/10" trend="up" />
+                </div>
+            </div>
+
+            {/* ── Subscriber Growth Chart ── */}
+            {subGrowth.length > 0 && (
+                <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-subtle)] p-5 shadow-[var(--shadow-sm)]">
+                    <h3 className="text-sm font-black text-[var(--text-primary)] mb-4">Subscriber Growth (Last 30 Days)</h3>
+                    <ResponsiveContainer width="100%" height={160}>
+                        <BarChart data={subGrowth} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} />
+                            <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} width={30} />
+                            <Tooltip contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', fontSize: '12px' }} />
+                            <Bar dataKey="count" name="New Subscribers" fill="#38bdf8" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+
+            {/* ── Quick Actions ── */}
+            <div>
+                <h2 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <Zap className="w-3.5 h-3.5" /> Quick Actions
+                </h2>
+                <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-3">
+                    <QuickAction icon={<Plus className="w-5 h-5 text-emerald-600" />} label="Add Package" to="/tenant/packages" color="bg-emerald-500/10" />
+                    <QuickAction icon={<Users className="w-5 h-5 text-sky-600" />} label="Add Subscriber" to="/tenant" color="bg-sky-500/10" />
+                    <QuickAction icon={<Router className="w-5 h-5 text-violet-600" />} label="Add Router" to="/tenant/router-management" color="bg-violet-500/10" />
+                    <QuickAction icon={<Wifi className="w-5 h-5 text-amber-600" />} label="MikroTik Setup" to="/tenant/mikrotik" color="bg-amber-500/10" />
+                    <QuickAction icon={<BarChart3 className="w-5 h-5 text-pink-600" />} label="Analytics" to="/tenant/analytics" color="bg-pink-500/10" />
+                    <QuickAction icon={<Activity className="w-5 h-5 text-teal-600" />} label="Monitoring" to="/tenant/network-monitoring" color="bg-teal-500/10" />
+                    <QuickAction icon={<FileText className="w-5 h-5 text-blue-600" />} label="Reports" to="/tenant/reports" color="bg-blue-500/10" />
+                    <QuickAction icon={<MessageSquare className="w-5 h-5 text-indigo-600" />} label="Send SMS" to="/tenant/communication" color="bg-indigo-500/10" />
+                    <QuickAction icon={<Wallet className="w-5 h-5 text-rose-600" />} label="Wallet" to="/tenant/wallet" color="bg-rose-500/10" />
+                    <QuickAction icon={<Settings className="w-5 h-5 text-slate-600" />} label="Settings" to="/tenant/profile" color="bg-slate-500/10" />
+                </div>
+            </div>
+
+        </div>
     );
 };
 

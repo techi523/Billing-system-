@@ -1,364 +1,283 @@
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useBranding } from '../context/BrandingContext';
+import SurfBillLogo from '../components/Common/SurfBillLogo';
 import {
-    Zap,
-    Shield,
-    BarChart3,
-    Wifi,
-    ArrowRight,
-    CheckCircle2,
-    Cpu,
-    MessageCircle,
-    RotateCw
+    Wifi, Shield, Zap, DollarSign, MessageSquare, BarChart3, ChevronRight,
+    CheckCircle2, ArrowRight, Phone, Mail, Globe, MapPin, Users, HelpCircle,
+    Star, Layers, Terminal, Sparkles, Check, Lock, ExternalLink
 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import SupportFooter from '../components/Common/SupportFooter';
-import SupportSection from '../components/Common/SupportSection';
-import { OFFICIAL_SUPPORT } from '../constants';
 
-interface FeatureItem {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-    color: string;
-}
+const LandingPage: React.FC = () => {
+    const { branding } = useBranding();
+    const [faqOpen, setFaqOpen] = useState<number | null>(0);
 
-interface BenefitCardProps {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-}
-
-const BenefitCard = ({ icon, title, description }: BenefitCardProps) => (
-    <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
-        <div className="mb-6 transform group-hover:scale-110 transition-transform">{icon}</div>
-        <h3 className="text-xl font-bold mb-3">{title}</h3>
-        <p className="text-slate-400 text-sm font-medium leading-relaxed">{description}</p>
-    </div>
-);
-
-const LandingPage = () => {
-    const navigate = useNavigate();
-
-    const features: FeatureItem[] = [
-        {
-            icon: <Wifi className="w-6 h-6" />,
-            title: "MikroTik Integrated",
-            description: "Native support for ROS v6 & v7. Zero-touch script generation for seamless Hotspot management.",
-            color: "blue"
-        },
-        {
-            icon: <Zap className="w-6 h-6" />,
-            title: "Lightning Fast Payments",
-            description: "M-Pesa Express & IntaSend integration. Subscribers get online instantly after payment.",
-            color: "emerald"
-        },
-        {
-            icon: <BarChart3 className="w-6 h-6" />,
-            title: "Real-time Analytics",
-            description: "Monitor revenue, bandwidth, and active sessions as they happen with built-in Socket.io.",
-            color: "indigo"
-        },
-        {
-            icon: <Shield className="w-6 h-6" />,
-            title: "Production Ready",
-            description: "Strict tenant isolation, comprehensive audit logs, and automated readiness checklists.",
-            color: "rose"
-        }
-    ];
+    const toggleFaq = (idx: number) => {
+        setFaqOpen(faqOpen === idx ? null : idx);
+    };
 
     return (
-        <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-600">
-            {/* Navigation */}
-            <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
-                            <Wifi className="w-6 h-6" />
-                        </div>
-                        <span className="text-2xl font-black tracking-tighter text-slate-900 uppercase">SurfBill</span>
+        <div className="min-h-screen bg-[#090d16] text-slate-100 font-sans selection:bg-sky-500 selection:text-white overflow-x-hidden">
+            {/* ── Top Announcement Bar ── */}
+            <div className="bg-gradient-to-r from-sky-600 to-indigo-600 text-white text-xs font-bold py-2 text-center px-4 flex items-center justify-center gap-2">
+                <Sparkles className="w-4 h-4 animate-pulse" />
+                <span>Next-Gen Multi-Tenant WiFi Billing & MikroTik Management System.</span>
+                <Link to="/login" className="underline hover:text-sky-100 flex items-center gap-0.5">Start Free Trial <ChevronRight className="w-3 h-3" /></Link>
+            </div>
+
+            {/* ── Navigation Bar ── */}
+            <nav className="sticky top-0 z-40 backdrop-blur-xl bg-[#090d16]/80 border-b border-slate-800 px-6 py-4">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+                        <SurfBillLogo size="md" showText={true} />
+                    </Link>
+
+                    {/* Nav Links */}
+                    <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
+                        <a href="#features" className="hover:text-sky-400 transition-colors">Features</a>
+                        <a href="#mikrotik" className="hover:text-sky-400 transition-colors">MikroTik Sync</a>
+                        <a href="#captive" className="hover:text-sky-400 transition-colors">Captive Ads</a>
+                        <a href="#pricing" className="hover:text-sky-400 transition-colors">Pricing</a>
+                        <a href="#contact" className="hover:text-sky-400 transition-colors">Contact</a>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-8">
-                        <a href="#features" className="text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">Features</a>
-                        <button onClick={() => navigate('/customer')} className="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors">Client Portal</button>
-                        <button onClick={() => navigate('/captive-portal')} className="text-sm font-bold text-sky-600 hover:text-sky-800 transition-colors">Captive WiFi Portal</button>
-                        <a href="#support" className="text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">Support</a>
-                    </div>
-
+                    {/* Actions */}
                     <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate('/login')}
-                            className="text-sm font-bold text-slate-700 hover:text-indigo-600 transition-colors px-4 py-2"
-                        >
+                        <Link to="/login" className="px-4 py-2 text-sm font-bold text-slate-300 hover:text-white transition-colors">
                             Sign In
-                        </button>
-                        <button
-                            onClick={() => navigate('/register')}
-                            className="bg-slate-900 text-white text-sm font-black px-6 py-3 rounded-xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 flex items-center gap-2 group"
-                        >
-                            Get Started
-                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </button>
+                        </Link>
+                        <Link to="/login" className="px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-bold text-sm rounded-2xl shadow-lg shadow-sky-500/25 transition-all transform hover:-translate-y-0.5">
+                            Get Started Free
+                        </Link>
                     </div>
                 </div>
             </nav>
 
-            {/* Hero Section */}
-            <header className="relative pt-40 pb-24 overflow-hidden">
-                {/* Background Decorations */}
-                <div className="absolute top-0 right-0 -tr-slate-200 w-full h-full pointer-events-none -z-10">
-                    <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-indigo-50 rounded-full blur-[120px] animate-pulse"></div>
-                    <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-sky-50 rounded-full blur-[120px]"></div>
-                </div>
+            {/* ── HERO SECTION ── */}
+            <section className="relative pt-20 pb-28 px-6 overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(14,165,233,0.15),rgba(255,255,255,0))]" />
+                <div className="max-w-6xl mx-auto text-center relative z-10 space-y-8">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold">
+                        <Zap className="w-4 h-4" /> Production-Ready Automated ISP & Hotspot Billing
+                    </div>
 
-                <div className="max-w-7xl mx-auto px-6 text-center">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <span className="inline-block px-4 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-black rounded-full uppercase tracking-widest mb-6">
-                            The Ultimate ISP Billing Engine
-                        </span>
-                        <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tight leading-[1.1] mb-8 max-w-4xl mx-auto">
-                            Scale Your WiFi Business <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-sky-500">
-                                Without the Headache.
-                            </span>
-                        </h1>
-                        <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto mb-12">
-                            A production-grade, tenant-controlled SaaS for hotspot owners and ISPs.
-                            Automated M-Pesa payments, real-time analytics, and MikroTik integration built for Kenya.
-                        </p>
+                    <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight max-w-4xl mx-auto leading-tight">
+                        Scale Your WiFi & ISP Business With Automated <span className="bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">M-Pesa Billing</span>
+                    </h1>
 
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <button
-                                onClick={() => navigate('/register')}
-                                className="w-full sm:w-auto bg-indigo-600 text-white text-lg font-black px-10 py-5 rounded-2xl hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-200 flex items-center justify-center gap-2 group"
-                            >
-                                Start Free Trial
-                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                            </button>
-                            <a
-                                href={OFFICIAL_SUPPORT.whatsappUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full sm:w-auto bg-white text-slate-900 text-lg font-black px-10 py-5 rounded-2xl border border-slate-200 hover:border-indigo-600 transition-all flex items-center justify-center gap-2"
-                            >
-                                <MessageCircle className="w-5 h-5 text-green-500" />
-                                Talk to Sales
-                            </a>
+                    <p className="text-lg text-slate-400 max-w-2xl mx-auto font-medium">
+                        {branding.platformDescription} Real-time MikroTik RouterOS sync, subscriber management, captive portal ads, and multi-channel customer communications.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                        <Link to="/login" className="w-full sm:w-auto px-8 py-4 bg-sky-500 hover:bg-sky-400 text-white font-bold text-base rounded-2xl shadow-xl shadow-sky-500/30 transition-all flex items-center justify-center gap-2">
+                            Start Free Trial <ArrowRight className="w-5 h-5" />
+                        </Link>
+                        <a href={`tel:${branding.supportPhone}`} className="w-full sm:w-auto px-8 py-4 bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-200 font-bold text-base rounded-2xl transition-all flex items-center justify-center gap-2">
+                            <Phone className="w-5 h-5 text-sky-400" /> Call Sales ({branding.supportPhone})
+                        </a>
+                    </div>
+
+                    {/* Live Stats Row */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-16 border-t border-slate-800 max-w-4xl mx-auto">
+                        <div>
+                            <div className="text-3xl font-black text-white">99.9%</div>
+                            <div className="text-xs text-slate-400 font-semibold uppercase mt-1">Uptime Guaranteed</div>
                         </div>
-
-                        <div className="mt-16 flex items-center justify-center gap-8 grayscale opacity-50">
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 className="w-5 h-5 text-slate-900" />
-                                <span className="font-bold text-slate-900">M-Pesa Integrated</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 className="w-5 h-5 text-slate-900" />
-                                <span className="font-bold text-slate-900">MikroTik Native</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 className="w-5 h-5 text-slate-900" />
-                                <span className="font-bold text-slate-900">SLA Guaranteed</span>
-                            </div>
+                        <div>
+                            <div className="text-3xl font-black text-sky-400">100%</div>
+                            <div className="text-xs text-slate-400 font-semibold uppercase mt-1">Automated M-Pesa</div>
                         </div>
-                    </motion.div>
-                </div>
-            </header>
-
-            {/* Platform Preview */}
-            <section className="py-20 bg-slate-50 border-y border-slate-200">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border border-white p-4 bg-white/50 backdrop-blur-xl">
-                        <div className="w-full aspect-video bg-slate-900 rounded-[2.5rem] flex items-center justify-center relative group">
-                            {/* Mock UI elements could go here, or an illustrative icon */}
-                            <div className="flex flex-col items-center">
-                                <BarChart3 className="w-24 h-24 text-indigo-500 mb-4 animate-pulse" />
-                                <p className="text-white font-black text-2xl uppercase tracking-widest opacity-50">Command Center Preview</p>
-                            </div>
-
-                            {/* Decorative overlays */}
-                            <div className="absolute top-8 left-8 p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/5 w-48">
-                                <div className="h-2 w-12 bg-indigo-500 rounded-full mb-3"></div>
-                                <div className="h-4 w-full bg-white/20 rounded-full mb-2"></div>
-                                <div className="h-4 w-2/3 bg-white/20 rounded-full"></div>
-                            </div>
+                        <div>
+                            <div className="text-3xl font-black text-emerald-400">&lt; 2s</div>
+                            <div className="text-xs text-slate-400 font-semibold uppercase mt-1">Router Sync Speed</div>
+                        </div>
+                        <div>
+                            <div className="text-3xl font-black text-indigo-400">24/7</div>
+                            <div className="text-xs text-slate-400 font-semibold uppercase mt-1">Support Available</div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Why Connect Section */}
-            <section className="py-24 bg-slate-900 text-white overflow-hidden relative">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-5xl font-black mb-6">Why Connect Your MikroTik?</h2>
-                        <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
-                            Transform your simple router into a powerful ISP management hub.
-                            Connect to SurfBill and unlock enterprise-grade automation.
-                        </p>
+            {/* ── FEATURES SECTION ── */}
+            <section id="features" className="py-24 bg-slate-900/60 border-y border-slate-800 px-6">
+                <div className="max-w-6xl mx-auto space-y-16">
+                    <div className="text-center space-y-4">
+                        <h2 className="text-xs font-black uppercase text-sky-400 tracking-wider">Complete Feature Suite</h2>
+                        <p className="text-3xl md:text-4xl font-black text-white">Everything You Need To Run A Modern ISP</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <BenefitCard
-                            icon={<Zap className="w-8 h-8 text-yellow-400" />}
-                            title="Zero Manual Config"
-                            description="Forget manual firewall rules or hotspot setups. One script does it all, perfectly every time."
-                        />
-                        <BenefitCard
-                            icon={<Cpu className="w-8 h-8 text-blue-400" />}
-                            title="Goodbye Winbox"
-                            description="Manage users, sessions, and speed limits directly from your SurfBill dashboard from anywhere."
-                        />
-                        <BenefitCard
-                            icon={<Shield className="w-8 h-8 text-green-400" />}
-                            title="Enhanced Security"
-                            description="Least-privilege API users and automated firewall hardening keep your network safe."
-                        />
-                        <BenefitCard
-                            icon={<RotateCw className="w-8 h-8 text-purple-400" />}
-                            title="Automated Sync"
-                            description="Packages and user limits are automatically pushed to your router in real-time."
-                        />
-                        <BenefitCard
-                            icon={<BarChart3 className="w-8 h-8 text-pink-400" />}
-                            title="Real-time Visibility"
-                            description="Monitor CPU, traffic, and active users with beautiful live charts and deep analytics."
-                        />
-                        <BenefitCard
-                            icon={<ArrowRight className="w-8 h-8 text-cyan-400" />}
-                            title="Remote Control"
-                            description="Reboot, monitor health, and update configurations remotely without needing VPNs."
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* Features Section */}
-            <section id="features" className="py-32 px-6">
-                <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-20">
-                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">Enterprise Features, <br />Available to Everyone.</h2>
-                        <p className="text-slate-500 font-medium max-w-xl mx-auto">Everything you need to automate your internet business and maximize revenue from day one.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {features.map((feature, idx) => (
-                            <motion.div
-                                key={idx}
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: idx * 0.1 }}
-                                className="p-8 rounded-[2.5rem] bg-white border border-slate-100 hover:border-indigo-100 transition-all hover:shadow-xl hover:shadow-indigo-50/50 group"
-                            >
-                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all group-hover:scale-110
-                                    ${feature.color === 'blue' ? 'bg-blue-50 text-blue-600' : ''}
-                                    ${feature.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' : ''}
-                                    ${feature.color === 'indigo' ? 'bg-indigo-50 text-indigo-600' : ''}
-                                    ${feature.color === 'rose' ? 'bg-rose-50 text-rose-600' : ''}
-                                `}>
-                                    {feature.icon}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {[
+                            { icon: Wifi, title: 'MikroTik RouterOS Sync', desc: 'Direct API integration for Hotspot users, PPPoE secrets, active sessions, and queues.' },
+                            { icon: DollarSign, title: 'Automated M-Pesa Payments', desc: 'Instant account activation via Paybill, Till Number, and IntaSend gateway with STK Push.' },
+                            { icon: MessageSquare, title: 'SMS & WhatsApp Marketing', desc: 'Automated welcome messages, expiry alerts, receipts, and promotional campaigns.' },
+                            { icon: Layers, title: 'Captive Portal Ads', desc: 'Monetize free WiFi with video ads, banner campaigns, and lead capture surveys.' },
+                            { icon: Users, title: 'Subscriber Onboarding', desc: 'Complete CRM with bulk CSV import, customer groups, and wallet management.' },
+                            { icon: BarChart3, title: 'Financial Analytics', desc: 'Live BI dashboards, revenue trends, customer lifetime value, and CSV reports.' },
+                        ].map((f, i) => (
+                            <div key={i} className="bg-slate-900/80 border border-slate-800 rounded-3xl p-8 hover:border-sky-500/50 transition-all space-y-4 group">
+                                <div className="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <f.icon className="w-6 h-6" />
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
-                                <p className="text-sm font-medium text-slate-500 leading-relaxed">{feature.description}</p>
-                            </motion.div>
+                                <h3 className="text-xl font-bold text-white">{f.title}</h3>
+                                <p className="text-slate-400 text-sm leading-relaxed">{f.desc}</p>
+                            </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Scaling Section */}
-            <section id="scaling" className="py-24 bg-slate-900 overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-full h-full pointer-events-none opacity-20">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500 rounded-full blur-[150px]"></div>
-                </div>
-
-                <div className="max-w-7xl mx-auto px-6 relative z-10">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                        <div>
-                            <span className="text-indigo-400 font-black uppercase text-xs tracking-widest">Built for Growth</span>
-                            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight mt-4 mb-8">Ready to Scale to <br />10,000+ Users?</h2>
-                            <p className="text-indigo-100/60 text-lg font-medium mb-10 leading-relaxed">
-                                Our platform isn't just a billing tool. It's a scaling engine. With optimized session handling and multi-router support, we help you transition from a single hotspot to a multi-city ISP network.
-                            </p>
-
-                            <div className="space-y-4">
-                                {[
-                                    "Dedicated technical scaling team",
-                                    "ISP-grade session management",
-                                    "Custom bandwidth shaping",
-                                    "White-label options for large ISPs"
-                                ].map((item, i) => (
-                                    <div key={i} className="flex items-center gap-3 text-white font-bold">
-                                        <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
-                                            <CheckCircle2 className="w-3 h-3 text-white" />
-                                        </div>
-                                        {item}
-                                    </div>
-                                ))}
-                            </div>
+            {/* ── MIKROTIK DEEP DIVE SECTION ── */}
+            <section id="mikrotik" className="py-24 px-6">
+                <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                    <div className="space-y-6">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 text-sky-400 text-xs font-bold">
+                            <Terminal className="w-4 h-4" /> Native RouterOS API
                         </div>
-
-                        <div className="p-10 bg-white/5 backdrop-blur-3xl rounded-[3rem] border border-white/10">
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center">
-                                    <Cpu className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h4 className="text-white font-bold">Scaling Architecture</h4>
-                                    <p className="text-indigo-100/40 text-xs">Platform v3.0 Core</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6">
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-xs font-black uppercase text-indigo-300">
-                                        <span>ISP Performance</span>
-                                        <span>99.9%</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-indigo-900/50 rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            whileInView={{ width: '99.9%' }}
-                                            className="h-full bg-indigo-500"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-xs font-black uppercase text-sky-300">
-                                        <span>Payment Uptime</span>
-                                        <span>100%</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-sky-900/50 rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            whileInView={{ width: '100%' }}
-                                            className="h-full bg-sky-500"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={() => navigate('/register')}
-                                className="w-full mt-10 bg-indigo-500 text-white font-black py-4 rounded-2xl hover:bg-indigo-400 transition-all shadow-xl shadow-indigo-900/50"
-                            >
-                                Deploy Your Network
-                            </button>
+                        <h2 className="text-3xl md:text-4xl font-black text-white">Seamless MikroTik Integration & Real-Time Sync</h2>
+                        <p className="text-slate-400 text-base leading-relaxed">
+                            Connect your MikroTik routers in seconds using secure API credentials. SurfBill manages user profiles, bandwidth queues, disconnects expired sessions, and creates backups automatically.
+                        </p>
+                        <ul className="space-y-3 font-semibold text-slate-300 text-sm">
+                            <li className="flex items-center gap-2.5"><CheckCircle2 className="w-5 h-5 text-emerald-400" /> Hotspot User & PPPoE Secret Provisioning</li>
+                            <li className="flex items-center gap-2.5"><CheckCircle2 className="w-5 h-5 text-emerald-400" /> Real-time CPU, Memory & Interface Traffic Monitoring</li>
+                            <li className="flex items-center gap-2.5"><CheckCircle2 className="w-5 h-5 text-emerald-400" /> One-Click Backup Generation & List View</li>
+                        </ul>
+                    </div>
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 font-mono text-xs text-slate-300 space-y-4 shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <span className="text-sky-400 font-bold">mikrotik@surfbill-router</span>
+                            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded text-[10px]">CONNECTED</span>
+                        </div>
+                        <div className="space-y-2 text-slate-400">
+                            <div>&gt; /ip/hotspot/user/add name="user_0714" profile="10Mbps_Package"</div>
+                            <div className="text-emerald-400">[OK] User added successfully in 0.12s</div>
+                            <div>&gt; /ppp/secret/add name="pppoe_cust1" service=pppoe</div>
+                            <div className="text-emerald-400">[OK] PPPoE secret active</div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Final Support Section */}
-            <div id="support" className="max-w-7xl mx-auto px-6 py-24">
-                <SupportSection title="Non-Stop Scaling Assistance" />
-            </div>
+            {/* ── PRICING SECTION ── */}
+            <section id="pricing" className="py-24 bg-slate-900/60 border-t border-slate-800 px-6">
+                <div className="max-w-6xl mx-auto space-y-16">
+                    <div className="text-center space-y-4">
+                        <h2 className="text-xs font-black uppercase text-sky-400 tracking-wider">Transparent Plans</h2>
+                        <p className="text-3xl md:text-4xl font-black text-white">Simple, Affordable Pricing For Every ISP</p>
+                    </div>
 
-            <SupportFooter />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {[
+                            { name: 'Starter ISP', price: 'KES 2,500', period: '/month', features: ['Up to 250 Active Subscribers', '1 MikroTik Router Sync', 'Automated M-Pesa STK Push', 'Basic SMS Alerts'] },
+                            { name: 'Growth ISP', price: 'KES 5,000', period: '/month', popular: true, features: ['Up to 1,000 Active Subscribers', '5 MikroTik Router Syncs', 'WhatsApp & SMS Marketing', 'Captive Portal Advertising', 'Full Financial Reports'] },
+                            { name: 'Enterprise ISP', price: 'Custom', period: '', features: ['Unlimited Subscribers', 'Unlimited Routers', 'Dedicated White-Label Domain', 'Priority 24/7 Support', 'Custom API Integrations'] },
+                        ].map((p, i) => (
+                            <div key={i} className={`bg-slate-900 border rounded-3xl p-8 space-y-6 relative ${p.popular ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-slate-800'}`}>
+                                {p.popular && <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-sky-500 text-white rounded-full text-xs font-bold">MOST POPULAR</span>}
+                                <div className="space-y-2">
+                                    <h3 className="text-xl font-bold text-white">{p.name}</h3>
+                                    <div className="text-3xl font-black text-white">{p.price} <span className="text-xs text-slate-400 font-medium">{p.period}</span></div>
+                                </div>
+                                <ul className="space-y-3 text-sm text-slate-300">
+                                    {p.features.map((ft, fIdx) => (
+                                        <li key={fIdx} className="flex items-center gap-2"><Check className="w-4 h-4 text-sky-400" /> {ft}</li>
+                                    ))}
+                                </ul>
+                                <Link to="/login" className={`w-full py-3 block text-center rounded-2xl font-bold text-sm transition-all ${p.popular ? 'bg-sky-500 hover:bg-sky-400 text-white shadow-lg' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'}`}>
+                                    Get Started
+                                </Link>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ── FAQ SECTION ── */}
+            <section className="py-24 px-6 max-w-4xl mx-auto space-y-12">
+                <div className="text-center space-y-4">
+                    <h2 className="text-xs font-black uppercase text-sky-400 tracking-wider">Frequently Asked Questions</h2>
+                    <p className="text-3xl font-black text-white">Got Questions? We Have Answers</p>
+                </div>
+
+                <div className="space-y-4">
+                    {[
+                        { q: 'How fast can I connect my MikroTik router?', a: 'Connection takes less than 2 minutes. Simply enter your router IP address, API port (8728/8729), and credentials.' },
+                        { q: 'Is M-Pesa automated billing instant?', a: 'Yes! When a subscriber pays via M-Pesa STK Push or Paybill, SurfBill instantly creates/renews their account and updates the router.' },
+                        { q: 'Can I white-label the software with my business logo?', a: 'Absolutely. Super Admins and Tenants can upload custom logos, set brand colors, and brand captive portals and invoices.' },
+                        { q: 'How do I contact support?', a: `You can reach our primary support line directly at ${branding.supportPhone} or email us at ${branding.supportEmail}.` },
+                    ].map((item, idx) => (
+                        <div key={idx} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                            <button onClick={() => toggleFaq(idx)} className="w-full p-5 text-left font-bold text-white flex items-center justify-between hover:bg-slate-800/50">
+                                <span>{item.q}</span>
+                                <ChevronRight className={`w-5 h-5 text-sky-400 transition-transform ${faqOpen === idx ? 'rotate-90' : ''}`} />
+                            </button>
+                            {faqOpen === idx && (
+                                <div className="p-5 pt-0 text-slate-400 text-sm border-t border-slate-800/50">
+                                    {item.a}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* ── CONTACT US & SUPPORT FOOTER SECTION ── */}
+            <section id="contact" className="py-20 bg-slate-900/80 border-t border-slate-800 px-6">
+                <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                    <div className="space-y-6">
+                        <h2 className="text-3xl font-black text-white">Need Support Or A Custom Setup?</h2>
+                        <p className="text-slate-400 text-base">Contact our technical engineering team for live onboard assistance, custom integrations, or sales inquiries.</p>
+
+                        <div className="space-y-4 font-semibold text-sm">
+                            <div className="flex items-center gap-3">
+                                <Phone className="w-5 h-5 text-sky-400" />
+                                <div>Phone: <strong className="text-white">{branding.supportPhone}</strong></div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Mail className="w-5 h-5 text-sky-400" />
+                                <div>Email: <strong className="text-white">{branding.supportEmail}</strong></div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <MapPin className="w-5 h-5 text-sky-400" />
+                                <div>Address: <strong className="text-white">{branding.businessAddress}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-4">
+                        <h3 className="text-lg font-bold text-white">Send Us A Message</h3>
+                        <input type="text" placeholder="Your Name" className="w-full bg-slate-800 border border-slate-700 text-white p-3 rounded-2xl text-sm focus:outline-none focus:border-sky-500" />
+                        <input type="email" placeholder="Your Email Address" className="w-full bg-slate-800 border border-slate-700 text-white p-3 rounded-2xl text-sm focus:outline-none focus:border-sky-500" />
+                        <textarea rows={3} placeholder="How can we help your ISP business?" className="w-full bg-slate-800 border border-slate-700 text-white p-3 rounded-2xl text-sm focus:outline-none focus:border-sky-500" />
+                        <button onClick={() => alert(`Thank you! Your message has been sent to ${branding.supportEmail}`)} className="w-full py-3.5 bg-sky-500 hover:bg-sky-400 text-white font-bold rounded-2xl text-sm shadow-lg transition-all">
+                            Submit Request
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            {/* ── FOOTER ── */}
+            <footer className="border-t border-slate-800 py-12 px-6 bg-[#090d16] text-xs text-slate-500">
+                <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                        <SurfBillLogo size="sm" showText={false} />
+                        <div>
+                            <div className="font-bold text-slate-300 text-sm">{branding.companyName}</div>
+                            <div>{branding.copyrightInfo}</div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-6 font-semibold text-slate-400">
+                        <Link to="/privacy" className="hover:text-white">Privacy Policy</Link>
+                        <Link to="/terms" className="hover:text-white">Terms & Conditions</Link>
+                        <Link to="/about" className="hover:text-white">About Us</Link>
+                        <Link to="/status" className="hover:text-white">System Status</Link>
+                        <Link to="/help" className="hover:text-white">Help Center</Link>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 };

@@ -161,7 +161,7 @@ export class AdminUser extends Model {
   public id!: string;
   public email!: string;
   public password!: string;
-  public role!: 'SUPER_ADMIN' | 'TENANT' | 'STAFF' | 'AGENT';
+  public role!: 'PLATFORM_OWNER' | 'SUPER_ADMIN' | 'TENANT' | 'STAFF' | 'AGENT';
   public tenantId!: string | null;
   public themePreference!: 'light' | 'dark' | 'system';
   public commissionRate!: number; // Percentage (e.g., 0.1 for 10%)
@@ -188,7 +188,7 @@ AdminUser.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   email: { type: DataTypes.STRING, unique: true, allowNull: false },
   password: { type: DataTypes.STRING, allowNull: false },
-  role: { type: DataTypes.ENUM('SUPER_ADMIN', 'TENANT', 'STAFF', 'AGENT'), defaultValue: 'TENANT' },
+  role: { type: DataTypes.ENUM('PLATFORM_OWNER', 'SUPER_ADMIN', 'TENANT', 'STAFF', 'AGENT'), defaultValue: 'TENANT' },
   themePreference: { type: DataTypes.ENUM('light', 'dark', 'system'), defaultValue: 'light' },
   tenantId: {
     type: DataTypes.UUID,
@@ -220,9 +220,9 @@ AdminUser.init({
   modelName: 'admin_user',
   hooks: {
     beforeValidate: (user: AdminUser) => {
-      // Logic for Super Admin
-      if (user.role === 'SUPER_ADMIN') {
-        user.tenantId = null; // Super admin never belongs to a tenant
+      // Logic for Platform Owner and Super Admin
+      if (user.role === 'SUPER_ADMIN' || user.role === 'PLATFORM_OWNER') {
+        user.tenantId = null; // System admins never belong to a single tenant
         return;
       }
 
@@ -340,40 +340,109 @@ Package.init({
   parentQueue: { type: DataTypes.STRING },
 }, { sequelize, modelName: 'package' });
 
+export class SubscriberGroup extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public name!: string;
+  public description!: string | null;
+  public discountPercentage!: number;
+}
+
+SubscriberGroup.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  name: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT },
+  discountPercentage: { type: DataTypes.FLOAT, defaultValue: 0 },
+}, {
+  sequelize,
+  modelName: 'subscriber_group',
+  indexes: [{ fields: ['tenantId'] }]
+});
+
 export class Subscriber extends Model {
   public id!: string;
   public name!: string | null;
+  public firstName!: string | null;
+  public lastName!: string | null;
   public phoneNumber!: string;
-  public macAddress!: string | null;
+  public altPhone!: string | null;
+  public email!: string | null;
+  public idNumber!: string | null;
+  public username!: string | null;
+  public password!: string | null;
   public pppoeUsername!: string | null;
   public pppoePassword!: string | null;
+  public macAddress!: string | null;
   public address!: string | null;
+  public location!: string | null;
+  public customerType!: 'RESIDENTIAL' | 'BUSINESS' | 'CORPORATE' | 'INSTITUTION' | 'HOTSPOT' | 'PPPOE';
+  public connectionType!: 'HOTSPOT' | 'PPPOE';
+  public customerGroupId!: string | null;
   public status!: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   public tenantId!: string;
   public routerId!: string | null;
   public packageId!: number | null;
   public expiryDate!: Date | null;
   public lastPaymentDate!: Date | null;
-  public email!: string | null;
   public notes!: string | null;
+  public autoRenewal!: boolean;
+  public notificationsEnabled!: boolean;
+  public isDraft!: boolean;
+  public archivedAt!: Date | null;
 }
 Subscriber.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   name: { type: DataTypes.STRING, allowNull: true },
+  firstName: { type: DataTypes.STRING, allowNull: true },
+  lastName: { type: DataTypes.STRING, allowNull: true },
   phoneNumber: { type: DataTypes.STRING, allowNull: false },
-  macAddress: { type: DataTypes.STRING, allowNull: true },
-  pppoeUsername: { type: DataTypes.STRING, unique: true, allowNull: true },
+  altPhone: { type: DataTypes.STRING, allowNull: true },
+  email: { type: DataTypes.STRING, allowNull: true },
+  idNumber: { type: DataTypes.STRING, allowNull: true },
+  username: { type: DataTypes.STRING, allowNull: true },
+  password: { type: DataTypes.STRING, allowNull: true },
+  pppoeUsername: { type: DataTypes.STRING, allowNull: true },
   pppoePassword: { type: DataTypes.STRING, allowNull: true },
+  macAddress: { type: DataTypes.STRING, allowNull: true },
   address: { type: DataTypes.STRING },
+  location: { type: DataTypes.STRING },
+  customerType: {
+    type: DataTypes.ENUM('RESIDENTIAL', 'BUSINESS', 'CORPORATE', 'INSTITUTION', 'HOTSPOT', 'PPPOE'),
+    defaultValue: 'RESIDENTIAL'
+  },
+  connectionType: {
+    type: DataTypes.ENUM('HOTSPOT', 'PPPOE'),
+    defaultValue: 'HOTSPOT'
+  },
+  customerGroupId: { type: DataTypes.UUID, allowNull: true },
   status: { type: DataTypes.ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED'), defaultValue: 'INACTIVE' },
   tenantId: { type: DataTypes.UUID, allowNull: false },
   routerId: { type: DataTypes.UUID, allowNull: true },
   packageId: { type: DataTypes.INTEGER, allowNull: true },
   expiryDate: { type: DataTypes.DATE },
   lastPaymentDate: { type: DataTypes.DATE },
-  email: { type: DataTypes.STRING, allowNull: true },
   notes: { type: DataTypes.TEXT },
-}, { sequelize, modelName: 'subscriber' });
+  autoRenewal: { type: DataTypes.BOOLEAN, defaultValue: false },
+  notificationsEnabled: { type: DataTypes.BOOLEAN, defaultValue: true },
+  isDraft: { type: DataTypes.BOOLEAN, defaultValue: false },
+  archivedAt: { type: DataTypes.DATE, allowNull: true },
+}, {
+  sequelize,
+  modelName: 'subscriber',
+  indexes: [
+    { fields: ['tenantId'] },
+    { fields: ['phoneNumber'] },
+    { fields: ['username'] },
+    { fields: ['customerGroupId'] }
+  ]
+});
+
+Tenant.hasMany(SubscriberGroup, { foreignKey: 'tenantId' });
+SubscriberGroup.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+SubscriberGroup.hasMany(Subscriber, { foreignKey: 'customerGroupId' });
+Subscriber.belongsTo(SubscriberGroup, { foreignKey: 'customerGroupId' });
 
 export class Invoice extends Model {
   public id!: string;
@@ -943,6 +1012,8 @@ export class RouterConnectionLog extends Model {
   public ipAddress!: string | null;
   public userId!: string | null;
   public metadata!: string | null; // JSON for additional data
+  public createdAt!: Date;
+  public updatedAt!: Date;
 }
 RouterConnectionLog.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -956,6 +1027,33 @@ RouterConnectionLog.init({
   userId: { type: DataTypes.UUID },
   metadata: { type: DataTypes.TEXT }, // JSON string
 }, { sequelize, modelName: 'routerConnectionLog' });
+
+export class DormantRouterPolicy extends Model {
+  public id!: string;
+  public dormantThresholdMinutes!: number;
+  public actionOnDormant!: 'ALERT_ONLY' | 'SUSPEND_ROUTER' | 'DISABLE_SYNC' | 'RECONNECT_ATTEMPT';
+  public notifyTenantAdmin!: boolean;
+  public notifyPlatformOwner!: boolean;
+  autoActionEnabled!: boolean;
+  public lastExecutionAt!: Date | null;
+  public lastExecutionSummary!: string | null;
+  public createdAt!: Date;
+  public updatedAt!: Date;
+}
+DormantRouterPolicy.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  dormantThresholdMinutes: { type: DataTypes.INTEGER, defaultValue: 30 },
+  actionOnDormant: { 
+    type: DataTypes.ENUM('ALERT_ONLY', 'SUSPEND_ROUTER', 'DISABLE_SYNC', 'RECONNECT_ATTEMPT'), 
+    defaultValue: 'ALERT_ONLY' 
+  },
+  notifyTenantAdmin: { type: DataTypes.BOOLEAN, defaultValue: true },
+  notifyPlatformOwner: { type: DataTypes.BOOLEAN, defaultValue: true },
+  autoActionEnabled: { type: DataTypes.BOOLEAN, defaultValue: true },
+  lastExecutionAt: { type: DataTypes.DATE },
+  lastExecutionSummary: { type: DataTypes.TEXT },
+}, { sequelize, modelName: 'dormantRouterPolicy' });
+
 
 // Add relationships for new models
 AdminUser.hasMany(PasswordResetToken, { foreignKey: 'userId' });
@@ -1950,4 +2048,255 @@ SaaSPayment.belongsTo(Tenant, { foreignKey: 'tenantId' });
 Tenant.hasMany(SaaSNotification, { foreignKey: 'tenantId' });
 SaaSNotification.belongsTo(Tenant, { foreignKey: 'tenantId' });
 
+// ─── REFUND & COMPENSATION MODELS ──────────────────────────────────────────
+
+export class RefundRequest extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public subscriberId!: string;
+  public paymentId!: string | null;
+  public packageId!: number | null;
+  public type!: 'FULL_REFUND' | 'PARTIAL_REFUND' | 'WALLET_CREDIT' | 'PACKAGE_EXTENSION' | 'VOUCHER_REPLACEMENT' | 'FREE_DATA' | 'MANUAL_COMPENSATION' | 'GOODWILL_CREDIT';
+  public category!: 'NETWORK_OUTAGE' | 'ROUTER_FAILURE' | 'POWER_FAILURE' | 'PAYMENT_FAILURE' | 'AUTH_FAILURE' | 'SLOW_INTERNET' | 'MAINTENANCE' | 'GOODWILL' | 'CUSTOM';
+  public status!: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED';
+  public amount!: number; // In KES cents (e.g. 10000 = 100.00 KES)
+  public extensionMinutes!: number | null;
+  public freeDataBytes!: number | null;
+  public reason!: string;
+  public notes!: string | null;
+  public evidenceUrl!: string | null;
+  public requestedBy!: string;
+  public approvedBy!: string | null;
+  public rejectedBy!: string | null;
+  public rejectionReason!: string | null;
+  public completedAt!: Date | null;
+  public providerRefundId!: string | null;
+  public providerRefundStatus!: 'REQUESTED' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | null;
+  public previousBalance!: number;
+  public newBalance!: number;
+  public idempotencyKey!: string;
+}
+
+RefundRequest.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  subscriberId: { type: DataTypes.UUID, allowNull: false },
+  paymentId: { type: DataTypes.UUID, allowNull: true },
+  packageId: { type: DataTypes.INTEGER, allowNull: true },
+  type: {
+    type: DataTypes.ENUM(
+      'FULL_REFUND', 'PARTIAL_REFUND', 'WALLET_CREDIT', 'PACKAGE_EXTENSION',
+      'VOUCHER_REPLACEMENT', 'FREE_DATA', 'MANUAL_COMPENSATION', 'GOODWILL_CREDIT'
+    ),
+    allowNull: false,
+  },
+  category: {
+    type: DataTypes.ENUM(
+      'NETWORK_OUTAGE', 'ROUTER_FAILURE', 'POWER_FAILURE', 'PAYMENT_FAILURE',
+      'AUTH_FAILURE', 'SLOW_INTERNET', 'MAINTENANCE', 'GOODWILL', 'CUSTOM'
+    ),
+    defaultValue: 'GOODWILL',
+  },
+  status: {
+    type: DataTypes.ENUM('DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED'),
+    defaultValue: 'SUBMITTED',
+  },
+  amount: { type: DataTypes.BIGINT, defaultValue: 0 },
+  extensionMinutes: { type: DataTypes.INTEGER, allowNull: true },
+  freeDataBytes: { type: DataTypes.BIGINT, allowNull: true },
+  reason: { type: DataTypes.TEXT, allowNull: false },
+  notes: { type: DataTypes.TEXT },
+  evidenceUrl: { type: DataTypes.TEXT },
+  requestedBy: { type: DataTypes.UUID, allowNull: false },
+  approvedBy: { type: DataTypes.UUID, allowNull: true },
+  rejectedBy: { type: DataTypes.UUID, allowNull: true },
+  rejectionReason: { type: DataTypes.TEXT, allowNull: true },
+  completedAt: { type: DataTypes.DATE, allowNull: true },
+  providerRefundId: { type: DataTypes.STRING, allowNull: true },
+  providerRefundStatus: {
+    type: DataTypes.ENUM('REQUESTED', 'PROCESSING', 'COMPLETED', 'FAILED', 'CANCELLED'),
+    allowNull: true,
+  },
+  previousBalance: { type: DataTypes.BIGINT, defaultValue: 0 },
+  newBalance: { type: DataTypes.BIGINT, defaultValue: 0 },
+  idempotencyKey: { type: DataTypes.STRING, allowNull: false, unique: true },
+}, {
+  sequelize,
+  modelName: 'refund_request',
+  indexes: [
+    { fields: ['tenantId'] },
+    { fields: ['subscriberId'] },
+    { fields: ['status'] },
+    { fields: ['idempotencyKey'] },
+  ],
+});
+
+export class CompensationRule extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public name!: string;
+  public triggerType!: 'ROUTER_DOWNTIME' | 'HOTSPOT_OUTAGE' | 'AUTH_FAILURES' | 'CUSTOM';
+  public downtimeThresholdMinutes!: number;
+  public compensationType!: 'PACKAGE_EXTENSION' | 'WALLET_CREDIT' | 'FREE_DATA';
+  public compensationValue!: number;
+  public autoApprove!: boolean;
+  public isEnabled!: boolean;
+}
+
+CompensationRule.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  name: { type: DataTypes.STRING, allowNull: false },
+  triggerType: {
+    type: DataTypes.ENUM('ROUTER_DOWNTIME', 'HOTSPOT_OUTAGE', 'AUTH_FAILURES', 'CUSTOM'),
+    defaultValue: 'ROUTER_DOWNTIME',
+  },
+  downtimeThresholdMinutes: { type: DataTypes.INTEGER, defaultValue: 60 },
+  compensationType: {
+    type: DataTypes.ENUM('PACKAGE_EXTENSION', 'WALLET_CREDIT', 'FREE_DATA'),
+    defaultValue: 'PACKAGE_EXTENSION',
+  },
+  compensationValue: { type: DataTypes.INTEGER, defaultValue: 60 },
+  autoApprove: { type: DataTypes.BOOLEAN, defaultValue: true },
+  isEnabled: { type: DataTypes.BOOLEAN, defaultValue: true },
+}, {
+  sequelize,
+  modelName: 'compensation_rule',
+  indexes: [{ fields: ['tenantId'] }],
+});
+
+export class RefundAuditLog extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public refundRequestId!: string;
+  public subscriberId!: string;
+  public type!: string;
+  public amount!: number;
+  public action!: string;
+  public performedBy!: string;
+  public ipAddress!: string | null;
+  public userAgent!: string | null;
+  public previousBalance!: number;
+  public newBalance!: number;
+  public reason!: string;
+}
+
+RefundAuditLog.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  refundRequestId: { type: DataTypes.UUID, allowNull: false },
+  subscriberId: { type: DataTypes.UUID, allowNull: false },
+  type: { type: DataTypes.STRING, allowNull: false },
+  amount: { type: DataTypes.BIGINT, defaultValue: 0 },
+  action: { type: DataTypes.STRING, allowNull: false },
+  performedBy: { type: DataTypes.UUID, allowNull: false },
+  ipAddress: { type: DataTypes.STRING },
+  userAgent: { type: DataTypes.TEXT },
+  previousBalance: { type: DataTypes.BIGINT, defaultValue: 0 },
+  newBalance: { type: DataTypes.BIGINT, defaultValue: 0 },
+  reason: { type: DataTypes.TEXT },
+}, {
+  sequelize,
+  modelName: 'refund_audit_log',
+  indexes: [
+    { fields: ['tenantId'] },
+    { fields: ['refundRequestId'] },
+    { fields: ['subscriberId'] },
+  ],
+});
+
+// Relationships
+Tenant.hasMany(RefundRequest, { foreignKey: 'tenantId' });
+RefundRequest.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Subscriber.hasMany(RefundRequest, { foreignKey: 'subscriberId' });
+RefundRequest.belongsTo(Subscriber, { foreignKey: 'subscriberId' });
+
+Payment.hasMany(RefundRequest, { foreignKey: 'paymentId' });
+RefundRequest.belongsTo(Payment, { foreignKey: 'paymentId' });
+
+Tenant.hasMany(CompensationRule, { foreignKey: 'tenantId' });
+CompensationRule.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Tenant.hasMany(RefundAuditLog, { foreignKey: 'tenantId' });
+RefundAuditLog.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+// ─── PLATFORM BRANDING & WHITE-LABEL MODEL ─────────────────────────────────
+
+export class PlatformBranding extends Model {
+  public id!: string;
+  public platformName!: string;
+  public platformTagline!: string;
+  public platformDescription!: string;
+  public companyName!: string;
+  public supportPhone!: string;
+  public supportEmail!: string;
+  public websiteUrl!: string;
+  public socialLinks!: string; // JSON string
+  public businessAddress!: string;
+  public copyrightInfo!: string;
+  public legalInfo!: string;
+
+  // Logos
+  public primaryLogoUrl!: string | null;
+  public darkModeLogoUrl!: string | null;
+  public lightModeLogoUrl!: string | null;
+  public faviconUrl!: string | null;
+  public mobileLogoUrl!: string | null;
+  public invoiceLogoUrl!: string | null;
+  public emailLogoUrl!: string | null;
+  public captivePortalLogoUrl!: string | null;
+
+  // Colors
+  public primaryColor!: string;
+  public secondaryColor!: string;
+  public accentColor!: string;
+  public successColor!: string;
+  public warningColor!: string;
+  public dangerColor!: string;
+  public sidebarColor!: string;
+  public navColor!: string;
+  public buttonColor!: string;
+  public chartColor!: string;
+}
+
+PlatformBranding.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  platformName: { type: DataTypes.STRING, defaultValue: 'SurfBill Pro' },
+  platformTagline: { type: DataTypes.STRING, defaultValue: 'Next-Gen Multi-Tenant WiFi Billing & ISP Management System' },
+  platformDescription: { type: DataTypes.TEXT, defaultValue: 'Enterprise WiFi billing, MikroTik integration, bandwidth control, and M-Pesa automated payments for ISPs and hotspot owners.' },
+  companyName: { type: DataTypes.STRING, defaultValue: 'SurfBill Technologies Ltd' },
+  supportPhone: { type: DataTypes.STRING, defaultValue: '0714498996' },
+  supportEmail: { type: DataTypes.STRING, defaultValue: 'surfbill0@gmail.com' },
+  websiteUrl: { type: DataTypes.STRING, defaultValue: 'https://surfbill.com' },
+  socialLinks: { type: DataTypes.TEXT, defaultValue: JSON.stringify({ twitter: '', facebook: '', linkedin: '', whatsapp: 'https://wa.me/254714498996' }) },
+  businessAddress: { type: DataTypes.TEXT, defaultValue: 'Nairobi, Kenya' },
+  copyrightInfo: { type: DataTypes.STRING, defaultValue: '© 2026 SurfBill Technologies Ltd. All rights reserved.' },
+  legalInfo: { type: DataTypes.TEXT, defaultValue: 'SurfBill is a registered SaaS billing platform for Internet Service Providers.' },
+
+  primaryLogoUrl: { type: DataTypes.TEXT, allowNull: true },
+  darkModeLogoUrl: { type: DataTypes.TEXT, allowNull: true },
+  lightModeLogoUrl: { type: DataTypes.TEXT, allowNull: true },
+  faviconUrl: { type: DataTypes.TEXT, allowNull: true },
+  mobileLogoUrl: { type: DataTypes.TEXT, allowNull: true },
+  invoiceLogoUrl: { type: DataTypes.TEXT, allowNull: true },
+  emailLogoUrl: { type: DataTypes.TEXT, allowNull: true },
+  captivePortalLogoUrl: { type: DataTypes.TEXT, allowNull: true },
+
+  primaryColor: { type: DataTypes.STRING, defaultValue: '#0284c7' },
+  secondaryColor: { type: DataTypes.STRING, defaultValue: '#0f172a' },
+  accentColor: { type: DataTypes.STRING, defaultValue: '#38bdf8' },
+  successColor: { type: DataTypes.STRING, defaultValue: '#10b981' },
+  warningColor: { type: DataTypes.STRING, defaultValue: '#f59e0b' },
+  dangerColor: { type: DataTypes.STRING, defaultValue: '#ef4444' },
+  sidebarColor: { type: DataTypes.STRING, defaultValue: '#0f172a' },
+  navColor: { type: DataTypes.STRING, defaultValue: '#0284c7' },
+  buttonColor: { type: DataTypes.STRING, defaultValue: '#0284c7' },
+  chartColor: { type: DataTypes.STRING, defaultValue: '#0284c7' },
+}, {
+  sequelize,
+  modelName: 'platform_branding'
+});
+
 export { sequelize };
+
