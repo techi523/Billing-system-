@@ -171,9 +171,9 @@ const LandingPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {[
-                            { name: 'Starter ISP', price: 'KES 1,500', period: '/month', features: ['Up to 250 Active Subscribers', '1 MikroTik Router Sync', 'Automated M-Pesa STK Push', 'Basic SMS Alerts'] },
-                            { name: 'Growth ISP', price: 'KES 4,000', period: '/month', popular: true, features: ['Up to 1,000 Active Subscribers', '5 MikroTik Router Syncs', 'WhatsApp & SMS Marketing', 'Captive Portal Advertising', 'Full Financial Reports'] },
-                            { name: 'Enterprise ISP', price: 'Custom', period: '', features: ['Unlimited Subscribers', 'Unlimited Routers', 'Dedicated White-Label Domain', 'Priority 24/7 Support', 'Custom API Integrations'] },
+                            { name: 'Starter ISP', slug: 'starter', price: 'KES 1,500', period: '/month', features: ['Up to 250 Active Subscribers', '1 MikroTik Router Sync', 'Automated M-Pesa STK Push', 'Basic SMS Alerts'] },
+                            { name: 'Growth ISP', slug: 'growth', price: 'KES 4,000', period: '/month', popular: true, features: ['Up to 1,000 Active Subscribers', '5 MikroTik Router Syncs', 'WhatsApp & SMS Marketing', 'Captive Portal Advertising', 'Full Financial Reports'] },
+                            { name: 'Enterprise ISP', slug: 'professional', price: 'Custom', period: '', features: ['Unlimited Subscribers', 'Unlimited Routers', 'Dedicated White-Label Domain', 'Priority 24/7 Support', 'Custom API Integrations'] },
                         ].map((p, i) => (
                             <div key={i} className={`bg-slate-900 border rounded-3xl p-8 space-y-6 relative ${p.popular ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-slate-800'}`}>
                                 {p.popular && <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-sky-500 text-white rounded-full text-xs font-bold">MOST POPULAR</span>}
@@ -186,7 +186,7 @@ const LandingPage: React.FC = () => {
                                         <li key={fIdx} className="flex items-center gap-2"><Check className="w-4 h-4 text-sky-400" /> {ft}</li>
                                     ))}
                                 </ul>
-                                <Link to="/login" className={`w-full py-3 block text-center rounded-2xl font-bold text-sm transition-all ${p.popular ? 'bg-sky-500 hover:bg-sky-400 text-white shadow-lg' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'}`}>
+                                <Link to={`/checkout?type=SUBSCRIPTION_PLAN&slug=${p.slug}`} className={`w-full py-3 block text-center rounded-2xl font-bold text-sm transition-all ${p.popular ? 'bg-sky-500 hover:bg-sky-400 text-white shadow-lg' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'}`}>
                                     Get Started
                                 </Link>
                             </div>

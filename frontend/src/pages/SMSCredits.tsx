@@ -5,7 +5,7 @@ import {
     Zap, TrendingUp, AlertTriangle, CheckCircle2, Send,
     Download, RefreshCw, Plus, Search, X,
     Smartphone, Wallet, CreditCard,
-    Users, Calendar, FileText, Trash2
+    Users, Calendar, FileText, Trash2, ArrowUpRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BackButton from '../components/Common/BackButton';
@@ -324,18 +324,26 @@ const BuySmsTab = ({ balance, onPurchaseSuccess }: { balance: SmsBalance | null;
                                     />
                                 )}
 
-                                <button
-                                    onClick={handlePurchase}
-                                    disabled={isPurchasing}
-                                    className="w-full btn-primary py-4 text-base rounded-2xl"
-                                >
-                                    {isPurchasing ? (
-                                        <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            {pendingTrackingId ? 'Waiting for payment...' : 'Processing...'}</>
-                                    ) : (
-                                        <><ShoppingCart className="w-5 h-5" /> Buy {selectedPkg.smsCount.toLocaleString()} SMS — {formatAmount(selectedPkg.sellingPrice)}</>
-                                    )}
-                                </button>
+                                <div className="flex gap-2 pt-2">
+                                    <button
+                                        onClick={handlePurchase}
+                                        disabled={isPurchasing}
+                                        className="flex-1 btn-primary py-3.5 text-sm rounded-2xl"
+                                    >
+                                        {isPurchasing ? (
+                                            <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                {pendingTrackingId ? 'Waiting...' : 'Processing...'}</>
+                                        ) : (
+                                            <><ShoppingCart className="w-4 h-4" /> Quick Buy ({formatAmount(selectedPkg.sellingPrice)})</>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => window.location.href = `/checkout?type=SMS_CREDITS&id=${selectedPkg.id}`}
+                                        className="px-4 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-2xl transition flex items-center gap-1.5"
+                                    >
+                                        Full Checkout <ArrowUpRight className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </motion.div>

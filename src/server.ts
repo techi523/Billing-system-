@@ -32,6 +32,7 @@ import superadminCommandRoutes from './routes/superadmin-command.routes';
 import ultimateSuperAdminRoutes from './routes/ultimate-superadmin-control.routes';
 import intasendWebhookRoutes from './routes/intasend-webhook.routes';
 import platformOwnerRoutes from './routes/platform-owner.routes';
+import checkoutRoutes from './routes/checkout.routes';
 import { DormantRouterService } from './services/dormant-router.service';
 import { IspService } from './services/isp.service';
 import { SettlementEngine } from './services/settlement-engine';
@@ -146,6 +147,7 @@ app.use('/api/v1/superadmin/ultimate', authMiddleware, superAdminLimiter, ultima
 app.use('/api/v1/superadmin/saas', authMiddleware, superAdminLimiter, superAdminSaasRoutes);
 app.use('/api/v1/superadmin/sms', authMiddleware, superAdminLimiter, smsGatewayRoutes);
 app.use('/api/v1/platform-owner', platformOwnerRoutes);
+app.use('/api/v1/checkout', checkoutRoutes);
 app.use('/api/v1/tenant/saas', authMiddleware, TenantResolver.resolveTenant, tenantSaasRoutes);
 app.use('/api/v1/sms', authMiddleware, TenantResolver.resolveTenant, smsRoutes);
 app.use('/api/v1/admin/reports', authMiddleware, TenantResolver.resolveTenant, reportsRoutes);

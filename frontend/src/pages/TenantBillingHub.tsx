@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Wallet, ShieldCheck, AlertTriangle, FileText, Download,
     CreditCard, ArrowUpRight, CheckCircle, RefreshCw, Layers
 } from 'lucide-react';
 import axios from 'axios';
+import SubscriptionStatusWidget from '../components/SubscriptionStatusWidget';
 
 const TenantBillingHub: React.FC = () => {
+    const navigate = useNavigate();
     const [overview, setOverview] = useState<any>(null);
     const [invoices, setInvoices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
-    const [paying, setPaying] = useState(false);
 
     useEffect(() => {
         fetchBillingData();
@@ -25,25 +26,11 @@ const TenantBillingHub: React.FC = () => {
             ]);
 
             setOverview(overviewRes.data);
-            setInvoices(invoicesRes.data);
+            setInvoices(invoicesRes.data || []);
         } catch (err: any) {
             console.error('Failed to load tenant billing data', err);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleIntaSendPay = async (invoiceId: string) => {
-        setPaying(true);
-        try {
-            const res = await axios.post(`/api/v1/tenant/saas/invoices/${invoiceId}/pay-intasend`);
-            if (res.data.checkoutUrl) {
-                window.open(res.data.checkoutUrl, '_blank');
-            }
-        } catch (err: any) {
-            alert(`Payment error: ${err.message}`);
-        } finally {
-            setPaying(false);
         }
     };
 
@@ -70,44 +57,10 @@ const TenantBillingHub: React.FC = () => {
         );
     }
 
-    const currentStatus = overview?.status || 'ACTIVE';
-
     return (
         <div className="space-y-6">
-            {/* Subscription Banner */}
-            <div className="bg-slate-900 text-white p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                            <span className="px-3 py-1 text-xs font-black uppercase tracking-widest bg-sky-500/20 text-sky-400 rounded-full border border-sky-500/30">
-                                {overview?.planName || 'Starter Plan'}
-                            </span>
-                            <span className={`px-3 py-1 text-xs font-black uppercase tracking-widest rounded-full ${currentStatus === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
-                                }`}>
-                                {currentStatus}
-                            </span>
-                        </div>
-                        <h1 className="text-3xl font-black tracking-tight">{overview?.tenantName || 'Tenant Account'}</h1>
-                        <p className="text-xs text-slate-400">
-                            Current Period Ends: <strong>{overview?.currentPeriodEnd ? new Date(overview.currentPeriodEnd).toLocaleDateString() : 'Active'}</strong>
-                        </p>
-                    </div>
-
-                    {overview?.amountDue > 0 && (
-                        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl space-y-2">
-                            <div className="text-xs font-bold text-amber-400 uppercase">Amount Due</div>
-                            <div className="text-2xl font-black text-white">KES {overview.amountDue.toLocaleString()}</div>
-                            <button
-                                onClick={() => handleIntaSendPay(overview.unpaidInvoiceId)}
-                                disabled={paying}
-                                className="w-full px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
-                            >
-                                Pay Now (IntaSend)
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </div>
+            {/* Reusable Subscription & Billing Overview Widget */}
+            <SubscriptionStatusWidget />
 
             {/* Active Users Gauge */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -163,10 +116,10 @@ const TenantBillingHub: React.FC = () => {
                                     <td className="p-3 text-right space-x-2">
                                         {inv.paymentStatus !== 'PAID' && (
                                             <button
-                                                onClick={() => handleIntaSendPay(inv.id)}
-                                                className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-500 transition"
+                                                onClick={() => navigate(`/checkout?invoiceId=${inv.id}`)}
+                                                className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-500 transition shadow-sm"
                                             >
-                                                Pay
+                                                Pay Now
                                             </button>
                                         )}
                                         <button

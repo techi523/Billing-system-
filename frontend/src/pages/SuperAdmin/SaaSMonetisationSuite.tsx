@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     DollarSign, Users, CreditCard, ShieldCheck, AlertTriangle,
     Settings, Play, FileText, Download, CheckCircle, RefreshCw, Layers
@@ -6,6 +7,7 @@ import {
 import axios from 'axios';
 
 const SaaSMonetisationSuite: React.FC = () => {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'overview' | 'pricing' | 'plans' | 'invoices'>('overview');
     const [metrics, setMetrics] = useState<any>(null);
     const [pricingConfig, setPricingConfig] = useState<any>(null);
@@ -258,6 +260,12 @@ const SaaSMonetisationSuite: React.FC = () => {
                                 <li>• Staff Accounts: <strong>{p.maxStaff === -1 ? 'Unlimited' : p.maxStaff}</strong></li>
                                 <li>• Support Level: <strong>{p.supportLevel}</strong></li>
                             </ul>
+                            <button
+                                onClick={() => navigate(`/checkout?type=SUBSCRIPTION_PLAN&id=${p.id}&slug=${p.slug}`)}
+                                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow transition"
+                            >
+                                Activate / Subscribe Plan
+                            </button>
                         </div>
                     ))}
                 </div>

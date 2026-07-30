@@ -22,6 +22,7 @@ import SuperAdminPortal from './pages/SuperAdminPortal';
 // Protected Pages - Platform Owner
 import PlatformOwnerPortal from './pages/PlatformOwnerPortal';
 import ImpersonationBanner from './components/ImpersonationBanner';
+import CheckoutPortal from './pages/CheckoutPortal';
 
 // Protected Pages - Tenant
 import DashboardLayout from './components/Dashboard/DashboardLayout';
@@ -78,6 +79,7 @@ function App() {
                                 <Route path="/contact" element={<ContactUs />} />
                                 <Route path="/status" element={<SystemStatus />} />
                                 <Route path="/help" element={<HelpCenter />} />
+                                <Route path="/checkout" element={<CheckoutPortal />} />
 
                             {/* Super Admin Login (Explicit) */}
                             <Route path="/superadmin/login" element={<SuperAdminLogin />} />

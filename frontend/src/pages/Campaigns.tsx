@@ -1,20 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import {
-    Mail,
-    MessageSquare,
-    Plus,
-    Send,
-    BarChart3,
-    Clock,
-    AlertCircle,
-    CheckCircle2,
-    Users,
-    Filter,
-    ChevronRight,
-    Search,
-    ArrowRight,
-    MessageCircle
+    Plus, Search, Filter, Play, Pause, Trash2, Edit2, CheckCircle2,
+    Clock, AlertCircle, Users, Eye, BarChart3, MessageSquare, Mail,
+    Send, ChevronRight, MessageCircle, RefreshCw, X, Sparkles, ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BackButton from '../components/Common/BackButton';
@@ -256,8 +245,14 @@ const Campaigns = () => {
                                     })()}%
                                 </span>
                             </div>
-                            <div className="pt-4 border-t border-white/10">
-                                <button className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-sm transition-all">View Delivery Logs</button>
+                            <div className="pt-4 border-t border-white/10 space-y-2">
+                                <button
+                                    onClick={() => window.location.href = '/checkout?type=ADVERTISING_CAMPAIGN'}
+                                    className="w-full py-3 bg-sky-500 hover:bg-sky-400 text-white rounded-xl font-bold text-sm shadow-lg shadow-sky-500/20 transition-all flex items-center justify-center gap-1.5"
+                                >
+                                    <Sparkles className="w-4 h-4" /> Buy Ad Credits / Activate Campaign
+                                </button>
+                                <button className="w-full py-2.5 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-xs transition-all">View Delivery Logs</button>
                             </div>
                         </div>
                     </div>

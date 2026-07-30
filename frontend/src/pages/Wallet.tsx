@@ -187,6 +187,12 @@ const WalletPage = () => {
                 </div>
                 <div className="flex items-center gap-3">
                     <button
+                        onClick={() => window.location.href = '/checkout?type=WALLET_TOPUP'}
+                        className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 transition"
+                    >
+                        <ArrowUpRight className="w-4 h-4" /> Top Up Treasury
+                    </button>
+                    <button
                         onClick={() => { setShowWithdrawModal(true); setStep('REQUEST'); setMessage(''); }}
                         className="btn-primary"
                     >
