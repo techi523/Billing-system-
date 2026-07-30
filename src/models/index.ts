@@ -1930,8 +1930,6 @@ export class SaaSInvoice extends Model {
   public intasendCheckoutUrl!: string | null;
   public invoicePdfUrl!: string | null;
   public metadata!: string | null;
-  public subtotalCents!: number;
-  public taxCents!: number;
 }
 
 SaaSInvoice.init({
@@ -1949,8 +1947,6 @@ SaaSInvoice.init({
   whatsappAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
   extraRoutersAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
   addonAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
-  subtotalCents: { type: DataTypes.BIGINT, defaultValue: 0 },
-  taxCents: { type: DataTypes.BIGINT, defaultValue: 0 },
   taxAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
   discountAmountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
   lateFeeCents: { type: DataTypes.BIGINT, defaultValue: 0 },

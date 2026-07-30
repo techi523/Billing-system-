@@ -13,6 +13,7 @@ import {
     AdCampaign,
     AuditLog
 } from '../models';
+import { CheckoutService } from './checkout.service';
 import logger from '../utils/logger';
 import { Op } from 'sequelize';
 import crypto from 'crypto';
@@ -342,12 +343,7 @@ export class SaaSBillingService {
         }
 
         if (state === 'COMPLETE' || state === 'SUCCESSFUL') {
-            await invoice.update({
-                paymentStatus: 'PAID',
-                paidAt: new Date(),
-                paymentMethod: 'INTASEND',
-                paymentReference: ref
-            });
+            await CheckoutService.processPaymentSuccess(invoice.id, ref, 'INTASEND');
 
             // Update Tenant Subscription
             const sub = await TenantSubscription.findOne({ where: { tenantId: invoice.tenantId } });

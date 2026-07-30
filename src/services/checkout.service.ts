@@ -183,8 +183,9 @@ export class CheckoutService {
             billingPeriodStart: periodStart,
             billingPeriodEnd: periodEnd,
             dueDate,
-            subtotalCents,
-            taxCents,
+            subscriptionAmountCents: subtotalCents,
+            taxAmountCents: taxCents,
+            discountAmountCents: discountCents,
             totalAmountCents,
             paymentStatus: 'UNPAID',
             metadata: JSON.stringify({ itemType, itemId, itemSlug, quantity, billingCycle, couponCode })

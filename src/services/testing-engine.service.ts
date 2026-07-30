@@ -8,6 +8,7 @@ import { WalletService } from './wallet.service';
 import { PackageService } from './package.service';
 import { FeatureFlagService } from './feature-flag.service';
 import { SecurityScannerService } from './security-scanner.service';
+import { CheckoutService } from './checkout.service';
 import logger from '../utils/logger';
 
 export interface TestResultItem {
@@ -88,6 +89,18 @@ export class TestingEngineService {
             });
             if (!sim.success) throw new Error(sim.message);
             return `Simulated M-Pesa payment ref: ${sim.reference}`;
+        });
+
+        // 6b. Checkout & Service Activation Engine
+        await this.runTest(results, 'Checkout Engine', 'Server-Side Checkout Pricing & Invoice Generation', async () => {
+            const checkout = await CheckoutService.prepareCheckout({
+                tenantId: activeTenantId,
+                itemType: 'SUBSCRIPTION_PLAN',
+                itemSlug: 'starter',
+                billingCycle: 'MONTHLY'
+            });
+            if (!checkout.invoiceId) throw new Error('Checkout invoice creation failed');
+            return `Checkout invoice ${checkout.invoiceNumber} created (Total: KES ${checkout.totalAmountKes}).`;
         });
 
         // 7. Wallet Service Fallback & Balance Engine

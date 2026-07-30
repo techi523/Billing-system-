@@ -105,3 +105,33 @@ export const config = {
         encryptionKey: process.env.SMS_ENCRYPTION_KEY,
     }
 } as const;
+
+export function validatePaymentEnvDiagnostics(): {
+    intasendConfigured: boolean;
+    mpesaConfigured: boolean;
+    issues: string[];
+} {
+    const issues: string[] = [];
+    let intasendConfigured = true;
+    let mpesaConfigured = true;
+
+    if (!process.env.INTASEND_PUBLISHABLE_KEY) {
+        issues.push('INTASEND_PUBLISHABLE_KEY is missing');
+        intasendConfigured = false;
+    }
+    if (!process.env.INTASEND_SECRET_KEY) {
+        issues.push('INTASEND_SECRET_KEY is missing');
+        intasendConfigured = false;
+    }
+
+    if (!process.env.MPESA_CONSUMER_KEY) {
+        issues.push('MPESA_CONSUMER_KEY is missing (using sandbox fallback)');
+        mpesaConfigured = false;
+    }
+    if (!process.env.MPESA_CONSUMER_SECRET) {
+        issues.push('MPESA_CONSUMER_SECRET is missing (using sandbox fallback)');
+        mpesaConfigured = false;
+    }
+
+    return { intasendConfigured, mpesaConfigured, issues };
+}

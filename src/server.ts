@@ -212,6 +212,9 @@ async function startServer() {
             logger.warn('PRODUCTION MODE: Skipping automated schema synchronization. Use migrations.');
         } else {
             await sequelize.sync();
+            try { await sequelize.query("ALTER TABLE saas_invoices ADD COLUMN metadata TEXT;"); } catch (_) {}
+            try { await sequelize.query("ALTER TABLE saas_invoices ADD COLUMN subtotalCents BIGINT DEFAULT 0;"); } catch (_) {}
+            try { await sequelize.query("ALTER TABLE saas_invoices ADD COLUMN taxCents BIGINT DEFAULT 0;"); } catch (_) {}
             logger.info('DEVELOPMENT MODE: Database schema synced.');
         }
 
