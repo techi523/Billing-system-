@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBranding } from '../context/BrandingContext';
 import SurfBillLogo from '../components/Common/SurfBillLogo';
+import EnterpriseLeadModal from '../components/EnterpriseLeadModal';
 import {
     Wifi, Shield, Zap, DollarSign, MessageSquare, BarChart3, ChevronRight,
     CheckCircle2, ArrowRight, Phone, Mail, Globe, MapPin, Users, HelpCircle,
-    Star, Layers, Terminal, Sparkles, Check, Lock, ExternalLink
+    Star, Layers, Terminal, Sparkles, Check, Lock, ExternalLink, Building2
 } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
     const { branding } = useBranding();
     const [faqOpen, setFaqOpen] = useState<number | null>(0);
+    const [isEnterpriseModalOpen, setIsEnterpriseModalOpen] = useState(false);
 
     const toggleFaq = (idx: number) => {
         setFaqOpen(faqOpen === idx ? null : idx);
@@ -171,29 +173,46 @@ const LandingPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {[
-                            { name: 'Starter ISP', slug: 'starter', price: 'KES 1,500', period: '/month', features: ['Up to 250 Active Subscribers', '1 MikroTik Router Sync', 'Automated M-Pesa STK Push', 'Basic SMS Alerts'] },
-                            { name: 'Growth ISP', slug: 'growth', price: 'KES 4,000', period: '/month', popular: true, features: ['Up to 1,000 Active Subscribers', '5 MikroTik Router Syncs', 'WhatsApp & SMS Marketing', 'Captive Portal Advertising', 'Full Financial Reports'] },
-                            { name: 'Enterprise ISP', slug: 'professional', price: 'Custom', period: '', features: ['Unlimited Subscribers', 'Unlimited Routers', 'Dedicated White-Label Domain', 'Priority 24/7 Support', 'Custom API Integrations'] },
+                            { name: 'Starter ISP', slug: 'starter', price: 'KES 1,500', period: '/month', isEnterprise: false, features: ['Up to 250 Active Subscribers', '1 MikroTik Router Sync', 'Automated M-Pesa STK Push', 'Basic SMS Alerts'] },
+                            { name: 'Growth ISP', slug: 'growth', price: 'KES 4,000', period: '/month', popular: true, isEnterprise: false, features: ['Up to 1,000 Active Subscribers', '5 MikroTik Router Syncs', 'WhatsApp & SMS Marketing', 'Captive Portal Advertising', 'Full Financial Reports'] },
+                            { name: 'Enterprise ISP', slug: 'enterprise', price: 'Custom Pricing', period: '', badge: 'Contact Sales', isEnterprise: true, features: ['Unlimited Subscribers', 'Unlimited Routers', 'Multi-Location Management', 'Custom White Label Domain', 'Dedicated Account Manager', 'SLA Agreements & Priority Support', 'Custom API Integrations'] },
                         ].map((p, i) => (
-                            <div key={i} className={`bg-slate-900 border rounded-3xl p-8 space-y-6 relative ${p.popular ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-slate-800'}`}>
+                            <div key={i} className={`bg-slate-900 border rounded-3xl p-8 space-y-6 relative flex flex-col justify-between ${p.popular ? 'border-sky-500 ring-2 ring-sky-500/20' : p.isEnterprise ? 'border-amber-500/50 bg-gradient-to-b from-slate-900 to-slate-900/90' : 'border-slate-800'}`}>
                                 {p.popular && <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-sky-500 text-white rounded-full text-xs font-bold">MOST POPULAR</span>}
-                                <div className="space-y-2">
-                                    <h3 className="text-xl font-bold text-white">{p.name}</h3>
-                                    <div className="text-3xl font-black text-white">{p.price} <span className="text-xs text-slate-400 font-medium">{p.period}</span></div>
+                                {p.badge && <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-amber-500 text-white rounded-full text-xs font-black uppercase tracking-wider">{p.badge}</span>}
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <h3 className="text-xl font-bold text-white flex items-center justify-between">
+                                            {p.name}
+                                            {p.isEnterprise && <Building2 className="w-5 h-5 text-amber-400" />}
+                                        </h3>
+                                        <div className="text-2xl md:text-3xl font-black text-white">{p.price} <span className="text-xs text-slate-400 font-medium">{p.period}</span></div>
+                                    </div>
+                                    <ul className="space-y-3 text-sm text-slate-300">
+                                        {p.features.map((ft, fIdx) => (
+                                            <li key={fIdx} className="flex items-center gap-2"><Check className={`w-4 h-4 ${p.isEnterprise ? 'text-amber-400' : 'text-sky-400'}`} /> {ft}</li>
+                                        ))}
+                                    </ul>
                                 </div>
-                                <ul className="space-y-3 text-sm text-slate-300">
-                                    {p.features.map((ft, fIdx) => (
-                                        <li key={fIdx} className="flex items-center gap-2"><Check className="w-4 h-4 text-sky-400" /> {ft}</li>
-                                    ))}
-                                </ul>
-                                <Link to={`/checkout?type=SUBSCRIPTION_PLAN&slug=${p.slug}`} className={`w-full py-3 block text-center rounded-2xl font-bold text-sm transition-all ${p.popular ? 'bg-sky-500 hover:bg-sky-400 text-white shadow-lg' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'}`}>
-                                    Get Started
-                                </Link>
+                                {p.isEnterprise ? (
+                                    <button
+                                        onClick={() => setIsEnterpriseModalOpen(true)}
+                                        className="w-full py-3 text-center rounded-2xl font-bold text-sm transition-all bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                                    >
+                                        <Building2 className="w-4 h-4" /> Request Quote / Contact Sales
+                                    </button>
+                                ) : (
+                                    <Link to={`/checkout?type=SUBSCRIPTION_PLAN&slug=${p.slug}`} className={`w-full py-3 block text-center rounded-2xl font-bold text-sm transition-all ${p.popular ? 'bg-sky-500 hover:bg-sky-400 text-white shadow-lg' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'}`}>
+                                        Get Started
+                                    </Link>
+                                )}
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
+
+            <EnterpriseLeadModal isOpen={isEnterpriseModalOpen} onClose={() => setIsEnterpriseModalOpen(false)} />
 
             {/* ── FAQ SECTION ── */}
             <section className="py-24 px-6 max-w-4xl mx-auto space-y-12">

@@ -2300,5 +2300,122 @@ PlatformBranding.init({
   modelName: 'platform_branding'
 });
 
+// ENTERPRISE CRM & QUOTATION MODELS
+export class EnterpriseLead extends Model {
+  public id!: string;
+  public leadNumber!: string;
+  public companyName!: string;
+  public registrationNumber!: string | null;
+  public contactPerson!: string;
+  public position!: string | null;
+  public phone!: string;
+  public altPhone!: string | null;
+  public email!: string;
+  public website!: string | null;
+  public country!: string;
+  public region!: string | null;
+  public physicalAddress!: string | null;
+  public currentIspSize!: string | null;
+  public expectedGrowth!: string | null;
+  public subscriberCount!: number;
+  public activeUserCount!: number;
+  public routerCount!: number;
+  public currentBillingPlatform!: string | null;
+  public requiredFeatures!: string | null; // JSON
+  public expectedLaunchDate!: string | null;
+  public monthlyBudget!: string | null;
+  public notes!: string | null;
+  public status!: 'NEW' | 'CONTACTED' | 'QUALIFICATION' | 'PROPOSAL_SENT' | 'NEGOTIATION' | 'AWAITING_APPROVAL' | 'WON' | 'LOST' | 'ARCHIVED';
+  public assignedTo!: string | null;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+EnterpriseLead.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  leadNumber: { type: DataTypes.STRING, allowNull: false, unique: true },
+  companyName: { type: DataTypes.STRING, allowNull: false },
+  registrationNumber: { type: DataTypes.STRING },
+  contactPerson: { type: DataTypes.STRING, allowNull: false },
+  position: { type: DataTypes.STRING },
+  phone: { type: DataTypes.STRING, allowNull: false },
+  altPhone: { type: DataTypes.STRING },
+  email: { type: DataTypes.STRING, allowNull: false },
+  website: { type: DataTypes.STRING },
+  country: { type: DataTypes.STRING, defaultValue: 'Kenya' },
+  region: { type: DataTypes.STRING },
+  physicalAddress: { type: DataTypes.TEXT },
+  currentIspSize: { type: DataTypes.STRING },
+  expectedGrowth: { type: DataTypes.STRING },
+  subscriberCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  activeUserCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  routerCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  currentBillingPlatform: { type: DataTypes.STRING },
+  requiredFeatures: { type: DataTypes.TEXT },
+  expectedLaunchDate: { type: DataTypes.STRING },
+  monthlyBudget: { type: DataTypes.STRING },
+  notes: { type: DataTypes.TEXT },
+  status: {
+    type: DataTypes.ENUM('NEW', 'CONTACTED', 'QUALIFICATION', 'PROPOSAL_SENT', 'NEGOTIATION', 'AWAITING_APPROVAL', 'WON', 'LOST', 'ARCHIVED'),
+    defaultValue: 'NEW'
+  },
+  assignedTo: { type: DataTypes.STRING }
+}, { sequelize, modelName: 'enterprise_lead' });
+
+export class EnterpriseQuote extends Model {
+  public id!: string;
+  public quoteNumber!: string;
+  public leadId!: string;
+  public tenantId!: string | null;
+  public monthlyCostCents!: number;
+  public setupFeeCents!: number;
+  public maxActiveUsers!: number;
+  public maxRouters!: number;
+  public smsAllocation!: number;
+  public whatsappAllocation!: number;
+  public storageAllocationMB!: number;
+  public customModules!: string | null; // JSON
+  public discountCents!: number;
+  public taxPercentage!: number;
+  public contractDurationMonths!: number;
+  public status!: 'DRAFT' | 'SENT' | 'ACCEPTED' | 'REJECTED' | 'CHANGES_REQUESTED' | 'EXPIRED';
+  public validUntil!: Date | null;
+  public termsAndConditions!: string | null;
+  public rejectionReason!: string | null;
+  public customerNotes!: string | null;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+EnterpriseQuote.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  quoteNumber: { type: DataTypes.STRING, allowNull: false, unique: true },
+  leadId: { type: DataTypes.UUID, allowNull: false },
+  tenantId: { type: DataTypes.UUID, allowNull: true },
+  monthlyCostCents: { type: DataTypes.BIGINT, allowNull: false },
+  setupFeeCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  maxActiveUsers: { type: DataTypes.INTEGER, defaultValue: -1 },
+  maxRouters: { type: DataTypes.INTEGER, defaultValue: -1 },
+  smsAllocation: { type: DataTypes.INTEGER, defaultValue: 10000 },
+  whatsappAllocation: { type: DataTypes.INTEGER, defaultValue: 5000 },
+  storageAllocationMB: { type: DataTypes.INTEGER, defaultValue: 10240 },
+  customModules: { type: DataTypes.TEXT },
+  discountCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  taxPercentage: { type: DataTypes.FLOAT, defaultValue: 16.0 },
+  contractDurationMonths: { type: DataTypes.INTEGER, defaultValue: 12 },
+  status: {
+    type: DataTypes.ENUM('DRAFT', 'SENT', 'ACCEPTED', 'REJECTED', 'CHANGES_REQUESTED', 'EXPIRED'),
+    defaultValue: 'DRAFT'
+  },
+  validUntil: { type: DataTypes.DATE },
+  termsAndConditions: { type: DataTypes.TEXT },
+  rejectionReason: { type: DataTypes.TEXT },
+  customerNotes: { type: DataTypes.TEXT }
+}, { sequelize, modelName: 'enterprise_quote' });
+
+// Enterprise Relationships
+EnterpriseLead.hasMany(EnterpriseQuote, { foreignKey: 'leadId' });
+EnterpriseQuote.belongsTo(EnterpriseLead, { foreignKey: 'leadId' });
+
 export { sequelize };
 

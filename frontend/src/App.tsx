@@ -38,6 +38,8 @@ import SMSCredits from './pages/SMSCredits';
 import ProfilePage from './pages/Profile';
 import MarketingSuite from './pages/Marketing/MarketingSuite';
 import SaaSMonetisationSuite from './pages/SuperAdmin/SaaSMonetisationSuite';
+import EnterpriseCRM from './pages/SuperAdmin/EnterpriseCRM';
+import EnterpriseQuoteView from './pages/EnterpriseQuoteView';
 import TenantBillingHub from './pages/TenantBillingHub';
 import RouterManagement from './pages/RouterManagement';
 import NetworkMonitoring from './pages/NetworkMonitoring';
@@ -176,6 +178,14 @@ function App() {
                                 <Route path="/superadmin/monetisation" element={
                                     <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
                                         <SaaSMonetisationSuite />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/quote/:quoteId" element={<EnterpriseQuoteView />} />
+
+                                <Route path="/superadmin/enterprise-crm" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+                                        <EnterpriseCRM />
                                     </ProtectedRoute>
                                 } />
 

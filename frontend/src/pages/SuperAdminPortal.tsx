@@ -98,7 +98,13 @@ const SuperAdminPortal = () => {
                                     SMS Gateway
                                 </button>
                             </div>
-                            <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => navigate('/superadmin/enterprise-crm')}
+                                    className="px-4 py-2 bg-purple-500/10 text-purple-400 font-bold rounded-xl hover:bg-purple-500 hover:text-white border border-purple-500/20 transition-all text-xs flex items-center gap-2"
+                                >
+                                    💼 Enterprise Sales CRM
+                                </button>
                                 <button
                                     onClick={() => navigate('/platform-owner')}
                                     className="px-4 py-2 bg-amber-500/10 text-amber-400 font-bold rounded-xl hover:bg-amber-500 hover:text-white border border-amber-500/20 transition-all text-xs flex items-center gap-2"
