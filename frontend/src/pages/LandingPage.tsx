@@ -171,8 +171,8 @@ const LandingPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {[
-                            { name: 'Starter ISP', price: 'KES 2,500', period: '/month', features: ['Up to 250 Active Subscribers', '1 MikroTik Router Sync', 'Automated M-Pesa STK Push', 'Basic SMS Alerts'] },
-                            { name: 'Growth ISP', price: 'KES 5,000', period: '/month', popular: true, features: ['Up to 1,000 Active Subscribers', '5 MikroTik Router Syncs', 'WhatsApp & SMS Marketing', 'Captive Portal Advertising', 'Full Financial Reports'] },
+                            { name: 'Starter ISP', price: 'KES 1,500', period: '/month', features: ['Up to 250 Active Subscribers', '1 MikroTik Router Sync', 'Automated M-Pesa STK Push', 'Basic SMS Alerts'] },
+                            { name: 'Growth ISP', price: 'KES 4,000', period: '/month', popular: true, features: ['Up to 1,000 Active Subscribers', '5 MikroTik Router Syncs', 'WhatsApp & SMS Marketing', 'Captive Portal Advertising', 'Full Financial Reports'] },
                             { name: 'Enterprise ISP', price: 'Custom', period: '', features: ['Unlimited Subscribers', 'Unlimited Routers', 'Dedicated White-Label Domain', 'Priority 24/7 Support', 'Custom API Integrations'] },
                         ].map((p, i) => (
                             <div key={i} className={`bg-slate-900 border rounded-3xl p-8 space-y-6 relative ${p.popular ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-slate-800'}`}>
