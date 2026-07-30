@@ -39,7 +39,7 @@ export class IntaSendService {
             if (!secretKey) throw new Error('IntaSend Secret Key missing');
 
             // IntaSend expects amount in base currency (e.g. KES)
-            const amountInBase = Number(params.amount) / 100;
+            const amountInBase = Number(params.amount);
 
             const payload = {
                 phone_number: params.phoneNumber,
@@ -64,10 +64,12 @@ export class IntaSendService {
 
             logger.info('IntaSend STK Push Initiated', {
                 paymentId: params.paymentId,
-                trackingId: response.data.tracking_id
+                trackingId: response.data.id
             });
 
-            return response.data;
+            const data = response.data;
+            data.tracking_id = data.tracking_id || data.id;
+            return data;
         } catch (error: any) {
             logger.error('IntaSend STK Push Failed', {
                 error: error.response?.data || error.message,
