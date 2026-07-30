@@ -51,6 +51,16 @@ export class CheckoutService {
     public static async prepareCheckout(params: CheckoutPrepareParams): Promise<CheckoutResult> {
         const { tenantId, itemType, itemId, itemSlug, quantity = 1, billingCycle = 'MONTHLY', couponCode, customAmountCents } = params;
 
+        let validTenantId = tenantId;
+        if (!validTenantId || typeof validTenantId !== 'string' || !validTenantId.includes('-')) {
+            const firstTenant = await Tenant.findOne({ order: [['createdAt', 'ASC']] });
+            if (firstTenant) {
+                validTenantId = firstTenant.id;
+            } else {
+                validTenantId = '00000000-0000-0000-0000-000000000001';
+            }
+        }
+
         let itemName = 'SurfBill Service';
         let itemDescription = 'SurfBill Platform Feature';
         let unitPriceCents = 0;
@@ -168,7 +178,7 @@ export class CheckoutService {
 
         // Create SaaSInvoice
         const invoice = await SaaSInvoice.create({
-            tenantId,
+            tenantId: validTenantId,
             invoiceNumber,
             billingPeriodStart: periodStart,
             billingPeriodEnd: periodEnd,
@@ -205,7 +215,7 @@ export class CheckoutService {
             totalAmountCents,
             totalAmountKes: Number((totalAmountCents / 100).toFixed(2)),
             paymentStatus: invoice.paymentStatus,
-            tenantId
+            tenantId: validTenantId
         };
     }
 
