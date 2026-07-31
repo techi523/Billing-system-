@@ -1253,6 +1253,114 @@ SmsCampaignMessage.belongsTo(Campaign, { foreignKey: 'campaignId' });
 Tenant.hasMany(SmsCampaignMessage, { foreignKey: 'tenantId' });
 SmsCampaignMessage.belongsTo(Tenant, { foreignKey: 'tenantId' });
 
+// SMS PROCUREMENT & MARGIN PROTECTION MODELS
+export class SmsFinancialLedger extends Model {
+  public id!: string;
+  public providerProcurementBalanceCents!: number;
+  public reservedProfitBalanceCents!: number;
+  public availableOperatingBalanceCents!: number;
+  public smsInventoryBalanceCount!: number;
+  public totalTenantRevenueCents!: number;
+  public totalProcurementSpentCents!: number;
+  public totalReservedProfitCents!: number;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+SmsFinancialLedger.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  providerProcurementBalanceCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  reservedProfitBalanceCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  availableOperatingBalanceCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  smsInventoryBalanceCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  totalTenantRevenueCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  totalProcurementSpentCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  totalReservedProfitCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+}, { sequelize, modelName: 'sms_financial_ledger' });
+
+export class SmsProcurementTask extends Model {
+  public id!: string;
+  public procurementNumber!: string;
+  public tenantId!: string;
+  public invoiceId!: string;
+  public packageId!: string | null;
+  public smsCount!: number;
+  public amountPaidCents!: number;
+  public providerCostCents!: number;
+  public reservedProfitCents!: number;
+  public executionMode!: 'API' | 'AUTOMATED_PROCUREMENT_SERVICE';
+  public procurementStatus!: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'VERIFICATION_FAILED' | 'FAILED' | 'RETRYING';
+  public providerReference!: string | null;
+  public providerBalanceBeforeCents!: number;
+  public providerBalanceAfterCents!: number;
+  public procurementHash!: string;
+  public failureReason!: string | null;
+  public verifiedAt!: Date | null;
+  public allocatedAt!: Date | null;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+SmsProcurementTask.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  procurementNumber: { type: DataTypes.STRING, allowNull: false, unique: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  invoiceId: { type: DataTypes.UUID, allowNull: false },
+  packageId: { type: DataTypes.UUID, allowNull: true },
+  smsCount: { type: DataTypes.INTEGER, allowNull: false },
+  amountPaidCents: { type: DataTypes.BIGINT, allowNull: false },
+  providerCostCents: { type: DataTypes.BIGINT, allowNull: false },
+  reservedProfitCents: { type: DataTypes.BIGINT, allowNull: false },
+  executionMode: {
+    type: DataTypes.ENUM('API', 'AUTOMATED_PROCUREMENT_SERVICE'),
+    defaultValue: 'API'
+  },
+  procurementStatus: {
+    type: DataTypes.ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED', 'VERIFICATION_FAILED', 'FAILED', 'RETRYING'),
+    defaultValue: 'PENDING'
+  },
+  providerReference: { type: DataTypes.STRING },
+  providerBalanceBeforeCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  providerBalanceAfterCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  procurementHash: { type: DataTypes.STRING, allowNull: false },
+  failureReason: { type: DataTypes.TEXT },
+  verifiedAt: { type: DataTypes.DATE },
+  allocatedAt: { type: DataTypes.DATE }
+}, { sequelize, modelName: 'sms_procurement_task' });
+
+export class SmsLedgerTransaction extends Model {
+  public id!: string;
+  public procurementTaskId!: string | null;
+  public tenantId!: string | null;
+  public transactionType!: 'TENANT_PAYMENT' | 'PROFIT_RESERVED' | 'PROCUREMENT_DEBIT' | 'PROFIT_RELEASE' | 'PROCUREMENT_REFUND';
+  public amountCents!: number;
+  public providerProcurementBalanceAfterCents!: number;
+  public reservedProfitBalanceAfterCents!: number;
+  public notes!: string | null;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+SmsLedgerTransaction.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  procurementTaskId: { type: DataTypes.UUID },
+  tenantId: { type: DataTypes.UUID },
+  transactionType: {
+    type: DataTypes.ENUM('TENANT_PAYMENT', 'PROFIT_RESERVED', 'PROCUREMENT_DEBIT', 'PROFIT_RELEASE', 'PROCUREMENT_REFUND'),
+    allowNull: false
+  },
+  amountCents: { type: DataTypes.BIGINT, allowNull: false },
+  providerProcurementBalanceAfterCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  reservedProfitBalanceAfterCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  notes: { type: DataTypes.TEXT }
+}, { sequelize, modelName: 'sms_ledger_transaction' });
+
+Tenant.hasMany(SmsProcurementTask, { foreignKey: 'tenantId' });
+SmsProcurementTask.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+SmsProcurementTask.hasMany(SmsLedgerTransaction, { foreignKey: 'procurementTaskId' });
+SmsLedgerTransaction.belongsTo(SmsProcurementTask, { foreignKey: 'procurementTaskId' });
+
 // ============================================================
 // STAGING & TESTING ENVIRONMENT MODELS
 // ============================================================

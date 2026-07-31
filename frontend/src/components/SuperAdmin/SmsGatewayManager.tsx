@@ -4,7 +4,7 @@ import {
     MessageSquare, Plus, Edit3, Trash2, CheckCircle2, AlertTriangle,
     Wifi, Send, X, RefreshCw, Eye, EyeOff, Package,
     Settings, ToggleLeft, ToggleRight,
-    Save
+    Save, ShieldCheck, DollarSign, TrendingUp, Lock, Zap, FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -43,7 +43,7 @@ interface SmsPackage {
     createdAt: string;
 }
 
-type ActiveSection = 'gateways' | 'packages';
+type ActiveSection = 'gateways' | 'packages' | 'procurement';
 
 const formatAmount = (cents: number) => `KES ${(cents / 100).toLocaleString('en-KE', { minimumFractionDigits: 2 })}`;
 
@@ -361,22 +361,43 @@ const SmsGatewayManager = () => {
     const [notification, setNotification] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [testingGateway, setTestingGateway] = useState<string | null>(null);
     const [testPhones, setTestPhones] = useState<Record<string, string>>({});
+    const [procurementData, setProcurementData] = useState<any>(null);
+    const [isRetrying, setIsRetrying] = useState<string | null>(null);
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const [gRes, pRes] = await Promise.all([
+            const [gRes, pRes, procRes] = await Promise.all([
                 axios.get<SmsGateway[]>('/api/v1/superadmin/sms/gateways'),
                 axios.get<SmsPackage[]>('/api/v1/superadmin/sms/packages'),
+                axios.get('/api/v1/superadmin/sms-procurement/summary').catch(() => ({ data: null }))
             ]);
             setGateways(gRes.data);
             setPackages(pRes.data);
+            if (procRes.data) setProcurementData(procRes.data);
         } catch (e: any) {
             setNotification({ type: 'error', text: e.response?.data?.error || 'Failed to load data' });
         } finally { setIsLoading(false); }
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    const handleRetryProcurement = async (taskId: string) => {
+        setIsRetrying(taskId);
+        try {
+            const res = await axios.post(`/api/v1/superadmin/sms-procurement/tasks/${taskId}/retry`);
+            if (res.data.success) {
+                showNotification('success', 'Procurement retried successfully!');
+            } else {
+                showNotification('error', res.data.task?.failureReason || 'Procurement retry failed.');
+            }
+            fetchData();
+        } catch (err: any) {
+            showNotification('error', err.response?.data?.error || 'Failed to retry procurement.');
+        } finally {
+            setIsRetrying(null);
+        }
+    };
 
     const showNotification = (type: 'success' | 'error', text: string) => {
         setNotification({ type, text });
@@ -477,10 +498,11 @@ const SmsGatewayManager = () => {
             </AnimatePresence>
 
             {/* Section Tabs */}
-            <div className="flex gap-2 bg-[var(--bg-surface-elevated)] p-1 rounded-2xl w-fit">
+            <div className="flex flex-wrap gap-2 bg-[var(--bg-surface-elevated)] p-1 rounded-2xl w-fit">
                 {[
                     { id: 'gateways' as ActiveSection, label: 'SMS Gateways', icon: Settings },
                     { id: 'packages' as ActiveSection, label: 'SMS Packages', icon: Package },
+                    { id: 'procurement' as ActiveSection, label: 'Procurement & Margin Protection', icon: ShieldCheck },
                 ].map(s => (
                     <button key={s.id} onClick={() => setSection(s.id)}
                         className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${section === s.id ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
@@ -687,6 +709,142 @@ const SmsGatewayManager = () => {
                             ))}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* AUTOMATED PROCUREMENT & MARGIN PROTECTION SECTION */}
+            {section === 'procurement' && procurementData && (
+                <div className="space-y-6">
+                    {/* Financial Ledger Balances */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="p-5 bg-gradient-to-br from-emerald-950/40 to-slate-900 border border-emerald-500/30 rounded-2xl space-y-1">
+                            <div className="flex items-center justify-between text-emerald-400">
+                                <span className="text-xs font-bold uppercase tracking-wider">Reserved Profit Balance</span>
+                                <Lock className="w-4 h-4" />
+                            </div>
+                            <p className="text-2xl font-black text-white">KES {procurementData.summary.totalReservedProfitKes.toLocaleString()}</p>
+                            <p className="text-[10px] text-emerald-400 font-semibold">🔒 Protected from Procurement</p>
+                        </div>
+
+                        <div className="p-5 bg-gradient-to-br from-sky-950/40 to-slate-900 border border-sky-500/30 rounded-2xl space-y-1">
+                            <div className="flex items-center justify-between text-sky-400">
+                                <span className="text-xs font-bold uppercase tracking-wider">Procurement Fund Balance</span>
+                                <DollarSign className="w-4 h-4" />
+                            </div>
+                            <p className="text-2xl font-black text-white">KES {procurementData.summary.availableProcurementFundKes.toLocaleString()}</p>
+                            <p className="text-[10px] text-sky-400 font-semibold">Available for Provider Purchases</p>
+                        </div>
+
+                        <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl space-y-1">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total SMS Revenue</span>
+                            <p className="text-2xl font-black text-white">KES {procurementData.summary.totalRevenueKes.toLocaleString()}</p>
+                            <p className="text-[10px] text-slate-400">Margin: <strong className="text-emerald-400">{procurementData.summary.profitMarginPercentage}%</strong></p>
+                        </div>
+
+                        <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl space-y-1">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">SMS Inventory Balance</span>
+                            <p className="text-2xl font-black text-amber-400">{procurementData.summary.smsInventoryCount.toLocaleString()} <span className="text-xs font-normal text-slate-400">units</span></p>
+                            <p className="text-[10px] text-slate-400">Provider Credit Pool</p>
+                        </div>
+                    </div>
+
+                    {/* Procurement Tasks List */}
+                    <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-base font-black text-white flex items-center gap-2">
+                                <Zap className="w-4 h-4 text-sky-400" /> Automated Procurement Tasks & Failsafes
+                            </h3>
+                            <div className="flex items-center gap-2 text-xs font-bold">
+                                <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-lg">{procurementData.summary.successfulProcurementsCount} Completed</span>
+                                <span className="px-2.5 py-1 bg-rose-500/10 text-rose-400 rounded-lg">{procurementData.summary.failedProcurementsCount} Failed</span>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs text-slate-300">
+                                <thead className="bg-slate-800/80 text-[10px] font-black uppercase text-slate-400 border-b border-slate-700">
+                                    <tr>
+                                        <th className="p-3">Procurement #</th>
+                                        <th className="p-3">SMS Units</th>
+                                        <th className="p-3">Paid (KES)</th>
+                                        <th className="p-3">Provider Cost</th>
+                                        <th className="p-3">Reserved Profit</th>
+                                        <th className="p-3">Mode</th>
+                                        <th className="p-3">Status</th>
+                                        <th className="p-3">Provider Ref</th>
+                                        <th className="p-3 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-800">
+                                    {procurementData.recentProcurements.map((p: any) => (
+                                        <tr key={p.id} className="hover:bg-slate-800/40">
+                                            <td className="p-3 font-mono font-bold text-white">{p.procurementNumber}</td>
+                                            <td className="p-3 font-bold text-sky-400">{p.smsCount.toLocaleString()}</td>
+                                            <td className="p-3 font-bold">KES {(p.amountPaidCents / 100).toLocaleString()}</td>
+                                            <td className="p-3 font-bold text-slate-400">KES {(p.providerCostCents / 100).toLocaleString()}</td>
+                                            <td className="p-3 font-bold text-emerald-400">KES {(p.reservedProfitCents / 100).toLocaleString()}</td>
+                                            <td className="p-3"><span className="px-2 py-0.5 bg-slate-800 rounded text-[10px] font-bold">{p.executionMode}</span></td>
+                                            <td className="p-3">
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${p.procurementStatus === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-400' : p.procurementStatus === 'FAILED' ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                                                    {p.procurementStatus}
+                                                </span>
+                                            </td>
+                                            <td className="p-3 font-mono text-[10px] text-slate-400">{p.providerReference || 'N/A'}</td>
+                                            <td className="p-3 text-right">
+                                                {p.procurementStatus === 'FAILED' && (
+                                                    <button
+                                                        onClick={() => handleRetryProcurement(p.id)}
+                                                        disabled={isRetrying === p.id}
+                                                        className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition disabled:opacity-50"
+                                                    >
+                                                        {isRetrying === p.id ? 'Retrying...' : 'Retry'}
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Financial Audit Trail */}
+                    <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl space-y-4">
+                        <h3 className="text-base font-black text-white flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-sky-400" /> Margin Protection Financial Audit Log
+                        </h3>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs text-slate-300">
+                                <thead className="bg-slate-800/80 text-[10px] font-black uppercase text-slate-400 border-b border-slate-700">
+                                    <tr>
+                                        <th className="p-3">Date</th>
+                                        <th className="p-3">Transaction Type</th>
+                                        <th className="p-3">Amount (KES)</th>
+                                        <th className="p-3">Procurement Bal After</th>
+                                        <th className="p-3">Profit Reserved Bal After</th>
+                                        <th className="p-3">Audit Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-800">
+                                    {procurementData.recentLedgerTransactions.map((tx: any) => (
+                                        <tr key={tx.id}>
+                                            <td className="p-3 text-slate-400">{new Date(tx.createdAt).toLocaleString()}</td>
+                                            <td className="p-3">
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${tx.transactionType === 'PROFIT_RESERVED' ? 'bg-emerald-500/20 text-emerald-400' : tx.transactionType === 'PROCUREMENT_DEBIT' ? 'bg-sky-500/20 text-sky-400' : 'bg-slate-800 text-slate-300'}`}>
+                                                    {tx.transactionType}
+                                                </span>
+                                            </td>
+                                            <td className="p-3 font-bold">KES {(tx.amountCents / 100).toLocaleString()}</td>
+                                            <td className="p-3 font-mono text-slate-400">KES {(tx.providerProcurementBalanceAfterCents / 100).toLocaleString()}</td>
+                                            <td className="p-3 font-mono text-emerald-400">KES {(tx.reservedProfitBalanceAfterCents / 100).toLocaleString()}</td>
+                                            <td className="p-3 text-slate-400">{tx.notes}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

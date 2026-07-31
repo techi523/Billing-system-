@@ -14,6 +14,7 @@ import {
 } from '../models';
 import logger from '../utils/logger';
 import { sendEmail } from './emailService';
+import { SmsProcurementService } from './sms-procurement.service';
 
 export interface CheckoutPrepareParams {
     tenantId: string;
@@ -365,31 +366,15 @@ export class CheckoutService {
                 creditsToAdd = quantity;
             }
 
-            let smsWallet = await TenantSmsWallet.findOne({ where: { tenantId } });
-            if (!smsWallet) {
-                smsWallet = await TenantSmsWallet.create({ tenantId, balance: 0, usedCredits: 0, purchasedCredits: 0 });
-            }
-
-            const newBalance = smsWallet.balance + creditsToAdd;
-            const newPurchased = smsWallet.purchasedCredits + creditsToAdd;
-            await smsWallet.update({
-                balance: newBalance,
-                purchasedCredits: newPurchased,
-                lastPurchaseAt: new Date(),
-                lastPurchasePackageId: itemId || null
-            });
-
-            // Record SMS transaction
-            await SmsTransaction.create({
+            // Execute Automated SMS Procurement Engine with Margin Protection
+            await SmsProcurementService.processTenantSmsPurchase({
                 tenantId,
+                invoiceId: invoice.id,
                 packageId: itemId || null,
-                creditsAdded: creditsToAdd,
-                amount: invoice.totalAmountCents,
+                smsCount: creditsToAdd,
+                amountPaidCents: invoice.totalAmountCents,
                 paymentMethod: paymentMethod === 'WALLET' ? 'WALLET' : 'MPESA',
-                paymentReference: transactionRef,
-                invoiceNumber: invoice.invoiceNumber,
-                status: 'COMPLETED',
-                completedAt: new Date()
+                transactionRef
             });
         } else if (itemType === 'ADVERTISING_CAMPAIGN') {
             if (itemId) {

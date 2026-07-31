@@ -34,6 +34,7 @@ import intasendWebhookRoutes from './routes/intasend-webhook.routes';
 import platformOwnerRoutes from './routes/platform-owner.routes';
 import checkoutRoutes from './routes/checkout.routes';
 import enterpriseCrmRoutes from './routes/enterprise-crm.routes';
+import smsProcurementRoutes from './routes/sms-procurement.routes';
 import { DormantRouterService } from './services/dormant-router.service';
 import { IspService } from './services/isp.service';
 import { SettlementEngine } from './services/settlement-engine';
@@ -147,6 +148,7 @@ app.use('/api/v1/superadmin/command', authMiddleware, superAdminLimiter, superad
 app.use('/api/v1/superadmin/ultimate', authMiddleware, superAdminLimiter, ultimateSuperAdminRoutes);
 app.use('/api/v1/superadmin/saas', authMiddleware, superAdminLimiter, superAdminSaasRoutes);
 app.use('/api/v1/superadmin/sms', authMiddleware, superAdminLimiter, smsGatewayRoutes);
+app.use('/api/v1/superadmin/sms-procurement', authMiddleware, superAdminLimiter, smsProcurementRoutes);
 app.use('/api/v1/platform-owner', platformOwnerRoutes);
 app.use('/api/v1/checkout', checkoutRoutes);
 app.use('/api/v1/enterprise', enterpriseCrmRoutes);
@@ -217,6 +219,8 @@ async function startServer() {
             try { await sequelize.query("ALTER TABLE saas_invoices ADD COLUMN metadata TEXT;"); } catch (_) {}
             try { await sequelize.query("ALTER TABLE saas_invoices ADD COLUMN subtotalCents BIGINT DEFAULT 0;"); } catch (_) {}
             try { await sequelize.query("ALTER TABLE saas_invoices ADD COLUMN taxCents BIGINT DEFAULT 0;"); } catch (_) {}
+            try { await sequelize.query("ALTER TABLE sms_financial_ledgers ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP;"); } catch (_) {}
+            try { await sequelize.query("ALTER TABLE sms_ledger_transactions ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP;"); } catch (_) {}
             logger.info('DEVELOPMENT MODE: Database schema synced.');
         }
 
