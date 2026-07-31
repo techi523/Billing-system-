@@ -82,10 +82,10 @@ export class SaaSBillingService {
                     name: 'Growth',
                     slug: 'growth',
                     description: 'For growing ISPs and multi-location venues',
-                    monthlyPriceCents: 350000, // KSh 3,500
-                    yearlyPriceCents: 3500000, // KSh 35,000
-                    maxActiveUsers: 1500,
-                    maxRouters: 8,
+                    monthlyPriceCents: 400000, // KSh 4,000
+                    yearlyPriceCents: 4000000, // KSh 40,000
+                    maxActiveUsers: 1000,
+                    maxRouters: 5,
                     maxStaff: 5,
                     maxSMS: 1000,
                     maxCampaigns: 5,
@@ -136,6 +136,9 @@ export class SaaSBillingService {
                     isActive: true
                 }
             ]);
+        } else {
+            await SubscriptionPlan.update({ monthlyPriceCents: 150000, yearlyPriceCents: 1500000 }, { where: { slug: 'starter' } });
+            await SubscriptionPlan.update({ monthlyPriceCents: 400000, yearlyPriceCents: 4000000 }, { where: { slug: 'growth' } });
         }
         return SubscriptionPlan.findAll();
     }
