@@ -71,6 +71,8 @@ export interface Package {
     duration?: number;
     durationMinutes?: number | null;
     speedLimit?: string | null;
+    dataLimitBytes?: number | null;
+    description?: string | null;
     isEnabled: boolean;
     tenantId?: string;
 }

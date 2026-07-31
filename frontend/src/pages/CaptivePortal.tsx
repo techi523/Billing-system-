@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Smartphone, Zap, Clock, Wifi, ShieldCheck, ChevronRight, Share2, Info, Loader2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import {
+    Wifi, Clock, Zap, ShieldCheck, CheckCircle2, AlertTriangle,
+    Smartphone, Lock, RefreshCw, Key, HelpCircle, Sparkles, X, Info
+} from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import SurfBillLogo from '../components/Common/SurfBillLogo';
@@ -8,12 +11,29 @@ import SupportFooter from '../components/Common/SupportFooter';
 import type { Package } from '../types';
 
 interface TenantConfig {
+    id: string;
     name: string;
     logo?: string;
     logoUrl?: string;
-    themeColor: string;
-    supportPhone: string;
+    primaryColor?: string;
+    contactPhone?: string;
+    supportPhone?: string;
+    supportEmail?: string;
     termsUrl?: string;
+    subdomain?: string;
+    welcomeMessage?: string;
+    backgroundUrl?: string;
+}
+
+interface AdItem {
+    id: string;
+    headline?: string;
+    subheading?: string;
+    mediaUrl?: string;
+    mediaType?: 'IMAGE' | 'VIDEO' | 'GIF';
+    destinationUrl?: string;
+    buttonText?: string;
+    placement?: 'TOP_BANNER' | 'SIDE_BANNER' | 'BOTTOM_BANNER' | 'SPONSORED_SECTION';
 }
 
 const CaptivePortal = () => {
@@ -21,86 +41,96 @@ const CaptivePortal = () => {
     const [loading, setLoading] = useState(true);
     const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
     const [phoneNumber, setPhoneNumber] = useState('');
+    const [voucherCode, setVoucherCode] = useState('');
+    const [activeTab, setActiveTab] = useState<'MPESA' | 'VOUCHER' | 'TRIAL'>('MPESA');
     const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'waiting_pin' | 'success' | 'failed'>('idle');
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null);
-    const [activeAd, setActiveAd] = useState<any | null>(null);
+    
+    // Ad Placement Slots
+    const [topAds, setTopAds] = useState<AdItem[]>([]);
+    const [sideAds, setSideAds] = useState<AdItem[]>([]);
+    const [bottomAds, setBottomAds] = useState<AdItem[]>([]);
+    const [sponsoredAds, setSponsoredAds] = useState<AdItem[]>([]);
+
     const [couponInput, setCouponInput] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState<any | null>(null);
     const [couponMsg, setCouponMsg] = useState('');
 
-    const handleVerifyCoupon = async () => {
-        if (!couponInput.trim()) return;
-        try {
-            const urlParams = new URLSearchParams(window.location.search);
-            const tenantId = urlParams.get('tenantId');
-            const res = await axios.post(`/api/v1/portal/${tenantId}/verify-coupon`, { couponCode: couponInput });
-            if (res.data.valid) {
-                setAppliedCoupon(res.data);
-                setCouponMsg(res.data.message);
-            } else {
-                setAppliedCoupon(null);
-                setCouponMsg(res.data.message || 'Invalid coupon code');
-            }
-        } catch (e: any) {
-            setAppliedCoupon(null);
-            setCouponMsg(e.response?.data?.message || 'Invalid coupon code');
-        }
-    };
-
     useEffect(() => {
         const initPortal = async () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const tenantId = urlParams.get('tenantId');
-
-            if (!tenantId) {
-                setErrorMessage('Internal network error: missing tenantId');
-                setLoading(false);
-                return;
-            }
+            const tenantId = urlParams.get('tenantId') || 'demo-tenant';
 
             try {
-                // Fetch Branding
-                const configRes = await axios.get(`/api/v1/portal/${tenantId}/config`);
-                setTenantConfig(configRes.data);
+                // 1. Fetch Tenant Configuration & Branding
+                const configRes = await axios.get(`/api/v1/portal/${tenantId}/config`).catch(() => ({ data: null }));
+                if (configRes.data) {
+                    setTenantConfig(configRes.data);
+                }
 
-                // Fetch Packages
-                const res = await axios.get(`/api/v1/portal/${tenantId}/packages`);
-                setPackages(Array.isArray(res.data) ? res.data : []);
+                // 2. Fetch Active Packages
+                const pkgRes = await axios.get(`/api/v1/portal/${tenantId}/packages`).catch(() => ({ data: [] }));
+                const pkgData = Array.isArray(pkgRes.data) ? pkgRes.data : [];
+                setPackages(pkgData);
+                if (pkgData.length > 0) {
+                    setSelectedPackage(pkgData[0]);
+                }
 
-                // Fetch Advertisements Asynchronously (Non-blocking fallback)
-                axios.get(`/api/v1/portal/${tenantId}/ads?displayRule=BEFORE_LOGIN`)
+                // 3. Fetch Advertisements (Non-blocking)
+                const deviceType = window.innerWidth >= 1024 ? 'DESKTOP' : window.innerWidth >= 768 ? 'TABLET' : 'MOBILE';
+                axios.get(`/api/v1/portal/${tenantId}/ads?deviceType=${deviceType}`)
                     .then(adRes => {
                         if (Array.isArray(adRes.data) && adRes.data.length > 0) {
-                            setActiveAd(adRes.data[0]);
-                            // Log Impression
-                            axios.post(`/api/v1/portal/ads/${adRes.data[0].id}/track`, {
-                                tenantId,
-                                eventType: 'IMPRESSION'
-                            }).catch(() => { });
+                            const allAds: AdItem[] = adRes.data;
+                            setTopAds(allAds.filter(a => a.placement === 'TOP_BANNER' || !a.placement));
+                            setSideAds(allAds.filter(a => a.placement === 'SIDE_BANNER'));
+                            setBottomAds(allAds.filter(a => a.placement === 'BOTTOM_BANNER'));
+                            setSponsoredAds(allAds.filter(a => a.placement === 'SPONSORED_SECTION'));
+
+                            // Log Impression for first ad
+                            if (allAds[0]?.id) {
+                                axios.post(`/api/v1/portal/ads/${allAds[0].id}/track`, {
+                                    tenantId,
+                                    eventType: 'IMPRESSION',
+                                    deviceType
+                                }).catch(() => {});
+                            }
                         }
                     })
-                    .catch(() => { });
+                    .catch(() => {});
 
                 setLoading(false);
             } catch {
-                setErrorMessage('Failed to connect to network services');
+                setErrorMessage('Failed to connect to network portal services');
                 setLoading(false);
             }
         };
         initPortal();
     }, []);
 
-    useEffect(() => {
-        // Stop polling when component unmounts
-        return () => {
-            // Cleanup if needed
-        };
-    }, []);
+    const handleVerifyCoupon = async () => {
+        if (!couponInput.trim()) return;
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tenantId = urlParams.get('tenantId') || 'demo-tenant';
+            const res = await axios.post(`/api/v1/portal/${tenantId}/verify-coupon`, { couponCode: couponInput });
+            if (res.data.valid) {
+                setAppliedCoupon(res.data);
+                setCouponMsg(res.data.message);
+            } else {
+                setAppliedCoupon(null);
+                setCouponMsg(res.data.message || 'Invalid promo code');
+            }
+        } catch (e: any) {
+            setAppliedCoupon(null);
+            setCouponMsg(e.response?.data?.message || 'Invalid promo code');
+        }
+    };
 
-    const handlePayment = async () => {
+    const handleMpesaPayment = async () => {
         if (!selectedPackage || !phoneNumber) {
-            setErrorMessage('Select a package and enter M-Pesa number');
+            setErrorMessage('Please select a package and enter your M-Pesa phone number');
             return;
         }
 
@@ -109,51 +139,85 @@ const CaptivePortal = () => {
 
         try {
             const urlParams = new URLSearchParams(window.location.search);
-            const tenantId = urlParams.get('tenantId');
-
-            // Production: Fallback to detection if params missing (for captive portal environment)
+            const tenantId = urlParams.get('tenantId') || 'demo-tenant';
             const mac = urlParams.get('mac') || urlParams.get('client_mac') || '00:00:00:00:00:00';
             const ip = urlParams.get('ip') || urlParams.get('client_ip') || '127.0.0.1';
-
-            // Explicitly ignore 'unknown' if it is passed in the URL
             let routerId = urlParams.get('routerId') || undefined;
-            if (routerId === 'unknown') {
-                routerId = undefined;
-            }
-
-            if (!tenantId) {
-                throw new Error('Invalid Portal Configuration: Tenant ID missing');
-            }
+            if (routerId === 'unknown') routerId = undefined;
 
             const response = await axios.post(`/api/v1/portal/${tenantId}/pay`, {
-                phone: phoneNumber.replace(/^0/, '254').replace(/^\+/, ''), // Normalize
+                phone: phoneNumber.replace(/^0/, '254').replace(/^\+/, ''),
                 packageId: selectedPackage.id,
                 mac,
                 ip,
                 routerId,
-                // Persist MikroTik redirect context through the payment flow
                 linkLogin: urlParams.get('link-login'),
                 linkOrig: urlParams.get('link-orig') || urlParams.get('dst')
             });
 
-
             setPaymentStatus('waiting_pin');
             pollPaymentStatus(response.data.paymentId);
-
-        } catch (error: unknown) {
-            console.error('Payment Error', error);
+        } catch (error: any) {
             setPaymentStatus('failed');
-            if (axios.isAxiosError(error)) {
-                setErrorMessage(error.response?.data?.error || 'Payment initiation failed. Please check network.');
+            setErrorMessage(error.response?.data?.error || 'Payment initiation failed. Please check network.');
+        }
+    };
+
+    const handleVoucherLogin = async () => {
+        if (!voucherCode) {
+            setErrorMessage('Please enter your pre-paid voucher code');
+            return;
+        }
+
+        setPaymentStatus('processing');
+        setErrorMessage('');
+
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tenantId = urlParams.get('tenantId') || 'demo-tenant';
+            const res = await axios.post(`/api/v1/portal/${tenantId}/redeem-voucher`, { voucherCode });
+            if (res.data?.success) {
+                setPaymentStatus('success');
+                setTimeout(() => {
+                    window.location.href = res.data?.redirectUrl || 'https://www.google.com';
+                }, 2000);
             } else {
-                setErrorMessage('Payment initiation failed. Please check network.');
+                setPaymentStatus('failed');
+                setErrorMessage(res.data?.message || 'Voucher invalid or already used.');
             }
+        } catch (err: any) {
+            setPaymentStatus('failed');
+            setErrorMessage(err.response?.data?.error || 'Voucher authentication failed.');
+        }
+    };
+
+    const handleFreeTrialLogin = async () => {
+        setPaymentStatus('processing');
+        setErrorMessage('');
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tenantId = urlParams.get('tenantId') || 'demo-tenant';
+            const res = await axios.post(`/api/v1/portal/${tenantId}/free-trial`, {
+                mac: urlParams.get('mac') || '00:00:00:00:00:00'
+            });
+            if (res.data?.success) {
+                setPaymentStatus('success');
+                setTimeout(() => {
+                    window.location.href = res.data?.redirectUrl || 'https://www.google.com';
+                }, 2000);
+            } else {
+                setPaymentStatus('failed');
+                setErrorMessage(res.data?.message || 'Free trial unavailable or limit reached.');
+            }
+        } catch (err: any) {
+            setPaymentStatus('failed');
+            setErrorMessage(err.response?.data?.error || 'Free trial access failed.');
         }
     };
 
     const pollPaymentStatus = async (currentPaymentId: string) => {
         let attempts = 0;
-        const maxAttempts = 60; // 3 minutes total (3s interval)
+        const maxAttempts = 60;
 
         const pollInterval = setInterval(async () => {
             attempts++;
@@ -165,7 +229,6 @@ const CaptivePortal = () => {
                     clearInterval(pollInterval);
                     setPaymentStatus('success');
 
-                    // Allow time for animation before redirect
                     setTimeout(() => {
                         const urlParams = new URLSearchParams(window.location.search);
                         const linkLogin = urlParams.get('link-login');
@@ -173,14 +236,12 @@ const CaptivePortal = () => {
                         const username = `HS-${(urlParams.get('mac') || '00:00:00:00:00:00').replace(/[: -]/g, '').toUpperCase()}`;
 
                         if (linkLogin) {
-                            // Production MikroTik Hotspot Login Flow
                             const loginUrl = new URL(linkLogin);
                             loginUrl.searchParams.set('username', username);
-                            loginUrl.searchParams.set('password', 'guest'); // Legacy compatibility if needed
+                            loginUrl.searchParams.set('password', 'guest');
                             loginUrl.searchParams.set('dst', linkOrig);
                             window.location.href = loginUrl.toString();
                         } else {
-                            // Fallback to direct redirect
                             window.location.href = linkOrig;
                         }
                     }, 3000);
@@ -193,322 +254,338 @@ const CaptivePortal = () => {
                     setPaymentStatus('failed');
                     setErrorMessage('Payment request timed out. Please try again.');
                 }
-            } catch (error) {
-                // Silent catch for network blips during polling
-                console.warn('Polling network error', error);
-            }
+            } catch (_) {}
         }, 3000);
     };
 
-    const resetPayment = () => {
-        setPaymentStatus('idle');
-
-        setErrorMessage('');
-    };
-
-    if (loading) return (
-        <div className="h-screen flex items-center justify-center bg-[#0f172a] text-white">
-            <div className="flex flex-col items-center gap-6">
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-4">
                 <motion.div
                     animate={{ scale: [1, 1.1, 1], rotate: [0, 90, 0] }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="w-20 h-20 bg-sky-500/20 rounded-3xl border border-sky-500/30 flex items-center justify-center shadow-2xl"
+                    className="w-16 h-16 bg-sky-500/20 rounded-3xl border border-sky-500/30 flex items-center justify-center shadow-2xl mb-4"
                 >
                     <Wifi size={32} className="text-sky-400" />
                 </motion.div>
-                <div className="text-center">
-                    <h2 className="text-3xl font-black tracking-tighter">SurfBill</h2>
-                    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-sky-500 mt-2">Connecting...</p>
-                </div>
+                <h2 className="text-xl font-black tracking-tight">{tenantConfig?.name || 'SurfBill'} Captive Portal</h2>
+                <p className="text-xs text-sky-400 font-bold uppercase tracking-widest mt-2 animate-pulse">Initializing Network Access...</p>
             </div>
-        </div>
-    );
+        );
+    }
+
+    const primaryColor = tenantConfig?.primaryColor || '#0284c7';
 
     return (
-        <div className="min-h-screen bg-[#0f172a] text-slate-900 font-sans selection:bg-sky-500 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-600/20 rounded-full blur-[120px] -mr-32 -mt-32 animate-pulse"></div>
-            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-500/10 rounded-full blur-[100px] -ml-20 -mb-20"></div>
+        <div
+            className="min-h-screen bg-slate-950 text-white font-sans selection:bg-sky-500 relative overflow-x-hidden"
+            style={{ '--tenant-primary': primaryColor } as any}
+        >
+            {/* Background Glow */}
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-sky-600/10 rounded-full blur-[140px] pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
 
-            <motion.div
-                initial={{ y: -50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="relative z-10 pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-8 flex flex-col items-center text-center text-white"
-            >
-                <div className="flex justify-center mb-4 sm:mb-6">
-                    {tenantConfig?.logoUrl ? (
-                        <img src={tenantConfig.logoUrl} alt="Logo" className="w-16 h-16 sm:w-20 sm:h-20 object-contain" />
-                    ) : (
-                        <SurfBillLogo variant="captive" size="lg" showText={false} />
-                    )}
-                </div>
-                <h1 className="text-3xl sm:text-4xl font-black tracking-tighter mb-2">
-                    {tenantConfig?.name || 'SurfBill'} <span className="text-sky-400">Portal</span>
-                </h1>
-                <p className="text-slate-400 font-bold text-xs tracking-[0.2em] uppercase flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                    Verified Network Access
-                </p>
-            </motion.div>
+            <div className="max-w-6xl mx-auto px-4 py-6 sm:py-10 space-y-8 relative z-10">
 
-            {/* Main Content Card */}
-            <div className="relative z-20 px-3 sm:px-6 max-w-md mx-auto -mt-2 sm:-mt-4 pb-20">
-                <motion.div
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.2, duration: 0.6 }}
-                    className="glass-panel-dark rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-8"
-                >
-                    {/* Dynamic Advertisement Banner (Asynchronous & Resilient) */}
-                    {activeAd && (
-                        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-blue-600/30 to-indigo-600/30 border border-blue-500/30 text-left relative overflow-hidden">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-sky-400 bg-sky-500/20 px-2 py-0.5 rounded-md">Sponsored</span>
-                            {activeAd.headline && <h3 className="text-sm font-bold text-white mt-1">{activeAd.headline}</h3>}
-                            {activeAd.subheading && <p className="text-xs text-slate-300 mt-0.5">{activeAd.subheading}</p>}
-                            {activeAd.destinationUrl && (
-                                <a
-                                    href={activeAd.destinationUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={() => {
-                                        const urlParams = new URLSearchParams(window.location.search);
-                                        const tenantId = urlParams.get('tenantId');
-                                        if (tenantId) {
-                                            axios.post(`/api/v1/portal/ads/${activeAd.id}/track`, {
-                                                tenantId,
-                                                eventType: 'CLICK'
-                                            }).catch(() => { });
-                                        }
-                                    }}
-                                    className="inline-block mt-3 px-3.5 py-1.5 text-xs font-bold bg-sky-500 hover:bg-sky-400 text-white rounded-xl transition shadow-sm"
+                {/* 1. Header & Tenant Branding */}
+                <header className="flex flex-col items-center text-center space-y-3">
+                    <div className="flex justify-center mb-1">
+                        {tenantConfig?.logoUrl ? (
+                            <img src={tenantConfig.logoUrl} alt="Logo" className="h-14 sm:h-16 object-contain" />
+                        ) : (
+                            <SurfBillLogo variant="captive" size="lg" showText={false} />
+                        )}
+                    </div>
+                    <div>
+                        <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
+                            {tenantConfig?.name || 'SurfBill'} <span className="text-sky-400">High-Speed Wi-Fi</span>
+                        </h1>
+                        <p className="text-slate-400 text-xs sm:text-sm mt-1">
+                            {tenantConfig?.welcomeMessage || 'Select an internet package below for instant network access.'}
+                        </p>
+                    </div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-emerald-400 text-[10px] font-bold uppercase tracking-widest">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                        Hotspot Online & Ready
+                    </div>
+                </header>
+
+                {/* 2. Top Banner Advertisement Slot (Allowed Area: Isolated from package buttons) */}
+                {topAds.length > 0 && (
+                    <div className="w-full bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <span className="px-2 py-0.5 bg-sky-500/20 text-sky-400 text-[9px] font-black uppercase rounded">Sponsored</span>
+                            <div>
+                                <h4 className="text-xs font-bold text-white">{topAds[0].headline || 'Special Partner Promotion'}</h4>
+                                <p className="text-[11px] text-slate-400">{topAds[0].subheading || 'Enjoy high-speed streaming on SurfBill Hotspot.'}</p>
+                            </div>
+                        </div>
+                        {topAds[0].destinationUrl && (
+                            <a
+                                href={topAds[0].destinationUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold rounded-xl transition shrink-0"
+                            >
+                                {topAds[0].buttonText || 'Learn More'}
+                            </a>
+                        )}
+                    </div>
+                )}
+
+                {/* 3. Main Grid Layout (Desktop: Side Ad + Main Content, Mobile: Stacked Single Column) */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+                    
+                    {/* Left 3 Columns: Packages Display Matrix */}
+                    <div className="lg:col-span-3 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
+                                    <Zap className="w-5 h-5 text-sky-400" /> Internet Packages
+                                </h2>
+                                <p className="text-xs text-slate-400">Choose a package tailored for your data and speed needs</p>
+                            </div>
+                            <span className="text-xs font-bold text-slate-500">{packages.length} Packages Available</span>
+                        </div>
+
+                        {/* Responsive Package Grid (Desktop 3-col, Tablet 2-col, Mobile 1-col) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {packages.map((pkg, idx) => {
+                                const isSelected = selectedPackage?.id === pkg.id;
+                                const isPopular = idx === 1 || (pkg as any).isPopular;
+                                const isRecommended = idx === 0;
+
+                                return (
+                                    <motion.div
+                                        key={pkg.id}
+                                        whileHover={{ y: -4 }}
+                                        onClick={() => setSelectedPackage(pkg)}
+                                        className={`p-5 rounded-3xl border cursor-pointer transition-all duration-300 relative flex flex-col justify-between overflow-hidden ${isSelected ? 'bg-sky-950/60 border-sky-500 shadow-xl shadow-sky-500/10' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'}`}
+                                    >
+                                        {/* Badges */}
+                                        <div className="flex items-center justify-between mb-3">
+                                            {isPopular ? (
+                                                <span className="px-2.5 py-0.5 bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[9px] font-black uppercase rounded-full">
+                                                    Popular Choice
+                                                </span>
+                                            ) : isRecommended ? (
+                                                <span className="px-2.5 py-0.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[9px] font-black uppercase rounded-full">
+                                                    Recommended
+                                                </span>
+                                            ) : <div />}
+
+                                            {isSelected && <CheckCircle2 className="w-5 h-5 text-sky-400 shrink-0" />}
+                                        </div>
+
+                                        {/* Package Content */}
+                                        <div className="space-y-2 mb-4">
+                                            <h3 className="text-base font-black text-white">{pkg.name}</h3>
+                                            <p className="text-2xl font-black text-white">
+                                                KES {pkg.price} <span className="text-xs text-slate-400 font-normal">/ {(pkg.durationMinutes || 60) >= 1440 ? `${Math.round((pkg.durationMinutes || 1440) / 1440)} Days` : `${Math.round((pkg.durationMinutes || 60) / 60)} Hrs`}</span>
+                                            </p>
+
+                                            <div className="space-y-1 pt-2 border-t border-slate-800/80 text-xs text-slate-300">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-slate-500">Speed Limit:</span>
+                                                    <strong className="text-sky-400 font-bold">{pkg.speedLimit || '10 Mbps'}</strong>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-slate-500">Data Volume:</span>
+                                                    <strong className="text-white font-bold">{pkg.dataLimitBytes ? `${Math.round(pkg.dataLimitBytes / (1024 * 1024 * 1024))} GB` : 'Unlimited Data'}</strong>
+                                                </div>
+                                            </div>
+
+                                            {pkg.description && (
+                                                <p className="text-[11px] text-slate-400 line-clamp-2 pt-1">{pkg.description}</p>
+                                            )}
+                                        </div>
+
+                                        {/* Select Button */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedPackage(pkg);
+                                            }}
+                                            className={`w-full py-2.5 min-h-[44px] text-xs font-black uppercase tracking-wider rounded-xl transition ${isSelected ? 'bg-sky-500 text-slate-950 shadow-lg shadow-sky-500/20' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                                        >
+                                            {isSelected ? 'Selected' : 'Select Package'}
+                                        </button>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Right 1 Column: Login & Purchase Action Box + Side Ads */}
+                    <div className="space-y-6">
+                        <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl space-y-6">
+                            
+                            {/* Tab Selection: M-Pesa vs Voucher vs Free Trial */}
+                            <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs font-bold">
+                                <button
+                                    onClick={() => setActiveTab('MPESA')}
+                                    className={`flex-1 py-2 rounded-xl transition ${activeTab === 'MPESA' ? 'bg-sky-500 text-slate-950 font-black' : 'text-slate-400'}`}
                                 >
-                                    {activeAd.buttonText || 'Learn More'}
-                                </a>
+                                    M-Pesa STK
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('VOUCHER')}
+                                    className={`flex-1 py-2 rounded-xl transition ${activeTab === 'VOUCHER' ? 'bg-sky-500 text-slate-950 font-black' : 'text-slate-400'}`}
+                                >
+                                    Voucher
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('TRIAL')}
+                                    className={`flex-1 py-2 rounded-xl transition ${activeTab === 'TRIAL' ? 'bg-sky-500 text-slate-950 font-black' : 'text-slate-400'}`}
+                                >
+                                    Free Trial
+                                </button>
+                            </div>
+
+                            {/* Tab 1: M-Pesa Payment */}
+                            {activeTab === 'MPESA' && (
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-1 text-xs">
+                                        <div className="flex justify-between text-slate-400">
+                                            <span>Selected Package:</span>
+                                            <strong className="text-white">{selectedPackage?.name || 'Select a package'}</strong>
+                                        </div>
+                                        <div className="flex justify-between text-slate-400">
+                                            <span>Price:</span>
+                                            <strong className="text-emerald-400 font-bold">KES {selectedPackage?.price || 0}</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">M-Pesa Phone Number</label>
+                                        <div className="relative">
+                                            <Smartphone className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                                            <input
+                                                type="tel"
+                                                placeholder="0712345678 or 2547..."
+                                                value={phoneNumber}
+                                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-sky-500"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Promo Code Expandable */}
+                                    <div className="space-y-2">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Promo Coupon Code"
+                                                value={couponInput}
+                                                onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                                                className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs uppercase"
+                                            />
+                                            <button
+                                                onClick={handleVerifyCoupon}
+                                                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-xl transition"
+                                            >
+                                                Apply
+                                            </button>
+                                        </div>
+                                        {couponMsg && (
+                                            <p className={`text-[11px] ${appliedCoupon ? 'text-emerald-400' : 'text-amber-400'}`}>{couponMsg}</p>
+                                        )}
+                                    </div>
+
+                                    {errorMessage && (
+                                        <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs font-semibold">
+                                            {errorMessage}
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={handleMpesaPayment}
+                                        disabled={paymentStatus !== 'idle'}
+                                        className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50 min-h-[44px]"
+                                    >
+                                        {paymentStatus === 'processing' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                                        Pay & Connect Now
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Tab 2: Voucher Login */}
+                            {activeTab === 'VOUCHER' && (
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pre-paid Voucher Code</label>
+                                        <div className="relative">
+                                            <Key className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                                            <input
+                                                type="text"
+                                                placeholder="Enter 8-digit voucher code"
+                                                value={voucherCode}
+                                                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                                                className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm font-mono focus:outline-none focus:border-sky-500 uppercase"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {errorMessage && (
+                                        <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs font-semibold">
+                                            {errorMessage}
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={handleVoucherLogin}
+                                        className="w-full py-3.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 min-h-[44px]"
+                                    >
+                                        Redeem Voucher & Connect
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Tab 3: Free Trial Access */}
+                            {activeTab === 'TRIAL' && (
+                                <div className="space-y-4 text-center">
+                                    <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-1 text-xs text-left">
+                                        <p className="font-bold text-white">Free Guest Trial Access</p>
+                                        <p className="text-slate-400 text-[11px]">Get 10 minutes of complimentary high-speed internet access.</p>
+                                    </div>
+
+                                    <button
+                                        onClick={handleFreeTrialLogin}
+                                        className="w-full py-3.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 min-h-[44px]"
+                                    >
+                                        <Sparkles className="w-4 h-4" /> Activate Free 10-Min Trial
+                                    </button>
+                                </div>
                             )}
                         </div>
-                    )}
 
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h2 className="text-lg font-black text-white tracking-tight">Select Bandwidth</h2>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Instant Activation</p>
-                        </div>
-                        <div className="p-3 bg-white/5 rounded-2xl text-slate-400 hover:text-sky-400 cursor-pointer transition-colors border border-white/5">
-                            <Info size={18} />
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        {packages.map((pkg, i) => (
-                            <motion.button
-                                initial={{ x: -20, opacity: 0 }}
-                                animate={{ x: 0, opacity: 1 }}
-                                transition={{ delay: 0.3 + (i * 0.1) }}
-                                key={pkg.id}
-                                onClick={() => setSelectedPackage(pkg)}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className={`w-full text-left p-5 rounded-[2rem] border transition-all duration-300 relative group overflow-hidden ${selectedPackage?.id === pkg.id
-                                    ? 'border-sky-500/50 bg-sky-500/10 shadow-lg shadow-sky-500/10'
-                                    : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10'
-                                    }`}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                                <div className="flex justify-between items-center relative z-10">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-2xl transition-all duration-500 ${selectedPackage?.id === pkg.id ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/40 rotate-6' : 'bg-slate-800 text-slate-500'}`}>
-                                            {(pkg.durationMinutes || 0) < 1440 ? <Clock size={18} /> : <Zap size={18} />}
-                                        </div>
-                                        <div>
-                                            <p className={`font-black tracking-tight mb-1 text-sm transition-colors ${selectedPackage?.id === pkg.id ? 'text-white' : 'text-slate-300'}`}>
-                                                {pkg.name}
-                                            </p>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[9px] font-black uppercase text-sky-400 tracking-widest">
-                                                    {pkg.speedLimit || 'Ultra Fast'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] text-slate-500 font-bold mb-0.5 italic leading-none">KES</p>
-                                        <p className={`font-black text-xl tracking-tighter leading-none ${selectedPackage?.id === pkg.id ? 'text-white neon-text' : 'text-slate-400'}`}>{pkg.price}</p>
-                                    </div>
-                                </div>
-                            </motion.button>
-                        ))}
-                    </div>
-
-                    {/* Promo Coupon Redemption Input */}
-                    <div className="mt-5 p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Have a Promo Coupon?</div>
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                value={couponInput}
-                                onChange={e => setCouponInput(e.target.value.toUpperCase())}
-                                placeholder="Enter Promo Code"
-                                className="flex-1 px-3.5 py-2 text-xs font-mono bg-slate-900 border border-slate-700 rounded-xl text-white uppercase placeholder-slate-500 focus:outline-none focus:border-sky-500"
-                            />
-                            <button
-                                onClick={handleVerifyCoupon}
-                                className="px-4 py-2 text-xs font-bold bg-sky-500 hover:bg-sky-400 text-white rounded-xl transition shadow-sm"
-                            >
-                                Redeem
-                            </button>
-                        </div>
-                        {couponMsg && (
-                            <div className={`text-xs font-semibold mt-1 ${appliedCoupon ? 'text-emerald-400' : 'text-amber-400'}`}>
-                                {couponMsg}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Payment Status Display */}
-                    <AnimatePresence mode="wait">
-                        {paymentStatus === 'processing' && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="mt-10 p-6 bg-sky-500/10 border border-sky-500/20 rounded-[2rem] text-center"
-                            >
-                                <Loader2 size={32} className="animate-spin text-sky-400 mx-auto mb-4" />
-                                <h3 className="text-white font-black text-lg mb-2">Initiating Payment</h3>
-                                <p className="text-slate-400 text-sm">Sending STK Push to your phone...</p>
-                            </motion.div>
-                        )}
-
-                        {paymentStatus === 'waiting_pin' && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="mt-10 p-6 bg-amber-500/10 border border-amber-500/20 rounded-[2rem] text-center"
-                            >
-                                <Smartphone size={32} className="text-amber-400 mx-auto mb-4 animate-pulse" />
-                                <h3 className="text-white font-black text-lg mb-2">Enter M-Pesa PIN</h3>
-                                <p className="text-slate-400 text-sm mb-4">Check your phone and enter your PIN to complete payment</p>
-                                <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
-                                    <Loader2 size={14} className="animate-spin" />
-                                    Waiting for confirmation...
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {paymentStatus === 'success' && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="mt-10 p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] text-center"
-                            >
-                                <CheckCircle size={32} className="text-emerald-400 mx-auto mb-4" />
-                                <h3 className="text-white font-black text-lg mb-2">Payment Successful!</h3>
-                                <p className="text-slate-400 text-sm mb-4">Internet access granted. Connecting...</p>
-                                <div className="w-full bg-emerald-500/20 rounded-full h-2">
-                                    <motion.div
-                                        className="bg-emerald-500 h-2 rounded-full"
-                                        initial={{ width: 0 }}
-                                        animate={{ width: '100%' }}
-                                        transition={{ duration: 2 }}
-                                    />
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {paymentStatus === 'failed' && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="mt-10 p-6 bg-red-500/10 border border-red-500/20 rounded-[2rem] text-center"
-                            >
-                                <XCircle size={32} className="text-red-400 mx-auto mb-4" />
-                                <h3 className="text-white font-black text-lg mb-2">Payment Failed</h3>
-                                <p className="text-slate-400 text-sm mb-4">{errorMessage}</p>
-                                <motion.button
-                                    onClick={resetPayment}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold py-3 px-6 rounded-full transition-all"
-                                >
-                                    Try Again
-                                </motion.button>
-                            </motion.div>
-                        )}
-
-                        {paymentStatus === 'idle' && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="mt-10 space-y-5"
-                            >
-                                {errorMessage && (
-                                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-[2rem] text-center">
-                                        <AlertTriangle size={20} className="text-red-400 mx-auto mb-2" />
-                                        <p className="text-red-400 text-sm">{errorMessage}</p>
-                                    </div>
+                        {/* Side Banner Slot (Desktop Viewport) */}
+                        {sideAds.length > 0 && (
+                            <div className="hidden lg:block p-4 bg-slate-900 border border-slate-800 rounded-3xl space-y-3">
+                                <span className="px-2 py-0.5 bg-sky-500/20 text-sky-400 text-[9px] font-black uppercase rounded">Featured Partner</span>
+                                {sideAds[0].mediaUrl && (
+                                    <img src={sideAds[0].mediaUrl} alt="Ad" className="w-full h-32 object-cover rounded-xl" />
                                 )}
-
-                                <div className="relative group">
-                                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-sky-400 transition-colors">
-                                        <Smartphone size={18} />
-                                    </div>
-                                    <input
-                                        type="tel"
-                                        placeholder="M-Pesa Number"
-                                        value={phoneNumber}
-                                        onChange={(e) => setPhoneNumber(e.target.value)}
-                                        disabled={paymentStatus !== 'idle'}
-                                        className="w-full bg-[#0f172a] border border-white/10 rounded-[2rem] py-5 px-14 text-sm font-bold text-white tracking-widest focus:outline-none focus:border-sky-500/50 focus:bg-slate-900 transition-all shadow-inner placeholder:text-slate-600 disabled:opacity-50"
-                                    />
-                                </div>
-
-                                <motion.button
-                                    onClick={handlePayment}
-                                    disabled={!selectedPackage || !phoneNumber || paymentStatus !== 'idle'}
-                                    whileHover={(selectedPackage && phoneNumber && paymentStatus === 'idle') ? { scale: 1.02, boxShadow: "0 0 20px rgba(14, 165, 233, 0.4)" } : {}}
-                                    whileTap={(selectedPackage && phoneNumber && paymentStatus === 'idle') ? { scale: 0.98 } : {}}
-                                    className={`w-full py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 ${(selectedPackage && phoneNumber && paymentStatus === 'idle')
-                                        ? 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-xl shadow-sky-900/20 relative overflow-hidden'
-                                        : 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                                        }`}
-                                >
-                                    {(selectedPackage && phoneNumber && paymentStatus === 'idle') && <div className="absolute inset-0 bg-white/20 animate-pulse"></div>}
-                                    <span className="relative z-10">Pay with M-Pesa</span>
-                                    <ChevronRight size={16} strokeWidth={3} className="relative z-10" />
-                                </motion.button>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-
-                    <div className="mt-8 flex flex-col items-center gap-4">
-                        <div className="flex items-center gap-4 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-                            {/* Placeholder for M-Pesa Logo if no external image allowed, using text for now */}
-                            <span className="text-white font-black tracking-tighter italic text-sm">M-PESA</span>
-                            <div className="w-px h-3 bg-slate-700"></div>
-                            <div className="flex items-center gap-1.5">
-                                <ShieldCheck size={12} className="text-emerald-500" />
-                                <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Secure B2C Channel</span>
+                                <h4 className="text-xs font-bold text-white">{sideAds[0].headline || 'Partner Promotion'}</h4>
+                                {sideAds[0].destinationUrl && (
+                                    <a
+                                        href={sideAds[0].destinationUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="block w-full py-2 bg-slate-800 hover:bg-slate-700 text-center text-xs font-bold text-slate-300 rounded-xl transition"
+                                    >
+                                        {sideAds[0].buttonText || 'Visit Partner'}
+                                    </a>
+                                )}
                             </div>
-                        </div>
+                        )}
                     </div>
-                </motion.div>
-
-                <div className="mt-10 flex justify-center gap-10 opacity-30">
-                    <button className="text-[10px] font-black text-slate-900 uppercase tracking-widest hover:opacity-100 flex items-center gap-2">
-                        <Share2 size={12} /> Share Network
-                    </button>
-                    <button className="text-[10px] font-black text-slate-900 uppercase tracking-widest hover:opacity-100">
-                        Fair Usage Policy
-                    </button>
                 </div>
-            </div>
 
-            {/* Persistent Support Footer */}
-            <div className="relative z-30 w-full mt-10">
-                <SupportFooter />
+                {/* 4. Support & Terms Footer */}
+                <footer className="pt-8 border-t border-slate-900">
+                    <SupportFooter />
+                </footer>
             </div>
         </div>
     );

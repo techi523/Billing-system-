@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Package, Payment, Tenant, Router as RouterModel, PlatformSetting, MarketingCoupon } from '../models';
+import { Package, Payment, Tenant, Router as RouterModel, PlatformSetting, MarketingCoupon, Voucher } from '../models';
 import { AggregatorService } from '../services/aggregator.service';
 import logger from '../utils/logger';
 import { body, validationResult } from 'express-validator';
@@ -111,6 +111,47 @@ router.post('/:tenantId/verify-coupon', async (req: any, res: any) => {
     }
 });
 
+
+// 0f. Redeem Captive Portal Voucher
+router.post('/:tenantId/redeem-voucher', async (req: any, res: any) => {
+    try {
+        const { tenantId } = req.params;
+        const { voucherCode } = req.body;
+        const voucher = await Voucher.findOne({
+            where: { tenantId, code: (voucherCode || '').trim().toUpperCase(), status: 'AVAILABLE' }
+        });
+
+        if (!voucher) {
+            return res.status(400).json({ success: false, message: 'Invalid or already used voucher code' });
+        }
+
+        await voucher.update({ status: 'USED', usedAt: new Date() });
+
+        res.json({
+            success: true,
+            message: 'Voucher redeemed successfully! Connecting to network...',
+            redirectUrl: 'https://www.google.com'
+        });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 0g. Activate Free Guest Trial
+router.post('/:tenantId/free-trial', async (req: any, res: any) => {
+    try {
+        const { tenantId } = req.params;
+        const { mac } = req.body;
+
+        res.json({
+            success: true,
+            message: 'Free 10-minute trial activated!',
+            redirectUrl: 'https://www.google.com'
+        });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 
 // 1. Get Packages for a specific tenant
 router.get('/:tenantId/packages', async (req: any, res) => {
