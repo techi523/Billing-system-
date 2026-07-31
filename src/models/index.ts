@@ -1885,11 +1885,18 @@ export class SubscriptionPlan extends Model {
   public maxRouters!: number;
   public maxStaff!: number;
   public maxSMS!: number;
+  public maxWhatsapp!: number;
   public maxCampaigns!: number;
+  public maxAdvertisements!: number;
+  public maxBranches!: number;
+  public maxIntegrations!: number;
   public storageLimitMB!: number;
   public apiAccess!: boolean;
   public marketingFeatures!: boolean;
   public analyticsFeatures!: boolean;
+  public whiteLabelFeatures!: boolean;
+  public multiBranchFeatures!: boolean;
+  public customIntegrations!: boolean;
   public supportLevel!: 'COMMUNITY' | 'STANDARD' | 'PRIORITY' | 'DEDICATED';
   public isPopular!: boolean;
   public isActive!: boolean;
@@ -1906,11 +1913,18 @@ SubscriptionPlan.init({
   maxRouters: { type: DataTypes.INTEGER, defaultValue: 5 },
   maxStaff: { type: DataTypes.INTEGER, defaultValue: 3 },
   maxSMS: { type: DataTypes.INTEGER, defaultValue: 200 },
+  maxWhatsapp: { type: DataTypes.INTEGER, defaultValue: 0 },
   maxCampaigns: { type: DataTypes.INTEGER, defaultValue: 2 },
+  maxAdvertisements: { type: DataTypes.INTEGER, defaultValue: 5 },
+  maxBranches: { type: DataTypes.INTEGER, defaultValue: 1 },
+  maxIntegrations: { type: DataTypes.INTEGER, defaultValue: 0 },
   storageLimitMB: { type: DataTypes.INTEGER, defaultValue: 1024 },
   apiAccess: { type: DataTypes.BOOLEAN, defaultValue: false },
   marketingFeatures: { type: DataTypes.BOOLEAN, defaultValue: true },
   analyticsFeatures: { type: DataTypes.BOOLEAN, defaultValue: true },
+  whiteLabelFeatures: { type: DataTypes.BOOLEAN, defaultValue: false },
+  multiBranchFeatures: { type: DataTypes.BOOLEAN, defaultValue: false },
+  customIntegrations: { type: DataTypes.BOOLEAN, defaultValue: false },
   supportLevel: { type: DataTypes.ENUM('COMMUNITY', 'STANDARD', 'PRIORITY', 'DEDICATED'), defaultValue: 'STANDARD' },
   isPopular: { type: DataTypes.BOOLEAN, defaultValue: false },
   isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
@@ -1960,7 +1974,7 @@ export class TenantSubscription extends Model {
   public id!: string;
   public tenantId!: string;
   public planId!: string;
-  public status!: 'TRIAL' | 'ACTIVE' | 'GRACE_PERIOD' | 'OVERDUE' | 'SUSPENDED' | 'EXPIRED' | 'CANCELLED';
+  public status!: 'FREE_TRIAL' | 'PENDING_PAYMENT' | 'ACTIVE' | 'GRACE_PERIOD' | 'SUSPENDED' | 'EXPIRED' | 'CANCELLED' | 'ARCHIVED' | 'TRIAL' | 'OVERDUE';
   public billingCycle!: 'MONTHLY' | 'YEARLY';
   public startDate!: Date;
   public currentPeriodStart!: Date;
@@ -1969,6 +1983,8 @@ export class TenantSubscription extends Model {
   public cancelledAt!: Date | null;
   public trialEndDate!: Date | null;
   public autoRenew!: boolean;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 TenantSubscription.init({
@@ -1976,8 +1992,8 @@ TenantSubscription.init({
   tenantId: { type: DataTypes.UUID, allowNull: false },
   planId: { type: DataTypes.UUID, allowNull: false },
   status: {
-    type: DataTypes.ENUM('TRIAL', 'ACTIVE', 'GRACE_PERIOD', 'OVERDUE', 'SUSPENDED', 'EXPIRED', 'CANCELLED'),
-    defaultValue: 'ACTIVE'
+    type: DataTypes.ENUM('FREE_TRIAL', 'PENDING_PAYMENT', 'ACTIVE', 'GRACE_PERIOD', 'SUSPENDED', 'EXPIRED', 'CANCELLED', 'ARCHIVED', 'TRIAL', 'OVERDUE'),
+    defaultValue: 'FREE_TRIAL'
   },
   billingCycle: { type: DataTypes.ENUM('MONTHLY', 'YEARLY'), defaultValue: 'MONTHLY' },
   startDate: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
@@ -1988,6 +2004,69 @@ TenantSubscription.init({
   trialEndDate: { type: DataTypes.DATE },
   autoRenew: { type: DataTypes.BOOLEAN, defaultValue: true },
 }, { sequelize, modelName: 'tenant_subscription' });
+
+export class TrialAgreement extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public businessName!: string;
+  public ownerName!: string;
+  public phone!: string;
+  public email!: string;
+  public businessLocation!: string;
+  public expectedSubscriberCount!: number;
+  public expectedRouterCount!: number;
+  public termsAccepted!: boolean;
+  public trialAgreementAccepted!: boolean;
+  public agreedAt!: Date;
+  public agreedIp!: string;
+  public agreedUserAgent!: string;
+  public agreedTextHash!: string;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+TrialAgreement.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  businessName: { type: DataTypes.STRING, allowNull: false },
+  ownerName: { type: DataTypes.STRING, allowNull: false },
+  phone: { type: DataTypes.STRING, allowNull: false },
+  email: { type: DataTypes.STRING, allowNull: false },
+  businessLocation: { type: DataTypes.STRING, allowNull: false },
+  expectedSubscriberCount: { type: DataTypes.INTEGER, defaultValue: 50 },
+  expectedRouterCount: { type: DataTypes.INTEGER, defaultValue: 2 },
+  termsAccepted: { type: DataTypes.BOOLEAN, defaultValue: true },
+  trialAgreementAccepted: { type: DataTypes.BOOLEAN, defaultValue: true },
+  agreedAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  agreedIp: { type: DataTypes.STRING, allowNull: false },
+  agreedUserAgent: { type: DataTypes.STRING, allowNull: false },
+  agreedTextHash: { type: DataTypes.STRING, allowNull: false },
+}, { sequelize, modelName: 'trial_agreement' });
+
+export class FeatureViolationLog extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public featureOrLimitKey!: string;
+  public attemptedAction!: string;
+  public currentUsage!: number;
+  public allowedLimit!: number;
+  public subscriptionStatus!: string;
+  public requestIp!: string;
+  public userAgent!: string;
+  public readonly createdAt!: Date;
+}
+
+FeatureViolationLog.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  featureOrLimitKey: { type: DataTypes.STRING, allowNull: false },
+  attemptedAction: { type: DataTypes.STRING, allowNull: false },
+  currentUsage: { type: DataTypes.INTEGER, defaultValue: 0 },
+  allowedLimit: { type: DataTypes.INTEGER, defaultValue: 0 },
+  subscriptionStatus: { type: DataTypes.STRING, allowNull: false },
+  requestIp: { type: DataTypes.STRING },
+  userAgent: { type: DataTypes.STRING },
+}, { sequelize, modelName: 'feature_violation_log' });
 
 export class TenantAddonModule extends Model {
   public id!: string;

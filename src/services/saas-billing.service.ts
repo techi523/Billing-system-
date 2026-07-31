@@ -60,26 +60,33 @@ export class SaaSBillingService {
         if (count === 0) {
             await SubscriptionPlan.bulkCreate([
                 {
-                    name: 'Starter',
+                    name: 'Starter ISP',
                     slug: 'starter',
-                    description: 'Ideal for small hotspot setups and cafes',
+                    description: 'Ideal for small hotspot setups and single venue cafes',
                     monthlyPriceCents: 150000, // KSh 1,500
                     yearlyPriceCents: 1500000, // KSh 15,000
                     maxActiveUsers: 300,
                     maxRouters: 2,
                     maxStaff: 2,
                     maxSMS: 200,
+                    maxWhatsapp: 0,
                     maxCampaigns: 1,
+                    maxAdvertisements: 2,
+                    maxBranches: 1,
+                    maxIntegrations: 0,
                     storageLimitMB: 512,
                     apiAccess: false,
                     marketingFeatures: true,
-                    analyticsFeatures: true,
+                    analyticsFeatures: false,
+                    whiteLabelFeatures: false,
+                    multiBranchFeatures: false,
+                    customIntegrations: false,
                     supportLevel: 'STANDARD',
                     isPopular: false,
                     isActive: true
                 },
                 {
-                    name: 'Growth',
+                    name: 'Growth ISP',
                     slug: 'growth',
                     description: 'For growing ISPs and multi-location venues',
                     monthlyPriceCents: 400000, // KSh 4,000
@@ -88,57 +95,104 @@ export class SaaSBillingService {
                     maxRouters: 5,
                     maxStaff: 5,
                     maxSMS: 1000,
+                    maxWhatsapp: 200,
                     maxCampaigns: 5,
+                    maxAdvertisements: 10,
+                    maxBranches: 2,
+                    maxIntegrations: 1,
                     storageLimitMB: 2048,
                     apiAccess: true,
                     marketingFeatures: true,
                     analyticsFeatures: true,
+                    whiteLabelFeatures: false,
+                    multiBranchFeatures: false,
+                    customIntegrations: false,
                     supportLevel: 'PRIORITY',
                     isPopular: true,
                     isActive: true
                 },
                 {
-                    name: 'Professional',
+                    name: 'Professional ISP',
                     slug: 'professional',
-                    description: 'Advanced network control and marketing suite',
+                    description: 'Advanced network control, SMS/WhatsApp and marketing suite',
                     monthlyPriceCents: 750000, // KSh 7,500
                     yearlyPriceCents: 7500000, // KSh 75,000
                     maxActiveUsers: 5000,
                     maxRouters: 25,
                     maxStaff: 15,
                     maxSMS: 5000,
+                    maxWhatsapp: 2000,
                     maxCampaigns: 20,
+                    maxAdvertisements: 30,
+                    maxBranches: 5,
+                    maxIntegrations: 5,
                     storageLimitMB: 10240,
                     apiAccess: true,
                     marketingFeatures: true,
                     analyticsFeatures: true,
+                    whiteLabelFeatures: true,
+                    multiBranchFeatures: true,
+                    customIntegrations: false,
                     supportLevel: 'PRIORITY',
                     isPopular: false,
                     isActive: true
                 },
                 {
-                    name: 'Enterprise',
+                    name: 'Business ISP',
+                    slug: 'business',
+                    description: 'Full commercial ISP suite with multi-branch and advertising engine',
+                    monthlyPriceCents: 1200000, // KSh 12,000
+                    yearlyPriceCents: 12000000, // KSh 120,000
+                    maxActiveUsers: 15000,
+                    maxRouters: 50,
+                    maxStaff: 30,
+                    maxSMS: 15000,
+                    maxWhatsapp: 10000,
+                    maxCampaigns: 50,
+                    maxAdvertisements: 100,
+                    maxBranches: 15,
+                    maxIntegrations: 15,
+                    storageLimitMB: 51200,
+                    apiAccess: true,
+                    marketingFeatures: true,
+                    analyticsFeatures: true,
+                    whiteLabelFeatures: true,
+                    multiBranchFeatures: true,
+                    customIntegrations: true,
+                    supportLevel: 'PRIORITY',
+                    isPopular: false,
+                    isActive: true
+                },
+                {
+                    name: 'Enterprise ISP',
                     slug: 'enterprise',
-                    description: 'Unlimited scale for tier-1 regional operations',
-                    monthlyPriceCents: 1800000, // KSh 18,000
-                    yearlyPriceCents: 18000000, // KSh 180,000
+                    description: 'Custom SLA, dedicated infrastructure & unlimited scale',
+                    monthlyPriceCents: 0, // Custom Quotation
+                    yearlyPriceCents: 0,
                     maxActiveUsers: -1, // Unlimited
                     maxRouters: -1,
                     maxStaff: -1,
                     maxSMS: -1,
+                    maxWhatsapp: -1,
                     maxCampaigns: -1,
+                    maxAdvertisements: -1,
+                    maxBranches: -1,
+                    maxIntegrations: -1,
                     storageLimitMB: -1,
                     apiAccess: true,
                     marketingFeatures: true,
                     analyticsFeatures: true,
+                    whiteLabelFeatures: true,
+                    multiBranchFeatures: true,
+                    customIntegrations: true,
                     supportLevel: 'DEDICATED',
                     isPopular: false,
                     isActive: true
                 }
             ]);
         } else {
-            await SubscriptionPlan.update({ monthlyPriceCents: 150000, yearlyPriceCents: 1500000 }, { where: { slug: 'starter' } });
-            await SubscriptionPlan.update({ monthlyPriceCents: 400000, yearlyPriceCents: 4000000 }, { where: { slug: 'growth' } });
+            await SubscriptionPlan.update({ name: 'Starter ISP', monthlyPriceCents: 150000, yearlyPriceCents: 1500000, whiteLabelFeatures: false, analyticsFeatures: false, apiAccess: false }, { where: { slug: 'starter' } });
+            await SubscriptionPlan.update({ name: 'Growth ISP', monthlyPriceCents: 400000, yearlyPriceCents: 4000000, whiteLabelFeatures: false }, { where: { slug: 'growth' } });
         }
         return SubscriptionPlan.findAll();
     }

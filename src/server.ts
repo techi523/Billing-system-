@@ -35,6 +35,8 @@ import platformOwnerRoutes from './routes/platform-owner.routes';
 import checkoutRoutes from './routes/checkout.routes';
 import enterpriseCrmRoutes from './routes/enterprise-crm.routes';
 import smsProcurementRoutes from './routes/sms-procurement.routes';
+import subscriptionEnforcementRoutes from './routes/subscription-enforcement.routes';
+import { subscriptionEnforcerMiddleware } from './middleware/subscription-enforcer.middleware';
 import { DormantRouterService } from './services/dormant-router.service';
 import { IspService } from './services/isp.service';
 import { SettlementEngine } from './services/settlement-engine';
@@ -152,11 +154,12 @@ app.use('/api/v1/superadmin/sms-procurement', authMiddleware, superAdminLimiter,
 app.use('/api/v1/platform-owner', platformOwnerRoutes);
 app.use('/api/v1/checkout', checkoutRoutes);
 app.use('/api/v1/enterprise', enterpriseCrmRoutes);
-app.use('/api/v1/tenant/saas', authMiddleware, TenantResolver.resolveTenant, tenantSaasRoutes);
-app.use('/api/v1/sms', authMiddleware, TenantResolver.resolveTenant, smsRoutes);
-app.use('/api/v1/admin/reports', authMiddleware, TenantResolver.resolveTenant, reportsRoutes);
-app.use('/api/v1/admin/refunds', authMiddleware, TenantResolver.resolveTenant, refundRoutes);
-app.use('/api/v1/admin/subscribers', authMiddleware, TenantResolver.resolveTenant, subscriberRoutes);
+app.use('/api/v1/subscription', subscriptionEnforcementRoutes);
+app.use('/api/v1/tenant/saas', authMiddleware, TenantResolver.resolveTenant, subscriptionEnforcerMiddleware, tenantSaasRoutes);
+app.use('/api/v1/sms', authMiddleware, TenantResolver.resolveTenant, subscriptionEnforcerMiddleware, smsRoutes);
+app.use('/api/v1/admin/reports', authMiddleware, TenantResolver.resolveTenant, subscriptionEnforcerMiddleware, reportsRoutes);
+app.use('/api/v1/admin/refunds', authMiddleware, TenantResolver.resolveTenant, subscriptionEnforcerMiddleware, refundRoutes);
+app.use('/api/v1/admin/subscribers', authMiddleware, TenantResolver.resolveTenant, subscriptionEnforcerMiddleware, subscriberRoutes);
 
 // WEBHOOK RATE LIMITING (Prevent webhook flooding)
 const webhookLimiter = rateLimit({

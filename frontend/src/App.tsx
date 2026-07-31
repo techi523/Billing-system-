@@ -23,6 +23,8 @@ import SuperAdminPortal from './pages/SuperAdminPortal';
 import PlatformOwnerPortal from './pages/PlatformOwnerPortal';
 import ImpersonationBanner from './components/ImpersonationBanner';
 import CheckoutPortal from './pages/CheckoutPortal';
+import SubscriptionRenewalPage from './pages/SubscriptionRenewalPage';
+import LicenseManager from './pages/SuperAdmin/LicenseManager';
 
 // Protected Pages - Tenant
 import DashboardLayout from './components/Dashboard/DashboardLayout';
@@ -95,6 +97,14 @@ function App() {
                                     </ProtectedRoute>
                                 }
                             />
+
+                            {/* Subscription Renewal & License Control Routes */}
+                            <Route path="/renew" element={<SubscriptionRenewalPage />} />
+                            <Route path="/admin/licenses" element={
+                                <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'PLATFORM_OWNER']}>
+                                    <LicenseManager />
+                                </ProtectedRoute>
+                            } />
 
                             {/* Protected Super Admin Routes */}
                             <Route
