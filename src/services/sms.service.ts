@@ -32,11 +32,14 @@ export class SMSService {
             const username = process.env.SMS_USERNAME;
             const apiKey = process.env.SMS_API_KEY;
             const senderId = process.env.SMS_SENDER_ID;
-            const provider = process.env.SMS_PROVIDER || 'GENERIC'; // e.g. AFRICASTALKING
+            const provider = process.env.SMS_PROVIDER || 'TALKSASA'; // e.g. TALKSASA, AFRICASTALKING
 
             let providerResult: any;
 
-            if (provider === 'AFRICASTALKING') {
+            if (provider === 'TALKSASA') {
+                // TalkSasa Bulk SMS Integration (Default Kenya & East Africa provider)
+                providerResult = await this.sendTalkSasa(to, message, apiKey!, senderId!);
+            } else if (provider === 'AFRICASTALKING') {
                 // Africa's Talking Integration (Common in East Africa)
                 providerResult = await this.sendAfricaTalking(to, message, username!, apiKey!, senderId!);
             } else {
@@ -114,6 +117,38 @@ export class SMSService {
         return {
             reference: recipientData.messageId,
             cost: parseFloat(recipientData.cost.split(' ')[1]) || 1.0,
+        };
+    }
+
+    /**
+     * TalkSasa Specific Implementation
+     */
+    private static async sendTalkSasa(to: string, message: string, apiKey: string, senderId: string) {
+        const url = process.env.TALKSASA_API_URL || 'https://api.talksasa.com/v1/send';
+        const response = await axios.post(
+            url,
+            {
+                sender_id: senderId || process.env.SMS_SENDER_ID || 'TALKSASA',
+                recipient: to,
+                message: message,
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                timeout: 10000
+            }
+        );
+
+        if (response.data?.status !== 'success' && response.data?.status !== true && response.data?.code !== 200) {
+            throw new Error(`TalkSasa Error: ${response.data?.message || 'Failed to send SMS'}`);
+        }
+
+        return {
+            reference: response.data?.message_id || response.data?.id || `TS_${Date.now()}`,
+            cost: response.data?.cost || 0.70
         };
     }
 }

@@ -1094,7 +1094,7 @@ MessageTemplate.hasMany(Campaign, { foreignKey: 'templateId' });
 export class SmsGateway extends Model {
   public id!: string;
   public name!: string;
-  public provider!: 'AFRICASTALKING' | 'INFOBIP' | 'VONAGE' | 'TWILIO' | 'GENERIC';
+  public provider!: 'TALKSASA' | 'AFRICASTALKING' | 'INFOBIP' | 'VONAGE' | 'TWILIO' | 'GENERIC';
   public apiBaseUrl!: string | null;
   public apiKeyEncrypted!: string | null;   // AES-256-GCM encrypted
   public apiSecretEncrypted!: string | null; // AES-256-GCM encrypted
@@ -1111,7 +1111,7 @@ export class SmsGateway extends Model {
 SmsGateway.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   name: { type: DataTypes.STRING, allowNull: false },
-  provider: { type: DataTypes.ENUM('AFRICASTALKING', 'INFOBIP', 'VONAGE', 'TWILIO', 'GENERIC'), defaultValue: 'AFRICASTALKING' },
+  provider: { type: DataTypes.ENUM('TALKSASA', 'AFRICASTALKING', 'INFOBIP', 'VONAGE', 'TWILIO', 'GENERIC'), defaultValue: 'TALKSASA' },
   apiBaseUrl: { type: DataTypes.STRING },
   apiKeyEncrypted: { type: DataTypes.TEXT },
   apiSecretEncrypted: { type: DataTypes.TEXT },

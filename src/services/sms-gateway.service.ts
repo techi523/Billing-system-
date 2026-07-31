@@ -199,7 +199,13 @@ export class SmsGatewayService {
         try {
             const apiKey = gw.apiKeyEncrypted ? decrypt(gw.apiKeyEncrypted) : null;
 
-            if (gw.provider === 'AFRICASTALKING') {
+            if (gw.provider === 'TALKSASA') {
+                const targetUrl = gw.apiBaseUrl || 'https://api.talksasa.com/v1/send';
+                await axios.get(targetUrl, {
+                    headers: { 'Authorization': `Bearer ${apiKey || ''}`, 'Accept': 'application/json' },
+                    timeout: 8000,
+                });
+            } else if (gw.provider === 'AFRICASTALKING') {
                 await axios.get('https://api.africastalking.com/version1/user', {
                     params: { username: 'sandbox' },
                     headers: { 'apiKey': apiKey || '', 'Accept': 'application/json' },
@@ -233,6 +239,31 @@ export class SmsGatewayService {
         const apiSecret = gw.apiSecretEncrypted ? decrypt(gw.apiSecretEncrypted) : null;
 
         try {
+            if (gw.provider === 'TALKSASA') {
+                const targetUrl = gw.apiBaseUrl || 'https://api.talksasa.com/v1/send';
+                const response = await axios.post(
+                    targetUrl,
+                    {
+                        sender_id: gw.senderId || 'TALKSASA',
+                        recipient: to,
+                        message: 'SurfBill SMS Gateway Test — Connection Verified ✓',
+                    },
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${apiKey || ''}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        timeout: 10000,
+                    }
+                );
+                if (response.data?.status === 'success' || response.data?.status === true || response.data?.code === 200) {
+                    const msgId = response.data?.message_id || response.data?.id || 'TS_VERIFIED';
+                    return { success: true, message: `TalkSasa Test SMS sent to ${to}. Reference ID: ${msgId}` };
+                }
+                return { success: false, message: `TalkSasa returned: ${response.data?.message || 'Failed'}` };
+            }
+
             if (gw.provider === 'AFRICASTALKING') {
                 const response = await axios.post(
                     (gw.apiBaseUrl || 'https://api.africastalking.com') + '/version1/messaging',

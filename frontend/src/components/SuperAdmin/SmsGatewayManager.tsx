@@ -51,7 +51,7 @@ const formatAmount = (cents: number) => `KES ${(cents / 100).toLocaleString('en-
 // GATEWAY FORM
 // ================================================================
 
-const PROVIDERS = ['AFRICASTALKING', 'INFOBIP', 'VONAGE', 'TWILIO', 'GENERIC'];
+const PROVIDERS = ['TALKSASA', 'AFRICASTALKING', 'INFOBIP', 'VONAGE', 'TWILIO', 'GENERIC'];
 
 interface GatewayFormProps {
     initial?: Partial<SmsGateway>;
@@ -63,7 +63,7 @@ interface GatewayFormProps {
 const GatewayForm = ({ initial, onSave, onCancel, isNew }: GatewayFormProps) => {
     const [form, setForm] = useState({
         name: initial?.name || '',
-        provider: initial?.provider || 'AFRICASTALKING',
+        provider: initial?.provider || 'TALKSASA',
         apiBaseUrl: initial?.apiBaseUrl || '',
         apiKey: '',
         apiSecret: '',
