@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import SuperAdminLogin from './pages/SuperAdminLogin';
 import PasswordResetRequest from './pages/PasswordResetRequest';
+import PasswordResetConfirm from './pages/PasswordResetConfirm';
 import CaptivePortal from './pages/CaptivePortal';
 
 // Protected Pages - Admin
@@ -73,7 +74,9 @@ function App() {
                                 <Route path="/" element={<LandingPage />} />
                                 <Route path="/login" element={<Login />} />
                                 <Route path="/register" element={<Register />} />
+                                <Route path="/forgot-password" element={<PasswordResetRequest />} />
                                 <Route path="/password-reset" element={<PasswordResetRequest />} />
+                                <Route path="/reset-password" element={<PasswordResetConfirm />} />
                                 <Route path="/captive-portal" element={<CaptivePortal />} />
 
                                 {/* Public Trust Pages */}

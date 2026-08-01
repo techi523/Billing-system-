@@ -921,15 +921,29 @@ export class PasswordResetToken extends Model {
   public id!: string;
   public userId!: string;
   public token!: string;
+  public tokenHash!: string | null;
+  public otpCode!: string | null;
+  public resetType!: 'LINK' | 'OTP';
+  public attempts!: number;
+  public isLocked!: boolean;
   public expiresAt!: Date;
   public used!: boolean;
+  public ipAddress!: string | null;
+  public userAgent!: string | null;
 }
 PasswordResetToken.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   userId: { type: DataTypes.UUID, allowNull: false },
-  token: { type: DataTypes.STRING, allowNull: false, unique: true },
+  token: { type: DataTypes.STRING, allowNull: false },
+  tokenHash: { type: DataTypes.STRING },
+  otpCode: { type: DataTypes.STRING },
+  resetType: { type: DataTypes.ENUM('LINK', 'OTP'), defaultValue: 'LINK' },
+  attempts: { type: DataTypes.INTEGER, defaultValue: 0 },
+  isLocked: { type: DataTypes.BOOLEAN, defaultValue: false },
   expiresAt: { type: DataTypes.DATE, allowNull: false },
   used: { type: DataTypes.BOOLEAN, defaultValue: false },
+  ipAddress: { type: DataTypes.STRING },
+  userAgent: { type: DataTypes.STRING },
 }, { sequelize, modelName: 'passwordResetToken' });
 
 export class Campaign extends Model {

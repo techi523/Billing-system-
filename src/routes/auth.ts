@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { AdminUser, Tenant, AdminSession, AuditLog, PasswordResetToken } from '../models';
 import { TenantBootstrapService } from '../services/tenant-bootstrap.service';
 import { sendPasswordResetEmail } from '../services/emailService';
+import { PasswordResetService } from '../services/password-reset.service';
 
 import { config } from '../config/env';
 import { validators, handleValidationErrors } from '../middleware/validation';
@@ -334,89 +335,85 @@ router.post('/theme', async (req: Request, res: Response) => {
     }
 });
 
-// Password reset request endpoint
-router.post('/password-reset/request', [
-    validators.email,
-    handleValidationErrors
-], async (req: Request, res: Response) => {
+// Password reset request endpoint (Supports LINK vs OTP, rate limiting & enumeration protection)
+router.post('/password-reset/request', async (req: Request, res: Response) => {
     try {
-        const { email } = req.body;
+        const { email, resetType, expiryMinutes } = req.body;
         if (!email) return res.status(400).json({ error: 'Email is required' });
 
-        const user = await AdminUser.findOne({ where: { email } });
+        const result = await PasswordResetService.requestPasswordReset({
+            email,
+            resetType: resetType === 'OTP' ? 'OTP' : 'LINK',
+            expiryMinutes: Number(expiryMinutes) || 60,
+            ipAddress: req.ip || '127.0.0.1',
+            userAgent: req.get('User-Agent') || ''
+        });
 
-        // Always respond with success to avoid email enumeration
-        if (user) {
-            const token = crypto.randomBytes(32).toString('hex');
-            const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-            await PasswordResetToken.create({
-                userId: user.id,
-                token,
-                expiresAt,
-                used: false
-            });
-
-            await sendPasswordResetEmail(email, token);
-
-            await AuditLog.create({
-                action: 'PASSWORD_RESET_REQUESTED',
-                details: `Password reset requested for ${email}`,
-                userId: user.id,
-                tenantId: user.tenantId,
-                ipAddress: req.ip
-            });
+        if (!result.success) {
+            return res.status(429).json({ error: result.message });
         }
 
-        res.json({ message: 'If the email exists, a password reset link has been sent.' });
+        res.json({ message: result.message, success: true });
     } catch (error: any) {
         console.error('Password reset request error:', error);
-        res.status(500).json({ error: 'Failed to process request' });
+        res.status(500).json({ error: 'Failed to process request: ' + error.message });
     }
 });
 
-// Password reset confirmation endpoint
-router.post('/password-reset/confirm', [
-    body('newPassword')
-        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Password must contain uppercase, lowercase, and number'),
-    handleValidationErrors
-], async (req: Request, res: Response) => {
+// Verify Verification Code (OTP)
+router.post('/password-reset/verify-otp', async (req: Request, res: Response) => {
     try {
-        const { token, newPassword } = req.body;
-        if (!token || !newPassword) {
-            return res.status(400).json({ error: 'Token and new password are required' });
+        const { email, otpCode } = req.body;
+        if (!email || !otpCode) {
+            return res.status(400).json({ error: 'Email and OTP code are required' });
         }
 
-        const resetRecord = await PasswordResetToken.findOne({
-            where: { token, used: false }
+        const result = await PasswordResetService.verifyOTP(email, otpCode);
+        if (!result.valid) {
+            return res.status(400).json({ error: result.message });
+        }
+
+        res.json({ valid: true, token: result.token, message: result.message });
+    } catch (error: any) {
+        res.status(500).json({ error: 'Failed to verify OTP code: ' + error.message });
+    }
+});
+
+// Password reset confirmation endpoint (Enforces password policy)
+router.post('/password-reset/confirm', async (req: Request, res: Response) => {
+    try {
+        const { token, otpCode, email, newPassword } = req.body;
+        if (!newPassword) {
+            return res.status(400).json({ error: 'New password is required' });
+        }
+
+        const result = await PasswordResetService.confirmPasswordReset({
+            token,
+            otpCode,
+            email,
+            newPassword,
+            ipAddress: req.ip || '127.0.0.1',
+            userAgent: req.get('User-Agent') || ''
         });
 
-        if (!resetRecord || resetRecord.expiresAt < new Date()) {
-            return res.status(400).json({ error: 'Invalid or expired token' });
+        if (!result.success) {
+            return res.status(400).json({ error: result.message });
         }
 
-        const user = await AdminUser.findByPk(resetRecord.userId);
-        if (!user) {
-            return res.status(400).json({ error: 'User not found' });
-        }
-
-        const hashedPassword = await bcrypt.hash(newPassword, 12);
-        await user.update({ password: hashedPassword });
-        await resetRecord.update({ used: true });
-
-        await AuditLog.create({
-            action: 'PASSWORD_RESET_SUCCESS',
-            details: `Password reset successful for ${user.email}`,
-            userId: user.id,
-            tenantId: user.tenantId,
-            ipAddress: req.ip
-        });
-
-        res.json({ message: 'Password has been reset successfully' });
+        res.json({ message: result.message, success: true });
     } catch (error: any) {
         console.error('Password reset confirm error:', error);
-        res.status(500).json({ error: 'Failed to reset password' });
+        res.status(500).json({ error: 'Failed to reset password: ' + error.message });
+    }
+});
+
+// Super Admin Password Reset Security Monitoring
+router.get('/password-reset/superadmin/logs', async (req: Request, res: Response) => {
+    try {
+        const monitoringData = await PasswordResetService.getSuperAdminMonitoringStats();
+        res.json(monitoringData);
+    } catch (error: any) {
+        res.status(500).json({ error: 'Failed to fetch password reset security logs' });
     }
 });
 
