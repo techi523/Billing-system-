@@ -2082,6 +2082,118 @@ FeatureViolationLog.init({
   userAgent: { type: DataTypes.STRING },
 }, { sequelize, modelName: 'feature_violation_log' });
 
+export class TenantCaptivePortalBranding extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public businessName!: string | null;
+  public tagline!: string | null;
+  public description!: string | null;
+  public supportPhone!: string | null;
+  public supportEmail!: string | null;
+  public whatsappNumber!: string | null;
+  public websiteUrl!: string | null;
+  public physicalAddress!: string | null;
+  public socialLinks!: string | null; // JSON
+  public primaryLogoUrl!: string | null;
+  public mobileLogoUrl!: string | null;
+  public darkModeLogoUrl!: string | null;
+  public lightModeLogoUrl!: string | null;
+  public faviconUrl!: string | null;
+  public footerLogoUrl!: string | null;
+  public loginLogoUrl!: string | null;
+  public welcomeScreenLogoUrl!: string | null;
+  public primaryColor!: string;
+  public secondaryColor!: string;
+  public accentColor!: string;
+  public buttonColor!: string;
+  public navColor!: string;
+  public backgroundColor!: string;
+  public footerColor!: string;
+  public textColor!: string;
+  public linkColor!: string;
+  public welcomeMessage!: string | null;
+  public headline!: string | null;
+  public subheadline!: string | null;
+  public termsConditions!: string | null;
+  public privacyNotice!: string | null;
+  public supportInfo!: string | null;
+  public footerText!: string | null;
+  public copyrightText!: string | null;
+  public loginInstructions!: string | null;
+  public paymentInstructions!: string | null;
+  public voucherInstructions!: string | null;
+  public backgroundType!: 'IMAGE' | 'VIDEO' | 'GRADIENT' | 'SOLID';
+  public backgroundUrl!: string | null;
+  public backgroundVideoUrl!: string | null;
+  public gradientStartColor!: string | null;
+  public gradientEndColor!: string | null;
+  public backgroundBlur!: number;
+  public backgroundOverlayOpacity!: number;
+  public mobileBackgroundUrl!: string | null;
+  public customDomain!: string | null;
+  public pinnedPackageIds!: string | null; // JSON Array
+  public featuredPackageId!: string | null;
+  public showPromotions!: boolean;
+  public isApproved!: boolean;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+TenantCaptivePortalBranding.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false, unique: true },
+  businessName: { type: DataTypes.STRING },
+  tagline: { type: DataTypes.STRING },
+  description: { type: DataTypes.TEXT },
+  supportPhone: { type: DataTypes.STRING },
+  supportEmail: { type: DataTypes.STRING },
+  whatsappNumber: { type: DataTypes.STRING },
+  websiteUrl: { type: DataTypes.STRING },
+  physicalAddress: { type: DataTypes.TEXT },
+  socialLinks: { type: DataTypes.TEXT },
+  primaryLogoUrl: { type: DataTypes.TEXT },
+  mobileLogoUrl: { type: DataTypes.TEXT },
+  darkModeLogoUrl: { type: DataTypes.TEXT },
+  lightModeLogoUrl: { type: DataTypes.TEXT },
+  faviconUrl: { type: DataTypes.TEXT },
+  footerLogoUrl: { type: DataTypes.TEXT },
+  loginLogoUrl: { type: DataTypes.TEXT },
+  welcomeScreenLogoUrl: { type: DataTypes.TEXT },
+  primaryColor: { type: DataTypes.STRING, defaultValue: '#0284c7' },
+  secondaryColor: { type: DataTypes.STRING, defaultValue: '#0f172a' },
+  accentColor: { type: DataTypes.STRING, defaultValue: '#38bdf8' },
+  buttonColor: { type: DataTypes.STRING, defaultValue: '#0284c7' },
+  navColor: { type: DataTypes.STRING, defaultValue: '#0284c7' },
+  backgroundColor: { type: DataTypes.STRING, defaultValue: '#0f172a' },
+  footerColor: { type: DataTypes.STRING, defaultValue: '#0284c7' },
+  textColor: { type: DataTypes.STRING, defaultValue: '#ffffff' },
+  linkColor: { type: DataTypes.STRING, defaultValue: '#38bdf8' },
+  welcomeMessage: { type: DataTypes.TEXT },
+  headline: { type: DataTypes.STRING },
+  subheadline: { type: DataTypes.STRING },
+  termsConditions: { type: DataTypes.TEXT },
+  privacyNotice: { type: DataTypes.TEXT },
+  supportInfo: { type: DataTypes.TEXT },
+  footerText: { type: DataTypes.TEXT },
+  copyrightText: { type: DataTypes.STRING },
+  loginInstructions: { type: DataTypes.TEXT },
+  paymentInstructions: { type: DataTypes.TEXT },
+  voucherInstructions: { type: DataTypes.TEXT },
+  backgroundType: { type: DataTypes.ENUM('IMAGE', 'VIDEO', 'GRADIENT', 'SOLID'), defaultValue: 'GRADIENT' },
+  backgroundUrl: { type: DataTypes.TEXT },
+  backgroundVideoUrl: { type: DataTypes.TEXT },
+  gradientStartColor: { type: DataTypes.STRING, defaultValue: '#0f172a' },
+  gradientEndColor: { type: DataTypes.STRING, defaultValue: '#0284c7' },
+  backgroundBlur: { type: DataTypes.INTEGER, defaultValue: 0 },
+  backgroundOverlayOpacity: { type: DataTypes.FLOAT, defaultValue: 0.2 },
+  mobileBackgroundUrl: { type: DataTypes.TEXT },
+  customDomain: { type: DataTypes.STRING },
+  pinnedPackageIds: { type: DataTypes.TEXT },
+  featuredPackageId: { type: DataTypes.STRING },
+  showPromotions: { type: DataTypes.BOOLEAN, defaultValue: true },
+  isApproved: { type: DataTypes.BOOLEAN, defaultValue: true },
+}, { sequelize, modelName: 'tenant_captive_portal_branding' });
+
 export class TenantAddonModule extends Model {
   public id!: string;
   public tenantId!: string;

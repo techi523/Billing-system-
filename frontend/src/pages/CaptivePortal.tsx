@@ -63,10 +63,13 @@ const CaptivePortal = () => {
             const tenantId = urlParams.get('tenantId') || 'demo-tenant';
 
             try {
-                // 1. Fetch Tenant Configuration & Branding
-                const configRes = await axios.get(`/api/v1/portal/${tenantId}/config`).catch(() => ({ data: null }));
-                if (configRes.data) {
-                    setTenantConfig(configRes.data);
+                // 1. Fetch Tenant Configuration & Isolated Captive Portal Branding
+                const brandingRes = await axios.get(`/api/v1/branding/tenant/${tenantId}`).catch(() => ({ data: null }));
+                if (brandingRes.data) {
+                    setTenantConfig(brandingRes.data);
+                } else {
+                    const configRes = await axios.get(`/api/v1/portal/${tenantId}/config`).catch(() => ({ data: null }));
+                    if (configRes.data) setTenantConfig(configRes.data);
                 }
 
                 // 2. Fetch Active Packages

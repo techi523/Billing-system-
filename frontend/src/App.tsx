@@ -31,6 +31,7 @@ import LicenseManager from './pages/SuperAdmin/LicenseManager';
 import DashboardLayout from './components/Dashboard/DashboardLayout';
 import TenantSetup from './pages/TenantSetup';
 import TenantPortal from './pages/TenantPortal';
+import TenantBrandingCenter from './pages/TenantBrandingCenter';
 import Packages from './pages/Packages';
 import Analytics from './pages/Analytics';
 import MikrotikCenter from './pages/MikrotikCenter';
@@ -133,6 +134,8 @@ function App() {
                                 </ProtectedRoute>
                             }>
                                 <Route path="/tenant" element={<TenantPortal />} />
+                                <Route path="/tenant/branding" element={<TenantBrandingCenter />} />
+                                <Route path="/admin/branding" element={<TenantBrandingCenter />} />
 
                                 <Route path="/tenant/packages" element={
                                     <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
