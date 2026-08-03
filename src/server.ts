@@ -17,6 +17,7 @@ import paymentCallbackRoutes from './routes/payment-callback.routes';
 import aggregatorCallbackRoutes from './routes/aggregator-callback.routes';
 import routerRoutes from './routes/router.routes';
 import routerControlRoutes from './routes/router-control.routes';
+import routerPowerRoutes from './routes/router-power.routes';
 import campaignRoutes from './routes/campaigns';
 import smsGatewayRoutes from './routes/sms-gateway.routes';
 import smsRoutes from './routes/sms.routes';
@@ -174,6 +175,7 @@ app.use('/api/v1/aggregator', aggregatorCallbackRoutes);
 app.use('/api/v1/payments/callback', paymentCallbackRoutes);
 app.use('/api/v1/routers', authMiddleware, routerRoutes);
 app.use('/api/v1/routers', authMiddleware, routerControlRoutes);
+app.use('/api/v1/routers', authMiddleware, routerPowerRoutes);
 
 // Security headers for sensitive routes
 app.use('/api/v1/superadmin', (_req, res, next) => {

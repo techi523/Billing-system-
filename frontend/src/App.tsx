@@ -35,6 +35,7 @@ import TenantBrandingCenter from './pages/TenantBrandingCenter';
 import Packages from './pages/Packages';
 import Analytics from './pages/Analytics';
 import MikrotikCenter from './pages/MikrotikCenter';
+import RouterManagementCenter from './pages/RouterManagementCenter';
 import Wallet from './pages/Wallet';
 import Campaigns from './pages/Campaigns';
 import CustomerPortal from './pages/CustomerPortal';
@@ -152,6 +153,12 @@ function App() {
                                 <Route path="/tenant/mikrotik" element={
                                     <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
                                         <MikrotikCenter />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/tenant/routers" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
+                                        <RouterManagementCenter />
                                     </ProtectedRoute>
                                 } />
 

@@ -257,6 +257,28 @@ export class Router extends Model {
   public version!: string | null; // RouterOS version
   public model!: string | null; // Hardware model
   public architecture!: string | null; // arm, mipsbe, x86, etc.
+  // Power & Maintenance Management fields
+  public powerStatus!: 'GRID' | 'UPS_BATTERY' | 'OFFLINE' | 'UNKNOWN';
+  public maintenanceStatus!: 'OPERATIONAL' | 'MAINTENANCE' | 'POWER_OUTAGE' | 'BLACKOUT' | 'NETWORK_FAILURE' | 'HARDWARE_FAILURE' | 'UPSTREAM_FAILURE';
+  public maintenanceNotes!: string | null;
+  public maintenanceStartTime!: Date | null;
+  public expectedReturnTime!: Date | null;
+  public maintenanceCreatedBy!: string | null;
+  public uptimeSeconds!: number;
+  public subscriberCount!: number;
+  public cpuUsagePercent!: number;
+  public memoryUsagePercent!: number;
+  public bandwidthUsageMbps!: number;
+  public hasSmartPower!: boolean;
+  public smartPowerType!: 'SMART_PDU' | 'SMART_UPS' | 'SMART_PLUG' | 'REMOTE_SWITCH' | 'NONE';
+  public smartPowerHost!: string | null;
+  public smartPowerPort!: number | null;
+  public smartPowerOutletId!: string | null;
+  public outageAutoDetect!: boolean;
+  public outageThresholdMinutes!: number;
+  public escalationThresholdMinutes!: number;
+  public suspendAlertsInBlackout!: boolean;
+  public autoExtendSubscribersOnOutage!: boolean;
 }
 Router.init({
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -281,7 +303,99 @@ Router.init({
   version: { type: DataTypes.STRING },
   model: { type: DataTypes.STRING },
   architecture: { type: DataTypes.STRING },
+  // Power & Maintenance
+  powerStatus: { type: DataTypes.ENUM('GRID', 'UPS_BATTERY', 'OFFLINE', 'UNKNOWN'), defaultValue: 'GRID' },
+  maintenanceStatus: {
+    type: DataTypes.ENUM('OPERATIONAL', 'MAINTENANCE', 'POWER_OUTAGE', 'BLACKOUT', 'NETWORK_FAILURE', 'HARDWARE_FAILURE', 'UPSTREAM_FAILURE'),
+    defaultValue: 'OPERATIONAL'
+  },
+  maintenanceNotes: { type: DataTypes.TEXT },
+  maintenanceStartTime: { type: DataTypes.DATE },
+  expectedReturnTime: { type: DataTypes.DATE },
+  maintenanceCreatedBy: { type: DataTypes.STRING },
+  uptimeSeconds: { type: DataTypes.INTEGER, defaultValue: 0 },
+  subscriberCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  cpuUsagePercent: { type: DataTypes.FLOAT, defaultValue: 0 },
+  memoryUsagePercent: { type: DataTypes.FLOAT, defaultValue: 0 },
+  bandwidthUsageMbps: { type: DataTypes.FLOAT, defaultValue: 0 },
+  hasSmartPower: { type: DataTypes.BOOLEAN, defaultValue: false },
+  smartPowerType: { type: DataTypes.ENUM('SMART_PDU', 'SMART_UPS', 'SMART_PLUG', 'REMOTE_SWITCH', 'NONE'), defaultValue: 'NONE' },
+  smartPowerHost: { type: DataTypes.STRING },
+  smartPowerPort: { type: DataTypes.INTEGER },
+  smartPowerOutletId: { type: DataTypes.STRING },
+  outageAutoDetect: { type: DataTypes.BOOLEAN, defaultValue: true },
+  outageThresholdMinutes: { type: DataTypes.INTEGER, defaultValue: 5 },
+  escalationThresholdMinutes: { type: DataTypes.INTEGER, defaultValue: 30 },
+  suspendAlertsInBlackout: { type: DataTypes.BOOLEAN, defaultValue: true },
+  autoExtendSubscribersOnOutage: { type: DataTypes.BOOLEAN, defaultValue: true },
 }, { sequelize, modelName: 'router' });
+
+export class RouterIncident extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public routerId!: string;
+  public incidentType!: 'POWER_OUTAGE' | 'BLACKOUT' | 'MAINTENANCE' | 'NETWORK_FAILURE' | 'HARDWARE_FAILURE' | 'UPSTREAM_FAILURE';
+  public severity!: 'INFO' | 'WARNING' | 'CRITICAL' | 'EMERGENCY';
+  public status!: 'OPEN' | 'SCHEDULED' | 'IN_PROGRESS' | 'RESOLVED' | 'CANCELLED';
+  public summary!: string;
+  public details!: string | null;
+  public startTime!: Date;
+  public endTime!: Date | null;
+  public expectedReturnTime!: Date | null;
+  public affectedSubscriberCount!: number;
+  public compensationIssuedCents!: number;
+  public notifiedChannels!: string | null; // JSON Array: ['SMS', 'EMAIL', 'WHATSAPP', 'DASHBOARD']
+  public resolvedBy!: string | null;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+RouterIncident.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  routerId: { type: DataTypes.UUID, allowNull: false },
+  incidentType: {
+    type: DataTypes.ENUM('POWER_OUTAGE', 'BLACKOUT', 'MAINTENANCE', 'NETWORK_FAILURE', 'HARDWARE_FAILURE', 'UPSTREAM_FAILURE'),
+    allowNull: false
+  },
+  severity: { type: DataTypes.ENUM('INFO', 'WARNING', 'CRITICAL', 'EMERGENCY'), defaultValue: 'WARNING' },
+  status: { type: DataTypes.ENUM('OPEN', 'SCHEDULED', 'IN_PROGRESS', 'RESOLVED', 'CANCELLED'), defaultValue: 'OPEN' },
+  summary: { type: DataTypes.STRING, allowNull: false },
+  details: { type: DataTypes.TEXT },
+  startTime: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  endTime: { type: DataTypes.DATE },
+  expectedReturnTime: { type: DataTypes.DATE },
+  affectedSubscriberCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  compensationIssuedCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  notifiedChannels: { type: DataTypes.TEXT },
+  resolvedBy: { type: DataTypes.STRING },
+}, { sequelize, modelName: 'router_incident' });
+
+export class DowntimeRecord extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public routerId!: string;
+  public incidentId!: string | null;
+  public reason!: string;
+  public downtimeMinutes!: number;
+  public subscriberCount!: number;
+  public compensationPerSubscriberCents!: number;
+  public totalCompensationCents!: number;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+DowntimeRecord.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  routerId: { type: DataTypes.UUID, allowNull: false },
+  incidentId: { type: DataTypes.UUID },
+  reason: { type: DataTypes.STRING, allowNull: false },
+  downtimeMinutes: { type: DataTypes.INTEGER, defaultValue: 0 },
+  subscriberCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  compensationPerSubscriberCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+  totalCompensationCents: { type: DataTypes.BIGINT, defaultValue: 0 },
+}, { sequelize, modelName: 'downtime_record' });
 
 export class Package extends Model {
   public id!: number;
