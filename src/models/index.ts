@@ -2844,5 +2844,241 @@ EnterpriseQuote.init({
 EnterpriseLead.hasMany(EnterpriseQuote, { foreignKey: 'leadId' });
 EnterpriseQuote.belongsTo(EnterpriseLead, { foreignKey: 'leadId' });
 
+// =========================================================
+// FREERADIUS & RADIUS-FIRST ISP MODELS
+// =========================================================
+
+export class Nas extends Model {
+  public id!: string;
+  public nasname!: string;
+  public shortname!: string;
+  public type!: string;
+  public ports!: number;
+  public secret!: string;
+  public server!: string | null;
+  public community!: string | null;
+  public description!: string | null;
+  public tenantId!: string;
+  public status!: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+Nas.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  nasname: { type: DataTypes.STRING, allowNull: false, unique: true },
+  shortname: { type: DataTypes.STRING, allowNull: false },
+  type: { type: DataTypes.STRING, defaultValue: 'other' },
+  ports: { type: DataTypes.INTEGER, defaultValue: 0 },
+  secret: { type: DataTypes.STRING, allowNull: false },
+  server: { type: DataTypes.STRING },
+  community: { type: DataTypes.STRING },
+  description: { type: DataTypes.TEXT },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  status: { type: DataTypes.ENUM('ACTIVE', 'INACTIVE', 'MAINTENANCE'), defaultValue: 'ACTIVE' }
+}, { sequelize, modelName: 'nas', tableName: 'nas' });
+
+export class RadCheck extends Model {
+  public id!: number;
+  public username!: string;
+  public attribute!: string;
+  public op!: string;
+  public value!: string;
+  public tenantId!: string;
+}
+
+RadCheck.init({
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  username: { type: DataTypes.STRING, allowNull: false },
+  attribute: { type: DataTypes.STRING, allowNull: false },
+  op: { type: DataTypes.STRING(2), defaultValue: ':=' },
+  value: { type: DataTypes.STRING, allowNull: false },
+  tenantId: { type: DataTypes.UUID, allowNull: false }
+}, { sequelize, modelName: 'radcheck', tableName: 'radcheck', timestamps: false });
+
+export class RadReply extends Model {
+  public id!: number;
+  public username!: string;
+  public attribute!: string;
+  public op!: string;
+  public value!: string;
+  public tenantId!: string;
+}
+
+RadReply.init({
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  username: { type: DataTypes.STRING, allowNull: false },
+  attribute: { type: DataTypes.STRING, allowNull: false },
+  op: { type: DataTypes.STRING(2), defaultValue: '=' },
+  value: { type: DataTypes.STRING, allowNull: false },
+  tenantId: { type: DataTypes.UUID, allowNull: false }
+}, { sequelize, modelName: 'radreply', tableName: 'radreply', timestamps: false });
+
+export class RadGroupCheck extends Model {
+  public id!: number;
+  public groupname!: string;
+  public attribute!: string;
+  public op!: string;
+  public value!: string;
+  public tenantId!: string;
+}
+
+RadGroupCheck.init({
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  groupname: { type: DataTypes.STRING, allowNull: false },
+  attribute: { type: DataTypes.STRING, allowNull: false },
+  op: { type: DataTypes.STRING(2), defaultValue: ':=' },
+  value: { type: DataTypes.STRING, allowNull: false },
+  tenantId: { type: DataTypes.UUID, allowNull: false }
+}, { sequelize, modelName: 'radgroupcheck', tableName: 'radgroupcheck', timestamps: false });
+
+export class RadGroupReply extends Model {
+  public id!: number;
+  public groupname!: string;
+  public attribute!: string;
+  public op!: string;
+  public value!: string;
+  public tenantId!: string;
+}
+
+RadGroupReply.init({
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  groupname: { type: DataTypes.STRING, allowNull: false },
+  attribute: { type: DataTypes.STRING, allowNull: false },
+  op: { type: DataTypes.STRING(2), defaultValue: '=' },
+  value: { type: DataTypes.STRING, allowNull: false },
+  tenantId: { type: DataTypes.UUID, allowNull: false }
+}, { sequelize, modelName: 'radgroupreply', tableName: 'radgroupreply', timestamps: false });
+
+export class RadUserGroup extends Model {
+  public id!: number;
+  public username!: string;
+  public groupname!: string;
+  public priority!: number;
+  public tenantId!: string;
+}
+
+RadUserGroup.init({
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  username: { type: DataTypes.STRING, allowNull: false },
+  groupname: { type: DataTypes.STRING, allowNull: false },
+  priority: { type: DataTypes.INTEGER, defaultValue: 1 },
+  tenantId: { type: DataTypes.UUID, allowNull: false }
+}, { sequelize, modelName: 'radusergroup', tableName: 'radusergroup', timestamps: false });
+
+export class RadAcct extends Model {
+  public radacctid!: number;
+  public acctsessionid!: string;
+  public acctuniqueid!: string;
+  public username!: string;
+  public groupname!: string | null;
+  public realm!: string | null;
+  public nasipaddress!: string;
+  public nasportid!: string | null;
+  public nasporttype!: string | null;
+  public acctstarttime!: Date | null;
+  public acctupdatetime!: Date | null;
+  public acctstoptime!: Date | null;
+  public acctinterval!: number | null;
+  public acctsessiontime!: number | null;
+  public acctauthentic!: string | null;
+  public connectinfo_start!: string | null;
+  public connectinfo_stop!: string | null;
+  public acctinputoctets!: number | null;
+  public acctoutputoctets!: number | null;
+  public calledstationid!: string | null;
+  public callingstationid!: string | null;
+  public acctterminatecause!: string | null;
+  public servicetype!: string | null;
+  public framedprotocol!: string | null;
+  public framedipaddress!: string | null;
+  public tenantId!: string;
+}
+
+RadAcct.init({
+  radacctid: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
+  acctsessionid: { type: DataTypes.STRING, allowNull: false },
+  acctuniqueid: { type: DataTypes.STRING, allowNull: false, unique: true },
+  username: { type: DataTypes.STRING, allowNull: false },
+  groupname: { type: DataTypes.STRING },
+  realm: { type: DataTypes.STRING },
+  nasipaddress: { type: DataTypes.STRING, allowNull: false },
+  nasportid: { type: DataTypes.STRING },
+  nasporttype: { type: DataTypes.STRING },
+  acctstarttime: { type: DataTypes.DATE },
+  acctupdatetime: { type: DataTypes.DATE },
+  acctstoptime: { type: DataTypes.DATE },
+  acctinterval: { type: DataTypes.INTEGER },
+  acctsessiontime: { type: DataTypes.INTEGER, defaultValue: 0 },
+  acctauthentic: { type: DataTypes.STRING },
+  connectinfo_start: { type: DataTypes.STRING },
+  connectinfo_stop: { type: DataTypes.STRING },
+  acctinputoctets: { type: DataTypes.BIGINT, defaultValue: 0 },
+  acctoutputoctets: { type: DataTypes.BIGINT, defaultValue: 0 },
+  calledstationid: { type: DataTypes.STRING },
+  callingstationid: { type: DataTypes.STRING },
+  acctterminatecause: { type: DataTypes.STRING },
+  servicetype: { type: DataTypes.STRING },
+  framedprotocol: { type: DataTypes.STRING },
+  framedipaddress: { type: DataTypes.STRING },
+  tenantId: { type: DataTypes.UUID, allowNull: false }
+}, { sequelize, modelName: 'radacct', tableName: 'radacct', timestamps: false });
+
+export class RadPostAuth extends Model {
+  public id!: number;
+  public username!: string;
+  public pass!: string;
+  public reply!: string;
+  public authdate!: Date;
+  public nasipaddress!: string | null;
+  public tenantId!: string | null;
+  public reason!: string | null;
+}
+
+RadPostAuth.init({
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  username: { type: DataTypes.STRING, allowNull: false },
+  pass: { type: DataTypes.STRING, defaultValue: '' },
+  reply: { type: DataTypes.STRING, allowNull: false },
+  authdate: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  nasipaddress: { type: DataTypes.STRING },
+  tenantId: { type: DataTypes.UUID },
+  reason: { type: DataTypes.STRING }
+}, { sequelize, modelName: 'radpostauth', tableName: 'radpostauth', timestamps: false });
+
+export class RadiusPolicy extends Model {
+  public id!: string;
+  public tenantId!: string;
+  public name!: string;
+  public authType!: 'PAP' | 'CHAP' | 'MSCHAPv2' | 'EAP' | 'MAC';
+  public macAuthEnabled!: boolean;
+  public voucherAuthEnabled!: boolean;
+  public simultaneousUse!: number;
+  public sessionTimeout!: number;
+  public idleTimeout!: number;
+  public rateLimit!: string;
+  public fallbackAction!: 'REJECT' | 'ACCEPT_GUEST' | 'REDIRECT_PORTAL';
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+RadiusPolicy.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  tenantId: { type: DataTypes.UUID, allowNull: false },
+  name: { type: DataTypes.STRING, allowNull: false },
+  authType: { type: DataTypes.ENUM('PAP', 'CHAP', 'MSCHAPv2', 'EAP', 'MAC'), defaultValue: 'PAP' },
+  macAuthEnabled: { type: DataTypes.BOOLEAN, defaultValue: true },
+  voucherAuthEnabled: { type: DataTypes.BOOLEAN, defaultValue: true },
+  simultaneousUse: { type: DataTypes.INTEGER, defaultValue: 1 },
+  sessionTimeout: { type: DataTypes.INTEGER, defaultValue: 86400 },
+  idleTimeout: { type: DataTypes.INTEGER, defaultValue: 300 },
+  rateLimit: { type: DataTypes.STRING, defaultValue: '10M/10M' },
+  fallbackAction: { type: DataTypes.ENUM('REJECT', 'ACCEPT_GUEST', 'REDIRECT_PORTAL'), defaultValue: 'REJECT' }
+}, { sequelize, modelName: 'radius_policy' });
+
+// RADIUS Relationships
+Nas.belongsTo(Tenant, { foreignKey: 'tenantId' });
+RadiusPolicy.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
 export { sequelize };
 

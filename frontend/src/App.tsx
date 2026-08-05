@@ -36,6 +36,7 @@ import Packages from './pages/Packages';
 import Analytics from './pages/Analytics';
 import MikrotikCenter from './pages/MikrotikCenter';
 import RouterManagementCenter from './pages/RouterManagementCenter';
+import RadiusManagementCenter from './pages/RadiusManagementCenter';
 import Wallet from './pages/Wallet';
 import Campaigns from './pages/Campaigns';
 import CustomerPortal from './pages/CustomerPortal';
@@ -159,6 +160,12 @@ function App() {
                                 <Route path="/tenant/routers" element={
                                     <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
                                         <RouterManagementCenter />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/tenant/radius" element={
+                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'TENANT', 'STAFF']}>
+                                        <RadiusManagementCenter />
                                     </ProtectedRoute>
                                 } />
 
