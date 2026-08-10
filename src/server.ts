@@ -236,6 +236,16 @@ async function startServer() {
         // Auto-seed templates on startup
         await TemplateSeeder.seedDefaults();
 
+        if (process.env.NODE_ENV === 'staging' || process.env.NODE_ENV === 'development') {
+            try {
+                const { StagingDbService } = require('./services/staging-db.service');
+                await StagingDbService.seedStagingData();
+                logger.info('STAGING/DEV MODE: Automatically seeded staging database.');
+            } catch (err: any) {
+                logger.error('Failed to auto-seed staging database on startup', { error: err.message });
+            }
+        }
+
         // Start Background Monitoring Services
         // Start Background Monitoring Services
         // Start Background Monitoring Services

@@ -1,21 +1,21 @@
-import { sequelize, AdminUser } from '../src/models';
+import { AdminUser, Tenant } from '../src/models';
 
-async function listUsers() {
+async function main() {
     try {
-        await sequelize.authenticate();
-        console.log('Database connected.');
-
         const users = await AdminUser.findAll();
-        console.log(`Found ${users.length} users:`);
-        users.forEach(u => {
-            console.log(`- Email: ${u.email}, Role: ${u.role}, TenantID: ${u.tenantId}`);
-        });
-
-    } catch (error) {
-        console.error('Error:', error);
-    } finally {
-        await sequelize.close();
+        console.log('--- ADMIN USERS ---');
+        for (const u of users) {
+            console.log(`ID: ${u.id} | Email: ${u.email} | Role: ${u.role} | TenantId: ${u.tenantId}`);
+        }
+        const tenants = await Tenant.findAll();
+        console.log('--- TENANTS ---');
+        for (const t of tenants) {
+            console.log(`ID: ${t.id} | Name: ${t.name} | Subdomain: ${t.subdomain}`);
+        }
+    } catch (err: any) {
+        console.error('Error:', err.message);
     }
+    process.exit(0);
 }
 
-listUsers();
+main();

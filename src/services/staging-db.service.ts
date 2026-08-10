@@ -137,15 +137,21 @@ export class StagingDbService {
 
         const seededUsers = [];
         for (const acc of testAccounts) {
-            const [user] = await AdminUser.findOrCreate({
-                where: { email: acc.email },
-                defaults: {
+            let user = await AdminUser.findOne({ where: { email: acc.email } });
+            if (user) {
+                await user.update({
+                    password: passwordHash,
+                    role: acc.role,
+                    tenantId: acc.tenantId
+                });
+            } else {
+                user = await AdminUser.create({
                     email: acc.email,
                     password: passwordHash,
                     role: acc.role,
-                    tenantId: acc.tenantId,
-                }
-            });
+                    tenantId: acc.tenantId
+                });
+            }
 
             await TestAccountSeed.findOrCreate({
                 where: { email: acc.email },
