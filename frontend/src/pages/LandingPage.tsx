@@ -39,6 +39,7 @@ const LandingPage: React.FC = () => {
                         <a href="#features" className="hover:text-sky-400 transition-colors">Features</a>
                         <a href="#mikrotik" className="hover:text-sky-400 transition-colors">MikroTik Sync</a>
                         <a href="#captive" className="hover:text-sky-400 transition-colors">Captive Ads</a>
+                        <a href="#ecosystem" className="hover:text-sky-400 transition-colors">App Store</a>
                         <a href="#pricing" className="hover:text-sky-400 transition-colors">Pricing</a>
                         <a href="#contact" className="hover:text-sky-400 transition-colors">Contact</a>
                     </div>
@@ -213,6 +214,70 @@ const LandingPage: React.FC = () => {
             </section>
 
             <EnterpriseLeadModal isOpen={isEnterpriseModalOpen} onClose={() => setIsEnterpriseModalOpen(false)} />
+
+            {/* ── UNIFIED ECOSYSTEM / DRAVIO INSTALL SECTION ── */}
+            <section id="ecosystem" className="py-24 border-t border-slate-800 px-6 bg-[#0c1220]/40 relative">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-indigo-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+                <div className="max-w-6xl mx-auto space-y-16 relative z-10">
+                    <div className="text-center space-y-4">
+                        <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-black uppercase tracking-widest border border-indigo-500/20">Unified App Store</span>
+                        <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">Expand Your Multi-Product Ecosystem</h2>
+                        <p className="text-slate-400 text-base max-w-2xl mx-auto leading-relaxed">
+                            SurfBill is part of a secure, unified digital identity ecosystem. Integrate additional verified SaaS products under a single OIDC login profile with absolute database and billing isolation.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                        {/* SurfBill Card */}
+                        <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 space-y-6 flex flex-col justify-between hover:border-slate-700 transition-colors">
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <div className="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-400 flex items-center justify-center">
+                                        <Layers className="w-6 h-6" />
+                                    </div>
+                                    <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black rounded-full uppercase">Active / Installed</span>
+                                </div>
+                                <h3 className="text-2xl font-black text-white">SurfBill ISP Platform</h3>
+                                <p className="text-slate-400 text-sm leading-relaxed">
+                                    Real-time MikroTik RouterOS automation, AAA RADIUS accounting, automated M-Pesa billing, and multi-channel notification campaigns.
+                                </p>
+                            </div>
+                            <Link to="/login" className="w-full py-3.5 bg-slate-800 hover:bg-slate-750 text-white font-bold text-center rounded-2xl text-xs uppercase tracking-wider transition-colors">
+                                Launch Dashboard
+                            </Link>
+                        </div>
+
+                        {/* Dravio Card (Dravio installation call to action) */}
+                        <div className="bg-slate-900 border border-indigo-500/30 rounded-[2.5rem] p-8 space-y-6 flex flex-col justify-between hover:border-indigo-500/50 transition-colors relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl"></div>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                                        <Globe className="w-6 h-6" />
+                                    </div>
+                                    <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-black rounded-full uppercase">Available for Install</span>
+                                </div>
+                                <h3 className="text-2xl font-black text-white flex items-center gap-2">
+                                    Dravio Data Market <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
+                                </h3>
+                                <p className="text-slate-400 text-sm leading-relaxed">
+                                    Unlock decentralized data monetization. Sell unused network bandwidth, monetize raw analytical logs, and buy structured data packages under your unified OIDC login.
+                                </p>
+                            </div>
+                            
+                            <button
+                                onClick={() => {
+                                    alert('To install and configure Dravio, please log into your SurfBill App Center or visit the Dravio installation portal.');
+                                    window.open('http://localhost:8000/marketplace', '_blank');
+                                }}
+                                className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-black text-center rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-indigo-500/20 transition-all transform hover:-translate-y-0.5"
+                            >
+                                Install & Configure Dravio
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             {/* ── FAQ SECTION ── */}
             <section className="py-24 px-6 max-w-4xl mx-auto space-y-12">
