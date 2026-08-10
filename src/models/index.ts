@@ -3080,5 +3080,129 @@ RadiusPolicy.init({
 Nas.belongsTo(Tenant, { foreignKey: 'tenantId' });
 RadiusPolicy.belongsTo(Tenant, { foreignKey: 'tenantId' });
 
+// =========================================================
+// CENTRAL IDENTITY PLATFORM (OIDC / OAUTH2) MODELS
+// =========================================================
+
+export class IdentityUser extends Model {
+  public id!: string;
+  public email!: string;
+  public passwordHash!: string;
+  public firstName!: string | null;
+  public lastName!: string | null;
+  public phone!: string | null;
+  public emailVerified!: boolean;
+  public mfaEnabled!: boolean;
+  public mfaSecret!: string | null;
+  public failedLoginAttempts!: number;
+  public lockedUntil!: Date | null;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+IdentityUser.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  email: { type: DataTypes.STRING, unique: true, allowNull: false },
+  passwordHash: { type: DataTypes.STRING, allowNull: false },
+  firstName: { type: DataTypes.STRING },
+  lastName: { type: DataTypes.STRING },
+  phone: { type: DataTypes.STRING },
+  emailVerified: { type: DataTypes.BOOLEAN, defaultValue: false },
+  mfaEnabled: { type: DataTypes.BOOLEAN, defaultValue: false },
+  mfaSecret: { type: DataTypes.STRING },
+  failedLoginAttempts: { type: DataTypes.INTEGER, defaultValue: 0 },
+  lockedUntil: { type: DataTypes.DATE }
+}, { sequelize, modelName: 'identity_user', tableName: 'identity_users' });
+
+export class IdentitySession extends Model {
+  public id!: string;
+  public userId!: string;
+  public clientId!: string;
+  public refreshToken!: string;
+  public expiresAt!: Date;
+  public ipAddress!: string | null;
+  public userAgent!: string | null;
+  public revokedAt!: Date | null;
+  public readonly createdAt!: Date;
+}
+
+IdentitySession.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId: { type: DataTypes.UUID, allowNull: false },
+  clientId: { type: DataTypes.STRING, allowNull: false },
+  refreshToken: { type: DataTypes.TEXT, allowNull: false },
+  expiresAt: { type: DataTypes.DATE, allowNull: false },
+  ipAddress: { type: DataTypes.STRING },
+  userAgent: { type: DataTypes.TEXT },
+  revokedAt: { type: DataTypes.DATE }
+}, { sequelize, modelName: 'identity_session', tableName: 'identity_sessions', updatedAt: false });
+
+export class IdentityClient extends Model {
+  public id!: string;
+  public name!: string;
+  public clientId!: string;
+  public clientSecretHash!: string;
+  public redirectUris!: string; // JSON string
+  public allowedScopes!: string; // JSON string
+}
+
+IdentityClient.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  name: { type: DataTypes.STRING, allowNull: false },
+  clientId: { type: DataTypes.STRING, unique: true, allowNull: false },
+  clientSecretHash: { type: DataTypes.STRING, allowNull: false },
+  redirectUris: { type: DataTypes.TEXT, allowNull: false },
+  allowedScopes: { type: DataTypes.TEXT, allowNull: false }
+}, { sequelize, modelName: 'identity_client', tableName: 'identity_clients' });
+
+export class IdentityAuthCode extends Model {
+  public id!: string;
+  public code!: string;
+  public userId!: string;
+  public clientId!: string;
+  public scope!: string;
+  public redirectUri!: string;
+  public codeChallenge!: string | null;
+  public codeChallengeMethod!: string | null;
+  public expiresAt!: Date;
+}
+
+IdentityAuthCode.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  code: { type: DataTypes.STRING, unique: true, allowNull: false },
+  userId: { type: DataTypes.UUID, allowNull: false },
+  clientId: { type: DataTypes.STRING, allowNull: false },
+  scope: { type: DataTypes.STRING, allowNull: false },
+  redirectUri: { type: DataTypes.TEXT, allowNull: false },
+  codeChallenge: { type: DataTypes.STRING },
+  codeChallengeMethod: { type: DataTypes.STRING },
+  expiresAt: { type: DataTypes.DATE, allowNull: false }
+}, { sequelize, modelName: 'identity_auth_code', tableName: 'identity_auth_codes', timestamps: false });
+
+export class IdentityAuditLog extends Model {
+  public id!: string;
+  public userId!: string | null;
+  public clientId!: string | null;
+  public event!: string;
+  public ipAddress!: string | null;
+  public userAgent!: string | null;
+  public details!: string | null;
+  public readonly createdAt!: Date;
+}
+
+IdentityAuditLog.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId: { type: DataTypes.UUID },
+  clientId: { type: DataTypes.STRING },
+  event: { type: DataTypes.STRING, allowNull: false },
+  ipAddress: { type: DataTypes.STRING },
+  userAgent: { type: DataTypes.TEXT },
+  details: { type: DataTypes.TEXT }
+}, { sequelize, modelName: 'identity_audit_log', tableName: 'identity_audit_logs', updatedAt: false });
+
+// Identity Relationships
+IdentitySession.belongsTo(IdentityUser, { foreignKey: 'userId' });
+IdentityAuditLog.belongsTo(IdentityUser, { foreignKey: 'userId' });
+
 export { sequelize };
 

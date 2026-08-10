@@ -107,6 +107,12 @@ const MENU_SECTIONS: MenuSection[] = [
             { id: 'notifications', label: 'Notifications', icon: BellRing, path: '/tenant/profile' },
         ]
     },
+    {
+        label: 'Ecosystem',
+        items: [
+            { id: 'app-center', label: 'App Center', icon: Layers, path: '/tenant/app-center' }
+        ]
+    }
 
 ];
 
@@ -132,6 +138,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
     '/tenant/wallet': 'Wallet & Treasury',
     '/tenant/subscription': 'Subscription & Invoices',
     '/tenant/profile': 'Profile & Settings',
+    '/tenant/app-center': 'App Center & Ecosystem',
 
 };
 
