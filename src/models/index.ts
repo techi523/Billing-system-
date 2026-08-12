@@ -3205,4 +3205,5 @@ IdentitySession.belongsTo(IdentityUser, { foreignKey: 'userId' });
 IdentityAuditLog.belongsTo(IdentityUser, { foreignKey: 'userId' });
 
 export { sequelize };
+export { DravioRelease } from './dravio-release';
 

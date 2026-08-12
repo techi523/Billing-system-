@@ -20,6 +20,7 @@ import routerControlRoutes from './routes/router-control.routes';
 import routerPowerRoutes from './routes/router-power.routes';
 import radiusRoutes from './routes/radius.routes';
 import identityRoutes from './routes/identity.routes';
+import dravioRoutes from './routes/dravio.routes';
 import campaignRoutes from './routes/campaigns';
 import smsGatewayRoutes from './routes/sms-gateway.routes';
 import smsRoutes from './routes/sms.routes';
@@ -180,6 +181,10 @@ app.use('/api/v1/routers', authMiddleware, routerControlRoutes);
 app.use('/api/v1/routers', authMiddleware, routerPowerRoutes);
 app.use('/api/v1/radius', authMiddleware, radiusRoutes);
 app.use('/api/v1/identity', identityRoutes);
+app.use('/api/v1/dravio', dravioRoutes);
+app.get('/marketplace', (_req, res) => {
+    res.redirect('/app-center');
+});
 
 // Security headers for sensitive routes
 app.use('/api/v1/superadmin', (_req, res, next) => {
@@ -324,6 +329,30 @@ async function startServer() {
         httpServer.listen(PORT, () => {
             logger.info(`Production SaaS Billing System running on port ${PORT}`);
         });
+
+        // Start Dravio Marketplace Server on Port 8000
+        try {
+            const dravioMarketApp = express();
+            dravioMarketApp.use(cors());
+            dravioMarketApp.use(express.static('public'));
+            dravioMarketApp.use('/api/v1/dravio', dravioRoutes);
+            dravioMarketApp.get('/marketplace', (_req, res) => {
+                res.redirect('http://localhost:5173/app-center');
+            });
+            dravioMarketApp.get('*', (_req, res) => {
+                res.redirect('http://localhost:5173/app-center');
+            });
+
+            const dravioServer = createServer(dravioMarketApp);
+            dravioServer.on('error', (err: any) => {
+                logger.error('Dravio Marketplace port 8000 error:', { error: err.message });
+            });
+            dravioServer.listen(8000, '0.0.0.0', () => {
+                logger.info(`Dravio Mobile Marketplace Portal running on port 8000`);
+            });
+        } catch (err: any) {
+            logger.warn('Dravio Marketplace port 8000 listener failed to start', { error: err.message });
+        }
     } catch (err) {
         logger.error('Failed to start server:', { error: (err as Error).message });
         process.exit(1);

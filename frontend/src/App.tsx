@@ -91,6 +91,8 @@ function App() {
                                 <Route path="/status" element={<SystemStatus />} />
                                 <Route path="/help" element={<HelpCenter />} />
                                 <Route path="/checkout" element={<CheckoutPortal />} />
+                                <Route path="/marketplace" element={<AppCenter />} />
+                                <Route path="/app-center" element={<AppCenter />} />
 
                             {/* Super Admin Login (Explicit) */}
                             <Route path="/superadmin/login" element={<SuperAdminLogin />} />

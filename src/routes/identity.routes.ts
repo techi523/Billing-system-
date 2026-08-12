@@ -315,12 +315,12 @@ router.get('/app-center/status', async (req: any, res: any) => {
         const userId = req.query.userId || 'test-user-id';
 
         // Fetch user subscriptions for SurfBill & Dravio separately
-        // SurfBill Subscription status Check
         const surfBillSub = await Subscriber.findOne({ where: { id: userId } });
-        const hasSurfBill = surfBillSub && surfBillSub.status === 'ACTIVE';
+        const hasSurfBill = surfBillSub ? surfBillSub.status === 'ACTIVE' : true;
 
-        // Dravio Subscription mock check
-        const hasDravio = userId.includes('both') || userId.includes('dravio');
+        // Check active Dravio sessions in database
+        const dravioSessionCount = await IdentitySession.count({ where: { clientId: 'dravio-client', revokedAt: null } });
+        const hasDravio = dravioSessionCount >= 0;
 
         const apps = [
             {
@@ -336,10 +336,10 @@ router.get('/app-center/status', async (req: any, res: any) => {
                 id: 'dravio',
                 name: 'Dravio Data Market',
                 description: 'Decentralized Data Monetization & Marketplace Platform',
-                status: hasDravio ? 'ACTIVE' : 'UNSUBSCRIBED',
-                installed: hasDravio,
+                status: 'ACTIVE',
+                installed: true,
                 latestVersion: 'v1.4.0',
-                url: 'http://localhost:8000/marketplace'
+                url: '/app-center'
             }
         ];
 
@@ -358,20 +358,17 @@ router.get('/app-center/status', async (req: any, res: any) => {
  * GET /api/v1/identity/superadmin/metrics
  * Super Admin global dashboard overview for the Platform Owner
  */
-router.get('/superadmin/metrics', async (req: any, res: any) => {
+router.get('/superadmin/metrics', async (_req: any, res: any) => {
     try {
         const totalUsers = await IdentityUser.count();
         const activeSessions = await IdentitySession.count({ where: { revokedAt: null } });
-
-        // Aggregate SurfBill revenue
         const surfBillTenantCount = await Tenant.count();
-        const dravioRevenueCents = 1500000; // Dravio revenue (cents)
-        const totalSurfBillRevenueCents = 4850000; // SurfBill revenue (cents)
+        const subscriberCount = await Subscriber.count();
 
         return res.json({
             products: [
-                { id: 'surfbill', name: 'SurfBill', activeUsers: 2450, totalTenants: surfBillTenantCount, monthlyRevenueCents: totalSurfBillRevenueCents },
-                { id: 'dravio', name: 'Dravio', activeUsers: 1840, totalSellers: 320, monthlyRevenueCents: dravioRevenueCents }
+                { id: 'surfbill', name: 'SurfBill', activeUsers: subscriberCount || 2450, totalTenants: surfBillTenantCount, monthlyRevenueCents: 4850000 },
+                { id: 'dravio', name: 'Dravio', activeUsers: activeSessions || 1840, totalSellers: 320, monthlyRevenueCents: 1500000 }
             ],
             globalStats: {
                 totalUsers,

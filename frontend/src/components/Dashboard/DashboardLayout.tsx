@@ -38,8 +38,9 @@ const MENU_SECTIONS: MenuSection[] = [
         ]
     },
     {
-        label: 'Business',
+        label: 'Ecosystem & Apps',
         items: [
+            { id: 'app-center', label: 'App Center', icon: Layers, path: '/app-center' },
             { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/tenant/analytics' },
         ]
     },

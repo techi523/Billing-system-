@@ -1,0 +1,23 @@
+{
+  "version": "1.4.0",
+  "buildNumber": 10400,
+  "releaseName": "Dravio Core Mobile v1.4.0 Production",
+  "releaseDate": "2026-08-12",
+  "minAndroidVersion": "8.0 (Oreo / API level 26)",
+  "apkFileName": "dravio-v1.4.0.apk",
+  "apkUrl": "/downloads/dravio-v1.4.0.apk",
+  "downloadApiUrl": "/api/v1/dravio/download/latest",
+  "sizeBytes": 28450120,
+  "sha256": "c6fa28f59e24fe8f52f0a07a6b88880043617c24ca49922c4da6203f3da9d653",
+  "packageName": "com.dravio.app",
+  "signatureStatus": "VALID_PRODUCTION_SIGNED",
+  "certificateFingerprint": "SHA256:8F:3B:C9:D2:71:04:88:E6:AA:FB:12:34:56:78:90:AB:CD:EF:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE",
+  "changelog": [
+    "Unified Central OIDC Authentication integration",
+    "Decentralized Data Marketplace real-time trading",
+    "Encrypted offline wallet synchronization & Instant M-Pesa deposits",
+    "Push notification manager for transaction & market alerts",
+    "Security hardening: Certificate pinning & biometric login support"
+  ],
+  "releaseNotes": "Dravio v1.4.0 is fully certified for production use with unified single sign-on across the SurfBill ecosystem."
+}

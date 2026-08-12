@@ -267,8 +267,7 @@ const LandingPage: React.FC = () => {
                             
                             <button
                                 onClick={() => {
-                                    alert('To install and configure Dravio, please log into your SurfBill App Center or visit the Dravio installation portal.');
-                                    window.open('http://localhost:8000/marketplace', '_blank');
+                                    window.location.href = '/app-center';
                                 }}
                                 className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-black text-center rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-indigo-500/20 transition-all transform hover:-translate-y-0.5"
                             >
