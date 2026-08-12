@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { publicKey } from '../routes/identity.routes';
-import { AdminUser, Subscriber } from '../models';
+import { AdminUser, Subscriber, Tenant } from '../models';
 import logger from '../utils/logger';
 
 export interface AuthenticatedOidcRequest extends Request {

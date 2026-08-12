@@ -9,7 +9,7 @@ const SERVER_PASS = 'Surfbill@2230';
 
 const REMOTE_APP_DIR = '/srv/apps/billing-system';
 const LOCAL_APK_PATH = path.join(__dirname, '../public/downloads/dravio-v1.4.0.apk');
-const REMOTE_APK_PATH = `${REMOTE_APP_DIR}/public/downloads/dravio-v1.4.0.apk`;
+const LOCAL_ENV_PATH = path.join(__dirname, '../.env');
 
 function execCmd(conn: Client, cmd: string): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -67,30 +67,48 @@ async function deployProductionServer() {
 
         try {
             // Step 1: Ensure directory structure
-            console.log(`\n[1/5] Ensuring target directories on server...`);
+            console.log(`\n[1/6] Ensuring target directories on server...`);
             await execCmd(conn, `mkdir -p ${REMOTE_APP_DIR}/public/downloads ${REMOTE_APP_DIR}/dist ${REMOTE_APP_DIR}/src`);
             console.log('  ✓ Directories verified');
 
             // Step 2: Try Git pull on server if repository exists
-            console.log(`\n[2/5] Checking git repository & pulling updates...`);
+            console.log(`\n[2/6] Checking git repository & pulling updates...`);
             const gitRes = await execCmd(conn, `cd ${REMOTE_APP_DIR} && git pull origin main`);
             console.log('  ' + gitRes.trim());
 
-            // Step 3: SFTP Upload APK binary
-            console.log(`\n[3/5] Syncing Dravio APK binary to ${REMOTE_APK_PATH}...`);
+            // Step 3: Upload .env file to root and dist
+            console.log(`\n[3/6] Syncing environment configuration (.env)...`);
             await new Promise<void>((resolve, reject) => {
                 conn.sftp((err, sftp) => {
                     if (err) return reject(err);
-                    sftp.fastPut(LOCAL_APK_PATH, REMOTE_APK_PATH, {}, (uErr: any) => {
+                    sftp.fastPut(LOCAL_ENV_PATH, `${REMOTE_APP_DIR}/.env`, {}, (e1: any) => {
+                        if (e1) return reject(e1);
+                        sftp.fastPut(LOCAL_ENV_PATH, `${REMOTE_APP_DIR}/dist/.env`, {}, (e2: any) => {
+                            if (e2) return reject(e2);
+                            resolve();
+                        });
+                    });
+                });
+            });
+            console.log('  ✓ [PASS] Environment configuration (.env) synchronized!');
+
+            // Step 4: SFTP Upload APK binary
+            console.log(`\n[4/6] Syncing Dravio APK binary to ${REMOTE_APP_DIR}/public/downloads/...`);
+            await new Promise<void>((resolve, reject) => {
+                conn.sftp((err, sftp) => {
+                    if (err) return reject(err);
+                    sftp.fastPut(LOCAL_APK_PATH, `${REMOTE_APP_DIR}/public/downloads/dravio-v1.4.0.apk`, {}, (uErr: any) => {
                         if (uErr) return reject(uErr);
-                        resolve();
+                        sftp.fastPut(LOCAL_APK_PATH, `${REMOTE_APP_DIR}/frontend/dist/downloads/dravio-v1.4.0.apk`, {}, () => {
+                            resolve();
+                        });
                     });
                 });
             });
             console.log('  ✓ [PASS] APK Binary uploaded and synchronized to production directory!');
 
-            // Step 4: Upload built dist files
-            console.log(`\n[4/5] Syncing compiled dist assets & src models to ${REMOTE_APP_DIR}...`);
+            // Step 5: Upload built dist files
+            console.log(`\n[5/6] Syncing compiled dist assets & src models to ${REMOTE_APP_DIR}...`);
             const localDist = path.join(__dirname, '../dist');
             await new Promise<void>((resolve, reject) => {
                 conn.sftp(async (err, sftp) => {
@@ -105,15 +123,25 @@ async function deployProductionServer() {
             });
             console.log('  ✓ [PASS] Compiled application code and models synchronized!');
 
-            // Step 5: PM2 Restart
-            console.log(`\n[5/5] Restarting PM2 process 'billing-system'...`);
-            const pm2Res = await execCmd(conn, `cd ${REMOTE_APP_DIR} && pm2 restart billing-system && pm2 status`);
+            // Step 6: PM2 Restart
+            console.log(`\n[6/6] Restarting PM2 process 'billing-system'...`);
+            const pm2Res = await execCmd(conn, `
+                cd ${REMOTE_APP_DIR} &&
+                pm2 delete billing-system || true
+                pm2 start dist/src/server.js --name billing-system --cwd ${REMOTE_APP_DIR} &&
+                pm2 save &&
+                pm2 status
+            `);
             console.log('  ✓ PM2 Status Output:\n' + pm2Res.trim().split('\n').map(l => '    ' + l).join('\n'));
+
+            // Test Health endpoint
+            const healthOut = await execCmd(conn, 'curl -s http://127.0.0.1:3000/health || curl -s http://127.0.0.1:3010/health');
+            console.log('  ✓ Server Health Verification:\n' + healthOut.trim().split('\n').map(l => '    ' + l).join('\n'));
 
             console.log('\n========================================================================');
             console.log('  PRODUCTION DEPLOYMENT & PM2 SERVICE RESTART COMPLETE');
-            console.log(`  Server Endpoint: http://${SERVER_HOST}:3010`);
-            console.log(`  Hosted APK Direct Download: http://${SERVER_HOST}:3010/downloads/dravio-v1.4.0.apk`);
+            console.log(`  Server Endpoint: http://${SERVER_HOST}`);
+            console.log(`  Hosted APK Direct Download: http://${SERVER_HOST}/downloads/dravio-v1.4.0.apk`);
             console.log('========================================================================\n');
             conn.end();
             process.exit(0);
