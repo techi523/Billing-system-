@@ -335,12 +335,16 @@ async function startServer() {
             const dravioMarketApp = express();
             dravioMarketApp.use(cors());
             dravioMarketApp.use(express.static('public'));
+            dravioMarketApp.use('/downloads', express.static('public/downloads'));
             dravioMarketApp.use('/api/v1/dravio', dravioRoutes);
             dravioMarketApp.get('/marketplace', (_req, res) => {
-                res.redirect('http://localhost:5173/app-center');
+                res.redirect('/app-center');
             });
-            dravioMarketApp.get('*', (_req, res) => {
-                res.redirect('http://localhost:5173/app-center');
+            dravioMarketApp.get('*', (req, res, next) => {
+                if (req.path.startsWith('/api') || req.path.startsWith('/downloads')) {
+                    return next();
+                }
+                res.redirect('/app-center');
             });
 
             const dravioServer = createServer(dravioMarketApp);

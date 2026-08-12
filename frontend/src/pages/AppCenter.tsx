@@ -138,7 +138,14 @@ const AppCenter = () => {
             const targetDownloadUrl = window.location.port === '3010'
                 ? '/api/v1/dravio/download/latest'
                 : 'http://localhost:3010/api/v1/dravio/download/latest';
-            window.location.href = targetDownloadUrl;
+
+            // Trigger file binary stream via hidden anchor element with download attribute
+            const link = document.createElement('a');
+            link.href = targetDownloadUrl;
+            link.setAttribute('download', 'dravio-v1.4.0.apk');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
             setTimeout(() => {
                 setDownloadProgress(100);
