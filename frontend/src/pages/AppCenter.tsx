@@ -382,8 +382,8 @@ const AppCenter = () => {
                                     <span className="px-2.5 py-0.5 text-[10px] font-black uppercase rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 tracking-wider">
                                         PRODUCTION MOBILE APP
                                     </span>
-                                    <h3 className="text-xl font-black text-white flex items-center gap-2 pt-1">
-                                        <Smartphone className="w-6 h-6 text-indigo-400" /> Dravio Mobile
+                                    <h3 className="text-xl font-black text-white flex items-center gap-3 pt-1">
+                                        <img src="/dravio-logo.png" alt="Dravio Logo" className="w-8 h-8 rounded-xl object-cover border border-indigo-500/30 shadow-md shadow-indigo-500/20" /> Dravio Mobile
                                     </h3>
                                 </div>
                                 <span className="px-3 py-1 text-xs font-mono font-bold rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
@@ -484,7 +484,9 @@ const AppCenter = () => {
                                         Build {releaseInfo?.buildNumber || 10400}
                                     </span>
                                 </div>
-                                <h2 className="text-2xl font-black text-white">Dravio Mobile App Center & Direct Package Distribution</h2>
+                                <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                                    <img src="/dravio-logo.png" alt="Dravio Logo" className="w-10 h-10 rounded-2xl object-cover border border-sky-400/40 shadow-lg shadow-sky-500/20" /> Dravio Mobile App Center & Direct Package Distribution
+                                </h2>
                                 <p className="text-slate-400 text-xs sm:text-sm max-w-2xl">
                                     Official production release binary channel for Android devices. Download signed APK packages, inspect SHA-256 certificate hashes, view release changelogs, and review installation steps.
                                 </p>
